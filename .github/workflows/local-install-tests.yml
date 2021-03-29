@@ -5,7 +5,8 @@ on:
   push:
     branches:
       - main
-
+      - dev
+      
 jobs:
   local_install_test:
     runs-on: ubuntu-latest
