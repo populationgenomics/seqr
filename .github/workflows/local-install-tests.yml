@@ -2,10 +2,7 @@ name: local install tests
 
 # Run the docker-compose test suite on pushes (incl. merges) to master and dev
 on:
-  push:
-    branches:
-      - main
-      - dev
+  push
       
 jobs:
   local_install_test:
