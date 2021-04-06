@@ -69,20 +69,14 @@ gatk GenotypeGVCFs \\
 if __name__ == "__main__":
     import os.path
 
-    base = "gs://cpg-fewgenomes-test/kccg/"
-    output_path = os.path.join(
-        base,
-        "mfranklin.HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.vcf.gz",
-    )
-    gvcf_path = os.path.join(
-        base,
-        "HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.g.vcf.gz",
-    )
+    base = "gs://<bucket>>"
+    output_path = os.path.join(base, "your.vcf.gz")
+    gvcf_path = os.path.join(base, "your.g.vcf.gz")
 
     BROAD_REF_BUCKET = "gs://gcp-public-data--broad-references/hg38/v0"
     reference_path = os.path.join(BROAD_REF_BUCKET, "Homo_sapiens_assembly38.fasta")
     dbsnp_path = os.path.join(BROAD_REF_BUCKET, "Homo_sapiens_assembly38.dbsnp138.vcf")
-    backend = hb.ServiceBackend(billing_project="michaelfranklin-trial")
+    backend = hb.ServiceBackend(billing_project="<billing>>")
 
     b = main(
         gvcf_path=gvcf_path,
