@@ -7,13 +7,19 @@ def main(gvcf_path, reference_path, dbsnp_path, output_path: str, **kwargs):
 
     b = hb.Batch("prepare_gvcf_for_seqr", **kwargs)
 
-    gvcf = b.read_input(gvcf_path)
-    reference = b.read_input(reference_path)
-    # reference = b.read_input_group(
-    #     base=reference_path, dict=reference_path.replace(".fasta", "") + ".dict"
-    # )
+    if gvcf_path.endswith(".vcf.gz"):
+        gvcf = b.read_input_group(base=gvcf_path, tbi=gvcf_path + ".tbi")
+    elif gvcf_path.endswith(".vcf"):
+        gvcf = b.read_input_group(base=gvcf_path, idx=gvcf_path + ".idx")
+    else:
+        raise Exception(f"Unrecognised file extension for gvcf: {gvcf_path}")
+
+    reference = b.read_input_group(
+        base=reference_path,
+        fai=reference_path + ".fai",
+        dict=reference_path.replace(".fasta", "") + ".dict",
+    )
     dbsnp = b.read_input_group(base=dbsnp_path, idx=dbsnp_path + ".idx")
-    dbsnp = b.read_input(dbsnp_path)
 
     genotype_vcf = submit_gatk_genotype_gvcf(
         b, gvcf=gvcf, reference=reference, dbsnps=dbsnp
@@ -24,26 +30,38 @@ def main(gvcf_path, reference_path, dbsnp_path, output_path: str, **kwargs):
     return b
 
 
-def submit_gatk_genotype_gvcf(b: hb.Batch, gvcf, reference, dbsnps):
+def submit_gatk_genotype_gvcf(
+    b: hb.Batch,
+    gvcf,
+    reference,
+    dbsnps,
+    verbosity="INFO",
+    interval_padding=25,
+    stand_call_confidence=5.0,
+):
     j = b.new_job("genotype_gvcf")
 
     j.image(GATK_CONTAINER)
+
+    output_name = f"{gvcf}.vcf.gz"
 
     j.command(
         f"""
 gatk GenotypeGVCFs \\
   --java-options '-DGATK_STACKTRACE_ON_USER_EXCEPTION=true' \\
-  -R {reference}
-  --dbsnp {dbsnps}
-  --allow-old-rms-mapping-quality-annotation-data \
-  --variant {gvcf}
-  --output {j.out}
-  --verbosity INFO
-  --create-output-variant-index \
-  --interval-padding 25 \
-  -stand-call-conf 5.0
+  -R {reference.base} \\
+  --dbsnp {dbsnps.base} \\
+  --allow-old-rms-mapping-quality-annotation-data \\
+  --variant {gvcf.base} \\
+  --output {output_name} \\
+  --verbosity {verbosity} \\
+  --create-output-variant-index \\
+  --interval-padding {interval_padding} \\
+  -stand-call-conf {stand_call_confidence}
 """
     )
+
+    j.command(f"ln {output_name} {j.out}")
 
     return j
 
@@ -51,8 +69,15 @@ gatk GenotypeGVCFs \\
 if __name__ == "__main__":
     import os.path
 
-    output_path = "gs://cpg-fewgenomes-upload/kccg/mfranklin.HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.vcf.gz"
-    gvcf_path = "gs://cpg-fewgenomes-upload/kccg/HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.g.vcf.gz"
+    base = "gs://cpg-fewgenomes-test/kccg/"
+    output_path = os.path.join(
+        base,
+        "mfranklin.HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.vcf.gz",
+    )
+    gvcf_path = os.path.join(
+        base,
+        "HVNTYDSXY_1_170811_FD02523293_Homo-sapiens_ATTACTCG-AGGCTATA_R_170811_CNTROL_KAPADNA_M001.tiny.g.vcf.gz",
+    )
 
     BROAD_REF_BUCKET = "gs://gcp-public-data--broad-references/hg38/v0"
     reference_path = os.path.join(BROAD_REF_BUCKET, "Homo_sapiens_assembly38.fasta")
@@ -67,4 +92,4 @@ if __name__ == "__main__":
         backend=backend,
     )
 
-    b.run()
+    b.run(dry_run=True)
