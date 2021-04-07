@@ -2,6 +2,7 @@
 
 echo "deb http://packages.cloud.google.com/apt gcsfuse-focal main" | tee /etc/apt/sources.list.d/gcsfuse.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
 apt update
 apt install -y gcsfuse docker.io
 
@@ -10,7 +11,8 @@ gcsfuse cpg-seqr-static-files /seqr_static_files
 
 gcloud -q auth configure-docker australia-southeast1-docker.pkg.dev
 
-docker system prune -f -a
+docker system prune -f -a   # Clear Docker cache on restarts.
+
 docker run --name seqr -p 80:8000 \
     -v /seqr_static_files:/seqr_static_files \
     -e DEPLOYMENT_TYPE=prod \
