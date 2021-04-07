@@ -10,7 +10,7 @@ EXPOSE $SEQR_SERVICE_PORT
 # install commmon utilities
 RUN apt update && apt install -y --no-install-recommends \
     # install dependencies of the HaploPainter.pl script used to generate static pedigree images
-    cpanminus libpango1.0-dev libgtk2.0-dev &&
+    cpanminus libpango1.0-dev libgtk2.0-dev && \
     apt clean && rm -rf /var/lib/apt/lists/* && \
     cpanm --notest Cairo DBI Gtk2 Tk Sort::Naturally && \
     # install gcloud tools
