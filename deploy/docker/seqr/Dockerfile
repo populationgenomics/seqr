@@ -18,12 +18,8 @@ RUN apt update && apt install -y --no-install-recommends \
     git checkout $SEQR_GIT_SHA && \
     rm -r .git && \
     # install seqr dependencies
-    pip install -r requirements.txt && \
-    cd deploy/docker/seqr && \
-    cp readiness_probe entrypoint.sh / && \
-    cp bin/*.sh /usr/local/bin/ && \
-    cp config/*.py /seqr
+    pip install -r requirements.txt
 
 COPY --from=us-docker.pkg.dev/berglas/berglas/berglas:latest /bin/berglas /bin/berglas
 
-ENTRYPOINT exec /bin/berglas exec -- /entrypoint.sh
+ENTRYPOINT exec /bin/berglas exec -- /seqr/deploy/docker/seqr/entrypoint.sh
