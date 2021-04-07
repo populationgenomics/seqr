@@ -17,14 +17,14 @@ class CheckBamCramPathsTest(TestCase):
             file_path='gs://missing-bucket/missing_file',
         )
 
-    @mock.patch('seqr.utils.file_utils.does_file_exist')
+    @mock.patch('seqr.management.commands.check_bam_cram_paths.does_file_exist')
     @mock.patch('seqr.management.commands.check_bam_cram_paths.logger')
     def test_command_with_project(self, mock_logger, mock_does_file_exist):
         mock_does_file_exist.return_value = False
         call_command('check_bam_cram_paths', '1kg project n\u00e5me with uni\u00e7\u00f8de')
         self._check_results(1, mock_logger, mock_does_file_exist)
 
-    @mock.patch('seqr.utils.file_utils.does_file_exist')
+    @mock.patch('seqr.management.commands.check_bam_cram_paths.does_file_exist')
     @mock.patch('seqr.management.commands.check_bam_cram_paths.logger')
     def test_command_with_other_project(self, mock_logger, mock_does_file_exist):
         mock_does_file_exist.return_value = False
@@ -38,14 +38,14 @@ class CheckBamCramPathsTest(TestCase):
         ]
         mock_logger.info.assert_has_calls(calls)
 
-    @mock.patch('seqr.utils.file_utils.does_file_exist')
+    @mock.patch('seqr.management.commands.check_bam_cram_paths.does_file_exist')
     @mock.patch('seqr.management.commands.check_bam_cram_paths.logger')
     def test_command(self, mock_logger, mock_does_file_exist):
         mock_does_file_exist.return_value = False
         call_command('check_bam_cram_paths')
         self._check_results(1, mock_logger, mock_does_file_exist)
 
-    @mock.patch('seqr.utils.file_utils.does_file_exist')
+    @mock.patch('seqr.management.commands.check_bam_cram_paths.does_file_exist')
     @mock.patch('seqr.management.commands.check_bam_cram_paths.logger')
     def test_dry_run_arg(self, mock_logger, mock_does_file_exist):
         mock_does_file_exist.return_value = False
