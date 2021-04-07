@@ -16,6 +16,7 @@ RUN apt update && apt install -y --no-install-recommends \
     git clone -q $SEQR_REPO seqr && \
     cd seqr && \
     git checkout $SEQR_GIT_SHA && \
+    rm -r .git && \
     # install seqr dependencies
     pip install -r requirements.txt && \
     cd deploy/docker/seqr && \
