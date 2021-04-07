@@ -1,4 +1,4 @@
-FROM python:3.7-buster
+FROM google/cloud-sdk:335.0.0
 
 ARG SEQR_REPO=https://github.com/populationgenomics/seqr
 ARG SEQR_GIT_SHA
@@ -10,11 +10,8 @@ EXPOSE $SEQR_SERVICE_PORT
 # install commmon utilities
 RUN apt update && apt install -y --no-install-recommends \
     # install dependencies of the HaploPainter.pl script used to generate static pedigree images
-    cpanminus libpango1.0-dev libgtk2.0-dev && \
+    libgtk2-perl libdbi-perl libtk-perl libsort-naturally-perl && \
     apt clean && rm -rf /var/lib/apt/lists/* && \
-    cpanm --notest Cairo DBI Gtk2 Tk Sort::Naturally && \
-    # install gcloud tools
-    curl https://sdk.cloud.google.com | bash && \
     # update seqr repo
     git clone -q $SEQR_REPO seqr && \
     cd seqr && \
