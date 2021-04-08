@@ -215,30 +215,30 @@ SAMPLE_QC_DATA = [
 ]
 
 SAMPLE_QC_DATA_NO_DATA_TYPE = [
-    b'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
-    b'03133B_2	n/a	[]	Standard Germline Exome v5	nfe	[]\n',
+    'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
+    '03133B_2	n/a	[]	Standard Germline Exome v5	nfe	[]\n',
 ]
 
 SAMPLE_QC_DATA_MORE_DATA_TYPE = [
-    b'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
-    b'03133B_2	WES	[]	Standard Germline Exome v5	nfe	[]\n',
-    b'03133B_3	WGS	[]	Standard Germline Exome v5	nfe	[]\n',
+    'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
+    '03133B_2	WES	[]	Standard Germline Exome v5	nfe	[]\n',
+    '03133B_3	WGS	[]	Standard Germline Exome v5	nfe	[]\n',
 ]
 
 
 SAMPLE_QC_DATA_UNEXPECTED_DATA_TYPE = [
-    b'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
-    b'03133B_2	UNKNOWN	[]	Standard Germline Exome v5	nfe	[]\n',
+    'seqr_id	data_type	filter_flags	qc_platform	qc_pop	qc_metrics_filters\n',
+    '03133B_2	UNKNOWN	[]	Standard Germline Exome v5	nfe	[]\n',
 ]
 
 SAMPLE_SV_QC_DATA = [
-    b'sample	lt100_raw_calls	lt10_highQS_rare_calls\n',
-    b'RP-123_MANZ_1169_DNA_v1_Exome_GCP	FALSE	TRUE\n',
-    b'RP-123_NA_v1_Exome_GCP	TRUE	FALSE\n',
-    b'RP-123_NA19675_1_v1_Exome_GCP	TRUE	TRUE\n',
-    b'RP-123_NA19678_v1_Exome_GCP	TRUE	FALSE\n',
-    b'RP-123_HG00732_v1_Exome_GCP	FALSE	TRUE\n',
-    b'RP-123_HG00733_v1_Exome_GCP	FALSE	FALSE\n',
+    'sample	lt100_raw_calls	lt10_highQS_rare_calls\n',
+    'RP-123_MANZ_1169_DNA_v1_Exome_GCP	FALSE	TRUE\n',
+    'RP-123_NA_v1_Exome_GCP	TRUE	FALSE\n',
+    'RP-123_NA19675_1_v1_Exome_GCP	TRUE	TRUE\n',
+    'RP-123_NA19678_v1_Exome_GCP	TRUE	FALSE\n',
+    'RP-123_HG00732_v1_Exome_GCP	FALSE	TRUE\n',
+    'RP-123_HG00733_v1_Exome_GCP	FALSE	FALSE\n',
 ]
 
 
@@ -283,7 +283,7 @@ class DataManagerAPITest(AuthenticationTestCase):
 
         # Test missing columns
         mock_file = mock_blob_open.return_value.__enter__.return_value
-        mock_file.__iter__.return_value = [b'', b'']
+        mock_file.__iter__.return_value = ['', '']
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
