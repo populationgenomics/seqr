@@ -2,9 +2,11 @@ import logging
 import os
 import subprocess
 
+from google.cloud import storage
+
 
 logger = logging.getLogger(__name__)
-
+storage_client = storage.Client()
 
 def _run_gsutil_command(command, gs_path, gunzip=False):
     #  Anvil buckets are requester-pays and we bill them to the anvil project
@@ -51,6 +53,18 @@ def file_iter(file_path, byte_range=None, raw_content=False):
 
 def _google_bucket_file_iter(gs_path, byte_range=None, raw_content=False):
     """Iterate over lines in the given file"""
+    if raw_content:  # Fast path to avoid launching a Python process.
+        path_segments = gs_path.split('/')
+        if not gs_path.startswith('gs://') or len(path_segments) < 4:
+            raise ValueError(f'Invalid GCS path: "{gs_path}"')
+        bucket = storage_client.bucket(path_segments[2])
+        blob = bucket.blob('/'.join(path_segments[3:]))
+        if byte_range:
+            yield blob.download_as_bytes(start=byte_range[0], end=byte_range[1])
+        else:
+            yield blob.download_as_bytes()
+        return
+
     range_arg = ' -r {}-{}'.format(byte_range[0], byte_range[1]) if byte_range else ''
     process = _run_gsutil_command('cat{}'.format(range_arg), gs_path, gunzip=gs_path.endswith("gz") and not raw_content)
     for line in process.stdout:
