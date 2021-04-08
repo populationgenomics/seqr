@@ -52,12 +52,12 @@ def file_iter(file_path, byte_range=None, raw_content=False):
         end = byte_range[1] if byte_range else blob.size()
         while True:
             next = min(current + (1 << 20), end)  # 1 MB chunks
+            if current >= next:
+                break
             if raw_content:
                 yield blob.download_as_bytes(start=current, end=next)
             else:
                 yield blob.download_as_string(start=current, end=next)
-            if next == end:
-                break
             current = next 
     else:
         mode = 'rb' if raw_content else 'r'
