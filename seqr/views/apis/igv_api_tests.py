@@ -16,26 +16,17 @@ PROJECT_GUID = 'R0001_1kg'
 class IgvAPITest(AuthenticationTestCase):
     fixtures = ['users', '1kg_project']
 
-    @mock.patch('seqr.utils.file_utils.subprocess.Popen')
-    def test_proxy_google_to_igv(self, mock_subprocess):
-        mock_subprocess.return_value.stdout = STREAMING_READS_CONTENT
+    @mock.patch('seqr.utils.file_utils._google_bucket_file_iter')
+    def test_proxy_google_to_igv(self, mock_google_bucket_file_iter):
+        mock_google_bucket_file_iter.return_value = STREAMING_READS_CONTENT
 
         url = reverse(fetch_igv_track, args=[PROJECT_GUID, 'gs://project_A/sample_1.bam.bai'])
         self.check_collaborator_login(url)
         response = self.client.get(url, HTTP_RANGE='bytes=100-200')
         self.assertEqual(response.status_code, 206)
         self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
-        mock_subprocess.assert_called_with(
-            'gsutil cat -r 100-200 gs://project_A/sample_1.bai',
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-
-        url = reverse(fetch_igv_track, args=[PROJECT_GUID, 'gs://fc-secure-project_A/sample_1.cram.gz'])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
-        mock_subprocess.assert_called_with(
-            'gsutil -u anvil-datastorage cat gs://fc-secure-project_A/sample_1.cram.gz',
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        mock_google_bucket_file_iter.assert_called_with(
+            'gs://project_A/sample_1.bai', [100, 200], True)
 
     @mock.patch('seqr.utils.file_utils.open')
     def test_proxy_local_to_igv(self, mock_open):
