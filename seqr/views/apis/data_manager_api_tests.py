@@ -272,7 +272,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertListEqual(response_json['diskStats'], EXPECTED_DISK_ALLOCATION)
 
 
-    @mock.patch('seqr.utils.file_utils.file_iter')
+    @mock.patch('seqr.views.apis.data_manager_api.file_iter')
     def test_upload_qc_pipeline_output(self, mock_file_iter):
         url = reverse(upload_qc_pipeline_output,)
         self.check_data_manager_login(url)
@@ -349,7 +349,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertDictEqual(indiv.pop_platform_filters, {'n_insertion': '38051', 'r_insertion_deletion': '1.8064E+00'})
         self.assertEqual(indiv.population, 'OTH')
 
-    @mock.patch('seqr.utils.file_utils.file_iter')
+    @mock.patch('seqr.views.apis.data_manager_api.file_iter')
     def test_upload_sv_qc(self, mock_file_iter):
         url = reverse(upload_qc_pipeline_output, )
         self.check_data_manager_login(url)
