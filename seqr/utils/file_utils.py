@@ -8,6 +8,7 @@ from google.cloud import storage
 logger = logging.getLogger(__name__)
 storage_client = storage.Client()
 
+
 def _run_gsutil_command(command, gs_path, gunzip=False):
     #  Anvil buckets are requester-pays and we bill them to the anvil project
     project_arg = '-u anvil-datastorage ' if gs_path.startswith('gs://fc-secure') else ''
