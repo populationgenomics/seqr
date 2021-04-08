@@ -18,7 +18,11 @@ def _gcs_storage_client():
 
 
 def _run_gsutil_command(command, gs_path, gunzip=False):
-    command = f'gsutil {command} {gs_path}'
+    #  Anvil buckets are requester-pays and we bill them to the anvil project
+    project_arg = '-u anvil-datastorage ' if gs_path.startswith('gs://fc-secure') else ''
+    command = 'gsutil {project_arg}{command} {gs_path}'.format(
+        project_arg=project_arg, command=command, gs_path=gs_path,
+    )
     if gunzip:
         command += " | gunzip -c -q - "
 
@@ -37,7 +41,7 @@ def does_file_exist(file_path):
     return os.path.isfile(file_path)
 
 
-def _iterate(f, byte_range=None):
+def _iterate(f, byte_range):
     if byte_range:
         f.seek(byte_range[0])
         for line in f:
@@ -50,15 +54,19 @@ def _iterate(f, byte_range=None):
             yield line
 
 
+def _blob_open(gs_path, mode):
+    path_segments = gs_path.split('/')
+    if len(path_segments) < 4:
+        raise ValueError(f'Invalid GCS path: "{gs_path}"')
+    bucket = _gcs_storage_client().bucket(path_segments[2])
+    blob = bucket.blob('/'.join(path_segments[3:]))
+    return blob.open(mode)
+
+
 def file_iter(file_path, byte_range=None, raw_content=False):
     mode = 'rb' if raw_content else 'r'
     if _is_google_bucket_file_path(file_path):
-        path_segments = file_path.split('/')
-        if len(path_segments) < 4:
-            raise ValueError(f'Invalid GCS path: "{file_path}"')
-        bucket = _gcs_storage_client().bucket(path_segments[2])
-        blob = bucket.blob('/'.join(path_segments[3:]))
-        with blob.open(mode) as f:
+        with _blob_open(file_path, mode) as f:
             for line in _iterate(f, byte_range):
                 yield line
     else:
