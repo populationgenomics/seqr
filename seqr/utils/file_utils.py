@@ -6,7 +6,15 @@ from google.cloud import storage
 
 
 logger = logging.getLogger(__name__)
-storage_client = storage.Client()
+storage_client = None
+
+
+def gcs_storage_client():
+    """Returns a lazily initialized GCS storage client."""
+    global storage_client
+    if not storage_client:
+        storage_client = storage.Client()
+    return storage_client
 
 
 def _run_gsutil_command(command, gs_path, gunzip=False):
@@ -58,7 +66,7 @@ def _google_bucket_file_iter(gs_path, byte_range=None, raw_content=False):
         path_segments = gs_path.split('/')
         if not gs_path.startswith('gs://') or len(path_segments) < 4:
             raise ValueError(f'Invalid GCS path: "{gs_path}"')
-        bucket = storage_client.bucket(path_segments[2])
+        bucket = gcs_storage_client().bucket(path_segments[2])
         blob = bucket.blob('/'.join(path_segments[3:]))
         if byte_range:
             yield blob.download_as_bytes(start=byte_range[0], end=byte_range[1])
