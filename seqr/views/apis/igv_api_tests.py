@@ -43,7 +43,7 @@ class IgvAPITest(AuthenticationTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
-        mock_file_iter.assert_called_with('/project_A/sample_1.bai', byte_range=None, raw_content=True)
+        mock_file_iter.assert_called_with('/project_A/sample_1.bai', raw_content=True)
 
     def test_receive_alignment_table_handler(self):
         url = reverse(receive_igv_table_handler, args=[PROJECT_GUID])
