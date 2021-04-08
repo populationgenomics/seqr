@@ -41,35 +41,34 @@ def does_file_exist(file_path):
     return os.path.isfile(file_path)
 
 
-def _iterate(f, byte_range):
-    if byte_range:
-        f.seek(byte_range[0])
-        for line in f:
-            if f.tell() < byte_range[1]:
-                yield line
-            else:
-                break
-    else:
-        for line in f:
-            yield line
-
-
-def _blob_open(gs_path, mode):
-    path_segments = gs_path.split('/')
-    if len(path_segments) < 4:
-        raise ValueError(f'Invalid GCS path: "{gs_path}"')
-    bucket = _gcs_storage_client().bucket(path_segments[2])
-    blob = bucket.blob('/'.join(path_segments[3:]))
-    return blob.open(mode)
-
-
 def file_iter(file_path, byte_range=None, raw_content=False):
-    mode = 'rb' if raw_content else 'r'
     if _is_google_bucket_file_path(file_path):
-        with _blob_open(file_path, mode) as f:
-            for line in _iterate(f, byte_range):
-                yield line
+        path_segments = file_path.split('/')
+        if len(path_segments) < 4:
+            raise ValueError(f'Invalid GCS path: "{file_path}"')
+        bucket = _gcs_storage_client().bucket(path_segments[2])
+        blob = bucket.blob('/'.join(path_segments[3:]))
+        current = byte_range[0] if byte_range else 0
+        end = byte_range[1] if byte_range else blob.size()
+        while True:
+            next = min(current + (1 << 20), end)  # 1 MB chunks
+            if raw_content:
+                yield blob.download_as_bytes(start=current, end=next)
+            else:
+                yield blob.download_as_string(start=current, end=next)
+            if next == end:
+                break
+            current = next 
     else:
+        mode = 'rb' if raw_content else 'r'
         with open(file_path, mode) as f:
-            for line in _iterate(f, byte_range):
-                yield line
+            if byte_range:
+                f.seek(byte_range[0])
+                for line in f:
+                    if f.tell() < byte_range[1]:
+                        yield line
+                    else:
+                        break
+            else:
+                for line in f:
+                    yield line

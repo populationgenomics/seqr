@@ -272,8 +272,8 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertListEqual(response_json['diskStats'], EXPECTED_DISK_ALLOCATION)
 
 
-    @mock.patch('seqr.utils.file_utils._blob_open')
-    def test_upload_qc_pipeline_output(self, mock_blob_open):
+    @mock.patch('seqr.utils.file_utils.file_iter')
+    def test_upload_qc_pipeline_output(self, mock_file_iter):
         url = reverse(upload_qc_pipeline_output,)
         self.check_data_manager_login(url)
 
@@ -282,8 +282,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         })
 
         # Test missing columns
-        mock_file = mock_blob_open.return_value.__enter__.return_value
-        mock_file.__iter__.return_value = ['', '']
+        mock_file_iter.__iter__.return_value = ['', '']
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
@@ -291,7 +290,7 @@ class DataManagerAPITest(AuthenticationTestCase):
             'The following required columns are missing: seqr_id, data_type, filter_flags, qc_metrics_filters, qc_pop')
 
         # Test no data type error
-        mock_file.__iter__.return_value = SAMPLE_QC_DATA_NO_DATA_TYPE
+        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA_NO_DATA_TYPE
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, 'No data type detected')
@@ -303,13 +302,13 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertEqual(response.reason_phrase, 'Multiple data types detected: wes ,wgs')
 
         # Test unexpected data type error
-        mock_file.__iter__.return_value = SAMPLE_QC_DATA_UNEXPECTED_DATA_TYPE
+        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA_UNEXPECTED_DATA_TYPE
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, 'Unexpected data type detected: "unknown" (should be "exome" or "genome")')
 
         # Test normal functions
-        mock_file.__iter__.return_value = SAMPLE_QC_DATA
+        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
@@ -350,8 +349,8 @@ class DataManagerAPITest(AuthenticationTestCase):
         self.assertDictEqual(indiv.pop_platform_filters, {'n_insertion': '38051', 'r_insertion_deletion': '1.8064E+00'})
         self.assertEqual(indiv.population, 'OTH')
 
-    @mock.patch('seqr.utils.file_utils._blob_open')
-    def test_upload_sv_qc(self, mock_blob_open):
+    @mock.patch('seqr.utils.file_utils.file_iter')
+    def test_upload_sv_qc(self, mock_file_iter):
         url = reverse(upload_qc_pipeline_output, )
         self.check_data_manager_login(url)
 
@@ -359,8 +358,7 @@ class DataManagerAPITest(AuthenticationTestCase):
             'file': 'gs://seqr-datasets/v02/GRCh38/RDG_WES_Broad_Internal/v15/sample_qc/sv/sv_sample_metadata.tsv'
         })
 
-        mock_file = mock_blob_open.return_value.__enter__.return_value
-        mock_file.__iter__.return_value = SAMPLE_SV_QC_DATA
+        mock_file_iter.__iter__.return_value = SAMPLE_SV_QC_DATA
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
