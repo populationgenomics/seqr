@@ -16,7 +16,7 @@ PROJECT_GUID = 'R0001_1kg'
 class IgvAPITest(AuthenticationTestCase):
     fixtures = ['users', '1kg_project']
 
-    @mock.patch('seqr.utils.file_utils.file_iter')
+    @mock.patch('seqr.views.apis.igv_api.file_iter')
     def test_proxy_google_to_igv(self, mock_file_iter):
         mock_file_iter.return_value = STREAMING_READS_CONTENT
 
@@ -27,7 +27,7 @@ class IgvAPITest(AuthenticationTestCase):
         self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT[:2])
         mock_file_iter.assert_called_with('gs://project_A/sample_1.bai', byte_range=(100, 200), raw_content=False)
 
-    @mock.patch('seqr.utils.file_utils.file_iter')
+    @mock.patch('seqr.views.apis.igv_api.file_iter')
     def test_proxy_local_to_igv(self, mock_file_iter):
         mock_file_iter.return_value = STREAMING_READS_CONTENT
 
