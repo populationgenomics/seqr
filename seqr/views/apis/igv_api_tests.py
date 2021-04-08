@@ -26,7 +26,7 @@ class IgvAPITest(AuthenticationTestCase):
         self.assertEqual(response.status_code, 206)
         self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
         mock_google_bucket_file_iter.assert_called_with(
-            'gs://project_A/sample_1.bai', [100, 200], True)
+            'gs://project_A/sample_1.bai', byte_range=(100, 200), raw_content=True)
 
     @mock.patch('seqr.utils.file_utils.open')
     def test_proxy_local_to_igv(self, mock_open):
