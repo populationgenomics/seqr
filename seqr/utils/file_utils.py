@@ -6,17 +6,17 @@ import google.cloud.storage
 
 
 logger = logging.getLogger(__name__)
-storage_client = None
+gcs_client = None
 
 ANVIL_BUCKET_PREFIX = 'fc-secure'
 ANVIL_BILLING_PROJECT = 'anvil-datastorage'
 
-def _gcs_storage_client():
+def _gcs_client():
     """Returns a lazily initialized GCS storage client."""
-    global storage_client
-    if not storage_client:
-        storage_client = google.cloud.storage.Client()
-    return storage_client
+    global gcs_client
+    if not gcs_client:
+        gcs_client = google.cloud.storage.Client()
+    return gcs_client
 
 
 def _run_gsutil_command(command, gs_path, gunzip=False):
@@ -49,7 +49,7 @@ def file_iter(file_path, byte_range=None, raw_content=False):
         if len(path_segments) < 4:
             raise ValueError(f'Invalid GCS path: "{file_path}"')
         user_project = ANVIL_BILLING_PROJECT if path_segments[2].startswith(ANVIL_BUCKET_PREFIX) else None
-        bucket = _gcs_storage_client().bucket(path_segments[2], user_project)
+        bucket = _gcs_client().bucket(path_segments[2], user_project)
         blob = bucket.blob('/'.join(path_segments[3:]))
         current = byte_range[0] if byte_range else 0
         end = byte_range[1] if byte_range else None
