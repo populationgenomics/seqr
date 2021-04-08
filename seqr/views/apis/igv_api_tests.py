@@ -24,7 +24,7 @@ class IgvAPITest(AuthenticationTestCase):
         self.check_collaborator_login(url)
         response = self.client.get(url, HTTP_RANGE='bytes=100-200')
         self.assertEqual(response.status_code, 206)
-        self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT[:2])
+        self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
         mock_file_iter.assert_called_with('gs://project_A/sample_1.bai', byte_range=(100, 200), raw_content=False)
 
     @mock.patch('seqr.views.apis.igv_api.file_iter')
@@ -35,7 +35,7 @@ class IgvAPITest(AuthenticationTestCase):
         self.check_collaborator_login(url)
         response = self.client.get(url, HTTP_RANGE='bytes=100-200')
         self.assertEqual(response.status_code, 206)
-        self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT[:2])
+        self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
         mock_file_iter.assert_called_with('/project_A/sample_1.bai', byte_range=(100, 200), raw_content=False)
 
         # test no byte range
