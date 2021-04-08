@@ -282,7 +282,7 @@ class DataManagerAPITest(AuthenticationTestCase):
         })
 
         # Test missing columns
-        mock_file_iter.__iter__.return_value = ['', '']
+        mock_file_iter.return_value = ['', '']
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
@@ -290,25 +290,25 @@ class DataManagerAPITest(AuthenticationTestCase):
             'The following required columns are missing: seqr_id, data_type, filter_flags, qc_metrics_filters, qc_pop')
 
         # Test no data type error
-        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA_NO_DATA_TYPE
+        mock_file_iter.return_value = SAMPLE_QC_DATA_NO_DATA_TYPE
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, 'No data type detected')
 
         # Test multiple data types error
-        mock_file.__iter__.return_value = SAMPLE_QC_DATA_MORE_DATA_TYPE
+        mock_file_iter.return_value = SAMPLE_QC_DATA_MORE_DATA_TYPE
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, 'Multiple data types detected: wes ,wgs')
 
         # Test unexpected data type error
-        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA_UNEXPECTED_DATA_TYPE
+        mock_file_iter.return_value = SAMPLE_QC_DATA_UNEXPECTED_DATA_TYPE
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, 'Unexpected data type detected: "unknown" (should be "exome" or "genome")')
 
         # Test normal functions
-        mock_file_iter.__iter__.return_value = SAMPLE_QC_DATA
+        mock_file_iter.return_value = SAMPLE_QC_DATA
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
@@ -358,7 +358,7 @@ class DataManagerAPITest(AuthenticationTestCase):
             'file': 'gs://seqr-datasets/v02/GRCh38/RDG_WES_Broad_Internal/v15/sample_qc/sv/sv_sample_metadata.tsv'
         })
 
-        mock_file_iter.__iter__.return_value = SAMPLE_SV_QC_DATA
+        mock_file_iter.return_value = SAMPLE_SV_QC_DATA
         response = self.client.post(url, content_type='application/json', data=request_data)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()

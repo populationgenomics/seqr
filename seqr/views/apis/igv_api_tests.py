@@ -18,7 +18,7 @@ class IgvAPITest(AuthenticationTestCase):
 
     @mock.patch('seqr.utils.file_utils.file_iter')
     def test_proxy_google_to_igv(self, mock_file_iter):
-        mock_file_iter.__iter__.return_value = STREAMING_READS_CONTENT
+        mock_file_iter.return_value = STREAMING_READS_CONTENT
 
         url = reverse(fetch_igv_track, args=[PROJECT_GUID, 'gs://project_A/sample_1.bam.bai'])
         self.check_collaborator_login(url)
@@ -29,7 +29,7 @@ class IgvAPITest(AuthenticationTestCase):
 
     @mock.patch('seqr.utils.file_utils.file_iter')
     def test_proxy_local_to_igv(self, mock_file_iter):
-        mock_file_iter.__iter__.return_value = STREAMING_READS_CONTENT
+        mock_file_iter.return_value = STREAMING_READS_CONTENT
 
         url = reverse(fetch_igv_track, args=[PROJECT_GUID, '/project_A/sample_1.bam.bai'])
         self.check_collaborator_login(url)
