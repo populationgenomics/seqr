@@ -61,11 +61,12 @@ def file_iter(file_path, byte_range=None, raw_content=False):
             if end and end < chunk_end:
                 chunk_end = end
             logger.error(f'*** starting download for {file_path} range: {current}, {chunk_end} (end: {end})')
-            data = blob.download_as_bytes(start=current, end=chunk_end)
+            data = blob.download_as_bytes(start=current, end=chunk_end, checksum=None)
             logger.error(f'*** finished download for {file_path} range: {current}, {chunk_end} (end: {end})')
             current += len(data)
             logger.error(f'*** {file_path} current: {current}')
             yield data if raw_content else data.decode('utf-8')
+            # We're done if we couldn't read the full range or we've reached the end.
             if current <= chunk_end or (end and current > end):
                 break
     else:
