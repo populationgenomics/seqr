@@ -49,6 +49,7 @@ def file_iter(file_path, byte_range=None, raw_content=False):
         if len(path_segments) < 4:
             raise ValueError(f'Invalid GCS path: "{file_path}"')
         user_project = ANVIL_BILLING_PROJECT if path_segments[2].startswith(ANVIL_BUCKET_PREFIX) else None
+        logger.error(f'*** opening {file_path}')
         bucket = _gcs_client().bucket(path_segments[2], user_project)
         blob = bucket.blob('/'.join(path_segments[3:]))
         current = byte_range[0] if byte_range else 0
@@ -57,8 +58,11 @@ def file_iter(file_path, byte_range=None, raw_content=False):
             next = current + (1 << 20)  # 1 MB chunks
             if end and end < next:
                 next = end
+            logger.error(f'*** starting download for {file_path} range: {current}, {next} (end: {end})')
             data = blob.download_as_bytes(start=current, end=next)
+            logger.error(f'*** finished download for {file_path} range: {current}, {next} (end: {end})')
             current += len(data)
+            logger.error(f'*** {file_path} current: {current}')
             yield data if raw_content else data.decode('utf-8')
             if current < next or current == end:
                 break
