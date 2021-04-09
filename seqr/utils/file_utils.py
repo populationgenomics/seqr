@@ -44,6 +44,8 @@ def does_file_exist(file_path):
 
 
 def file_iter(file_path, byte_range=None, raw_content=False):
+    """Note: byte_range interval ends are inclusive, i.e. the length is 
+    byte_range[1] - byte_range[0] + 1."""
     if _is_google_bucket_file_path(file_path):
         path_segments = file_path.split('/')
         if len(path_segments) < 4:
@@ -55,16 +57,16 @@ def file_iter(file_path, byte_range=None, raw_content=False):
         current = byte_range[0] if byte_range else 0
         end = byte_range[1] if byte_range else None
         while True:
-            next = current + (1 << 20)  # 1 MB chunks
-            if end and end < next:
-                next = end
-            logger.error(f'*** starting download for {file_path} range: {current}, {next} (end: {end})')
-            data = blob.download_as_bytes(start=current, end=next)
-            logger.error(f'*** finished download for {file_path} range: {current}, {next} (end: {end})')
+            chunk_end = current + (1 << 20) - 1  # 1 MB chunks
+            if end and end < chunk_end:
+                chunk_end = end
+            logger.error(f'*** starting download for {file_path} range: {current}, {chunk_end} (end: {end})')
+            data = blob.download_as_bytes(start=current, end=chunk_end)
+            logger.error(f'*** finished download for {file_path} range: {current}, {chunk_end} (end: {end})')
             current += len(data)
             logger.error(f'*** {file_path} current: {current}')
             yield data if raw_content else data.decode('utf-8')
-            if current < next or current == end:
+            if current <= chunk_end or current > end:
                 break
     else:
         mode = 'rb' if raw_content else 'r'
