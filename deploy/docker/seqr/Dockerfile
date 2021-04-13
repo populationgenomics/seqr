@@ -27,4 +27,4 @@ ADD deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker
 # Berglass: Store and retrieve secrets on Google Cloud
 COPY --from=us-docker.pkg.dev/berglas/berglas/berglas:latest /bin/berglas /bin/berglas
 
-ENTRYPOINT exec /bin/berglas exec -- /opt/entrypoint.sh
+ENTRYPOINT exec /bin/berglas exec -- /opt/seqr/entrypoint.sh
