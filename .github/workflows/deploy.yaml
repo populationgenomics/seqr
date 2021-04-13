@@ -20,15 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-#      - name: gcloud setup
-#        uses: google-github-actions/setup-gcloud@master
-#        with:
-#          project_id: seqr-308602
-#          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
-#
-#      - name: gcloud docker auth
-#        run: |
-#          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
+      - name: gcloud setup
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: seqr-308602
+          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+
+      - name: gcloud docker auth
+        run: |
+          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
       
       - name: set deployment type
         run: |
@@ -43,6 +43,7 @@ jobs:
           pushd ui
           npm install
           npm run build
+          cp dist/* ../static/
           popd
 
       - name: build image
@@ -53,10 +54,8 @@ jobs:
             --tag $DOCKER_IMAGE:gcloud-$DEPLOYMENT_TYPE \
             -f deploy/docker/seqr/Dockerfile \
             .
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-#      - name: push image
-#        run: docker push --all-tags $DOCKER_IMAGE
-#
-#      - name: restart seqr instances
-#        run: gcloud compute instance-groups managed rolling-action replace seqr-$DEPLOYMENT_TYPE-group --region australia-southeast1 --max-unavailable 0 --max-surge 3
+      - name: push image
+        run: docker push --all-tags $DOCKER_IMAGE
+
+      - name: restart seqr instances
+        run: gcloud compute instance-groups managed rolling-action replace seqr-$DEPLOYMENT_TYPE-group --region australia-southeast1 --max-unavailable 0 --max-surge 3
