@@ -21,7 +21,7 @@ ADD matchmaker /opt/seqr/matchmaker
 ADD reference_data /opt/seqr/reference_data
 ADD seqr /opt/seqr/seqr
 ADD static /opt/seqr/static
-ADD wsgi settings.py servctl manage.py django_key deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker/seqr/config/ /opt/seqr
+ADD wsgi.py settings.py servctl manage.py django_key deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker/seqr/config/ /opt/seqr
 
 # Berglass: Store and retrieve secrets on Google Cloud
 COPY --from=us-docker.pkg.dev/berglas/berglas/berglas:latest /bin/berglas /bin/berglas
