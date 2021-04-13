@@ -20,7 +20,7 @@ RUN pip install -r /opt/seqr/requirements.txt
 ADD matchmaker /opt/seqr/matchmaker
 ADD reference_data /opt/seqr/reference_data
 ADD seqr /opt/seqr/seqr
-ADD static /opt/seqr/static
+ADD static ui/dist /opt/seqr/static
 ADD ui/dist /opt/seqr/ui/dist
 ADD wsgi.py settings.py servctl manage.py deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker/seqr/config/ /opt/seqr
 
