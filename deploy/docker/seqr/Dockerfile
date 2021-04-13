@@ -1,6 +1,5 @@
 FROM google/cloud-sdk:335.0.0
 
-
 ARG SEQR_SERVICE_PORT
 ENV SEQR_SERVICE_PORT=$SEQR_SERVICE_PORT
 ENV PATH $PATH:/root/google-cloud-sdk/bin
@@ -22,7 +21,7 @@ ADD matchmaker /opt/seqr/matchmaker
 ADD reference_data /opt/seqr/reference_data
 ADD seqr /opt/seqr/seqr
 ADD static /opt/seqr/static
-ADD deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker/seqr/config/ /opt/seqr
+ADD wsgi settings.py servctl manage.py django_key deploy/docker/seqr/entrypoint.sh deploy/docker/seqr/init_db.sh deploy/docker/seqr/config/ /opt/seqr
 
 # Berglass: Store and retrieve secrets on Google Cloud
 COPY --from=us-docker.pkg.dev/berglas/berglas/berglas:latest /bin/berglas /bin/berglas
