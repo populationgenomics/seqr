@@ -6,7 +6,7 @@ ENV PATH $PATH:/root/google-cloud-sdk/bin
 EXPOSE $SEQR_SERVICE_PORT
 
 WORKDIR /app/seqr
-ADD requirements.txt /app/seqr/
+COPY requirements.txt /app/seqr/
 
 # install commmon utilities
 RUN apt update && apt install -y --no-install-recommends \
