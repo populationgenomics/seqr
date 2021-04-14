@@ -51,7 +51,7 @@ export default () =>
           <List bulleted>
             <List.Item>
               If you are interested in collaborating with our group, please &nbsp;
-              <a href="mailto:seqr@broadinstitute.org"><b>contact us</b></a>
+              <a href="mailto:seqr@populationgenomics.org.au"><b>contact us</b></a>
             </List.Item>
             <List.Item>
               To get updates about seqr, &nbsp;
@@ -60,9 +60,9 @@ export default () =>
               </a>
             </List.Item>
             <List.Item>
-              The <a target="_blank" href="http://github.com/broadinstitute/seqr"><b>source code</b></a> is available on
+              The <a target="_blank" href="http://github.com/populationgenomics/seqr"><b>source code</b></a> is available on
               github. Please use the &nbsp;
-              <a target="_blank" href="http://github.com/broadinstitute/seqr/issues"><b>github issues page</b></a> to
+              <a target="_blank" href="http://github.com/populationgenomics/seqr/issues"><b>github issues page</b></a> to
               submit bug reports or feature requests
             </List.Item>
           </List>

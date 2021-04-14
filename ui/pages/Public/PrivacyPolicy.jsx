@@ -12,7 +12,7 @@ export default () =>
 
     <b>
       &nbsp;Please make sure you review this Policy before using the seqr platform. If you have any questions about
-      this Policy, please contact us at <a href="mailto:seqr@broadinstitute.org">seqr@broadinstitute.org</a>.
+      this Policy, please contact us at <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>.
     </b>
 
     <Header content="1. Who is Broad?" size="medium" />
@@ -238,7 +238,7 @@ export default () =>
     <Header content="12. What rights do I have with respect to my information?" size="medium" />
     Users can update their seqr profile at any time.  All users can also contact us to request access to, a copy of,
     correction, or deletion of their Personal Information by contacting us
-    at <a href="mailto:seqr@broadinstitute.org">seqr@broadinstitute.org</a>. <br /><br />
+    at <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>. <br /><br />
 
     We will respond to any user request as soon as we reasonably can, and within the time and in the manner required by
     law.  We may request additional information from you to verify the request.  We may not be able to accommodate all
@@ -264,7 +264,7 @@ export default () =>
     <Header content="16. Whom do I contact if I have a question or a complaint?" size="medium" />
     You may contact us at the addresses below if you have any questions or complaints about information practices or
     this Policy:<br />
-    By email to: <a href="mailto:seqr@broadinstitute.org">seqr@broadinstitute.org</a><br />
+    By email to: <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a><br />
     By mail to:<br />
     The Broad Institute of MIT and Harvard<br />
     415 Main St.<br />
@@ -327,7 +327,7 @@ export default () =>
         <b>Consent.</b> In some cases, you will give us consent to use your Personal Information for a specific purpose.
         For example, we may rely on your consent to use technical information such as cookie data to the extent required
         by the GDPR.  You can withdraw your consent at any time by contacting
-        as <a href="mailto:seqr@broadinstitute.org">seqr@broadinstitute.org</a>; however, such withdrawal shall not
+        as <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>; however, such withdrawal shall not
         affect the legality of any processing done before receipt of the withdrawal.
       </List.Item>
       <List.Item>
@@ -391,7 +391,7 @@ export default () =>
     state of your habitual residence, your place of work or the place of the alleged violation.<br /><br />
 
     <b>Submitting Requests:</b> EU data subject can submit requests by contacting us
-    at <a href="mailto:seqr@broadinstitute.org">seqr@broadinstitute.org</a>.  We will respond to all such requests
+    at <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>.  We will respond to all such requests
     within 30 days of our receipt of the request, unless there are extenuating circumstances, in which event we may
     take up to 60 days to respond.  We will inform you if we expect our response to take longer than 30 days.  Please
     note, however, that certain Personal Information may be exempt from such rights pursuant to applicable data
