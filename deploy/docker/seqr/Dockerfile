@@ -12,10 +12,8 @@ ADD requirements.txt /app/seqr/
 RUN apt update && apt install -y --no-install-recommends \
     # install dependencies of the HaploPainter.pl script used to generate static pedigree images
     libgtk2-perl libdbi-perl libtk-perl libsort-naturally-perl && \
-    apt clean && rm -rf /var/lib/apt/lists/*
-
-# install seqr dependencies
-RUN pip install -r /app/seqr/requirements.txt
+    apt clean && rm -rf /var/lib/apt/lists/* \
+    pip install -r /app/seqr/requirements.txt
 
 ADD matchmaker /app/seqr/matchmaker
 ADD reference_data /app/seqr/reference_data
