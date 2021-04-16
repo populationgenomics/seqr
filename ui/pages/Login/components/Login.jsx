@@ -2,53 +2,55 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import queryString from 'query-string'
 import { connect } from 'react-redux'
-import { Link } from 'react-router-dom'
-import { Divider, Message, Button, Icon } from 'semantic-ui-react'
+import { Redirect } from 'react-router-dom'
+import { Message, Button, Icon } from 'semantic-ui-react'
 
 import { getGoogleLoginEnabled } from 'redux/selectors'
-import { validators } from 'shared/components/form/ReduxFormWrapper'
+// import { validators } from 'shared/components/form/ReduxFormWrapper'
 import { ANVIL_URL } from 'shared/utils/constants'
 import { login } from '../reducers'
-import UserFormLayout from './UserFormLayout'
+// import UserFormLayout from './UserFormLayout'
 
-const FIELDS = [
-  { name: 'email', label: 'Email', validate: validators.required },
-  { name: 'password', label: 'Password', type: 'password', validate: validators.required },
-]
+// const FIELDS = [
+//   { name: 'email', label: 'Email', validate: validators.required },
+//   { name: 'password', label: 'Password', type: 'password', validate: validators.required },
+// ]
 
-const Login = ({ onSubmit, googleLoginEnabled, location }) =>
-  <UserFormLayout
-    header="Login to seqr"
-    onSubmit={onSubmit}
-    form="login"
-    fields={FIELDS}
-    content={googleLoginEnabled &&
+const Login = ({ location }) => {
+  const queryParams = queryString.parse(location.search)
+  const googleauthLoginUri = `/login/google-oauth2${location.search}`
+
+  if (Object.keys(queryParams).length === 0 && !location.pathname.includes('google-oauth2')) {
+    // no query parameters, so not a redirect, let's auto redirect to GCP login
+    return (
       <div>
-        <br />
-        <Button as="a" href={`/login/google-oauth2${location.search}`} primary>
+        <Redirect to={googleauthLoginUri} push />
+        <p>Redirecting to Google login, click <a href={googleauthLoginUri}>here</a> if this isn&apost working as expected</p>
+      </div>)
+  }
+
+  return (
+    <div style={{ backgroundColor: 'white', maxWidth: '600px', width: '37%', minWidth: '300px', margin: '0 auto', padding: '40px', border: '1px solid rgba(34,36,38,.15)', borderRadius: '.28571429rem', boxShadow: '0 1px 2px 0 rgb(34 36 38 / 15%)' }}>
+      <p style={{ textAlign: 'center' }}>
+        <Button as="a" href={googleauthLoginUri} primary>
           <Icon name="google" />
           Sign in with Google
         </Button>
-        {queryString.parse(location.search).anvilLoginFailed &&
+      </p>
+      {queryParams.anvilLoginFailed &&
         <Message visible error>
           Unable to authorize the selected Google user. Please register your account in AnVIL by signing in and
           registering at <a href={ANVIL_URL} target="_blank">anvil.terra.bio</a>
-        </Message> }
-        {queryString.parse(location.search).googleLoginFailed &&
-        <Message visible error>
-          No seqr account found for the selected Google user
-        </Message> }
-        <Divider horizontal>Or</Divider>
-      </div>
-    }
-    submitButtonText="Log In"
-  >
-    <Link to="/users/forgot_password">Forgot Password?</Link>
-  </UserFormLayout>
+        </Message>}
+      {queryParams.googleLoginFailed &&
+      <Message visible error>
+        No seqr account found for the selected Google user
+      </Message>}
+    </div>
+  )
+}
 
 Login.propTypes = {
-  onSubmit: PropTypes.func,
-  googleLoginEnabled: PropTypes.bool,
   location: PropTypes.object,
 }
 
