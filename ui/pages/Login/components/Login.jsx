@@ -6,15 +6,8 @@ import { Redirect } from 'react-router-dom'
 import { Message, Button, Icon } from 'semantic-ui-react'
 
 import { getGoogleLoginEnabled } from 'redux/selectors'
-// import { validators } from 'shared/components/form/ReduxFormWrapper'
 import { ANVIL_URL } from 'shared/utils/constants'
 import { login } from '../reducers'
-// import UserFormLayout from './UserFormLayout'
-
-// const FIELDS = [
-//   { name: 'email', label: 'Email', validate: validators.required },
-//   { name: 'password', label: 'Password', type: 'password', validate: validators.required },
-// ]
 
 const Login = ({ location }) => {
   const queryParams = queryString.parse(location.search)
