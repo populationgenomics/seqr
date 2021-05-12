@@ -2,13 +2,14 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import queryString from 'query-string'
 import { connect } from 'react-redux'
-import { Divider, Message, Button, Icon, Accordion } from 'semantic-ui-react'
+import { Divider, Message, Button, Icon } from 'semantic-ui-react'
 
 import { getGoogleLoginEnabled } from 'redux/selectors'
 import { validators } from 'shared/components/form/ReduxFormWrapper'
 import { ANVIL_URL } from 'shared/utils/constants'
 import { login } from '../reducers'
-import { UserFormContainer, UserForm } from './UserFormLayout'
+
+import UserFormLayout from './UserFormLayout'
 
 const FIELDS = [
   { name: 'email', label: 'Email', validate: validators.required },

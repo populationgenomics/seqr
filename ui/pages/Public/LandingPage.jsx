@@ -21,7 +21,7 @@ export default () =>
       An open source software platform for rare disease genomics
       <VerticalSpacer height={40} />
       <Button as="a" href="/login/google-oauth2" label="Already a seqr user?" content="Sign In" primary size="big" labelPosition="left" />
-    </Segment>
+    </PageSegment>
     <Segment padded>
       <Grid columns="equal">
         <Grid.Column width={3} />
