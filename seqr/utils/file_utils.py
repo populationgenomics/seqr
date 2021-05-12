@@ -19,6 +19,11 @@ def _gcs_client():
     return gcs_client
 
 
+def _run_command(command):
+    logger.info('==> {}'.format(command))
+    return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+
 def _run_gsutil_command(command, gs_path, gunzip=False):
     #  Anvil buckets are requester-pays and we bill them to the anvil project
     project_arg = f'-u {ANVIL_BILLING_PROJECT} ' if gs_path.startswith(f'gs://{ANVIL_BUCKET_PREFIX}') else ''
@@ -28,8 +33,7 @@ def _run_gsutil_command(command, gs_path, gunzip=False):
     if gunzip:
         command += " | gunzip -c -q - "
 
-    logger.info('==> {}'.format(command))
-    return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    return _run_command(command)
 
 
 def _is_google_bucket_file_path(file_path):
@@ -44,7 +48,7 @@ def does_file_exist(file_path):
 
 
 def file_iter(file_path, byte_range=None, raw_content=False):
-    """Note: the byte_range interval end is inclusive, i.e. the length is 
+    """Note: the byte_range interval end is inclusive, i.e. the length is
     byte_range[1] - byte_range[0] + 1."""
     if _is_google_bucket_file_path(file_path):
         path_segments = file_path.split('/')
@@ -68,13 +72,5 @@ def file_iter(file_path, byte_range=None, raw_content=False):
     else:
         mode = 'rb' if raw_content else 'r'
         with open(file_path, mode) as f:
-            if byte_range:
-                f.seek(byte_range[0])
-                for line in f:
-                    if f.tell() < byte_range[1]:
-                        yield line
-                    else:
-                        break
-            else:
-                for line in f:
-                    yield line
+            for line in f:
+                yield line

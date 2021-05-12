@@ -33,7 +33,7 @@ class IgvAPITest(AuthenticationTestCase):
 
         url = reverse(fetch_igv_track, args=[PROJECT_GUID, '/project_A/sample_1.bam.bai'])
         self.check_collaborator_login(url)
-        response = self.client.get(url, HTTP_RANGE='bytes=100-200')
+        response = self.client.get(url, HTTP_RANGE='bytes=100-250')
         self.assertEqual(response.status_code, 206)
         self.assertListEqual([val for val in response.streaming_content], STREAMING_READS_CONTENT)
         mock_file_iter.assert_called_with('/project_A/sample_1.bai', byte_range=(100, 200), raw_content=True)
@@ -117,13 +117,13 @@ class IgvAPITest(AuthenticationTestCase):
         mock_local_file_exists.return_value = True
         mock_subprocess.return_value.wait.return_value = 0
         response = self.client.post(url, content_type='application/json', data=json.dumps({
-            'filePath': '/readviz/NA19675_new.cram',
+            'filePath': '/readviz/NA19675.new.cram',
         }))
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(response.json(), {'igvSamplesByGuid': {'S000145_na19675': {
             'projectGuid': PROJECT_GUID, 'individualGuid': 'I000001_na19675', 'sampleGuid': 'S000145_na19675',
-            'filePath': '/readviz/NA19675_new.cram', 'sampleId': None, 'sampleType': 'alignment'}}})
-        mock_local_file_exists.assert_called_with('/readviz/NA19675_new.cram')
+            'filePath': '/readviz/NA19675.new.cram', 'sampleId': None, 'sampleType': 'alignment'}}})
+        mock_local_file_exists.assert_called_with('/readviz/NA19675.new.cram')
 
         response = self.client.post(url, content_type='application/json', data=json.dumps({
             'filePath': 'gs://readviz/batch_10.dcr.bed.gz', 'sampleId': 'NA19675',
