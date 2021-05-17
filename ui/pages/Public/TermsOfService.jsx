@@ -284,6 +284,6 @@ export default () =>
         <b>Other terms and conditions.</b>
         Additional terms and conditions may also apply to specific portions, services or features of the
         Site. All such additional terms and conditions are incorporated by this reference into these terms.
-    </List.Item>
+      </List.Item>
     </List>
   </Segment>
