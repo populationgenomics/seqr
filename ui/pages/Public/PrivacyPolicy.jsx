@@ -465,7 +465,7 @@ export default () =>
     <br />
     <p>
       EU data subject can submit requests by contacting us at
-      <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>.
+      <a href="mailto:seqr@populationgenomics.org.au"> seqr@populationgenomics.org.au</a>.
       We will respond to all such requests within 30 days of our receipt of the request, unless there are extenuating
       circumstances, in which event we may take up to 60 days to respond. We will inform you if we expect our response
       to take longer than 30 days. Please note, however, that certain Personal Information may be exempt from such
