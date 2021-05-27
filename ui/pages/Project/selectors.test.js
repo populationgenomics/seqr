@@ -1,7 +1,8 @@
 /* eslint-disable no-undef */
 
 import orderBy from 'lodash/orderBy'
-import { getVisibleFamilies, getVisibleFamiliesInSortedOrder, getFamiliesExportData, getIndividualsExportData,
+import {
+  getVisibleFamilies, getVisibleFamiliesInSortedOrder, getFamiliesExportData, getIndividualsExportData,
   getCaseReviewStatusCounts, getProjectAnalysisGroupFamiliesByGuid, getIndividualTaggedVariants,
   getDefaultMmeSubmission, getMmeResultsBySubmission, getMmeDefaultContactEmail, getAnalystOptions
 } from './selectors'
@@ -92,14 +93,14 @@ test('getDefaultMmeSubmission', () => {
   const defaultSubmissions = getDefaultMmeSubmission(STATE_WITH_2_FAMILIES)
   expect(defaultSubmissions).toEqual({
     contactName: 'PI',
-    contactHref: 'test@broadinstitute.org',
+    contactHref: 'test@populationgenomics.org.au',
     geneVariants: [],
     phenotypes: [],
   })
 })
 
 test('getMmeResultsBySubmission', () => {
-  const mmeResults = getMmeResultsBySubmission(STATE_WITH_2_FAMILIES, {match: {params: {}}})
+  const mmeResults = getMmeResultsBySubmission(STATE_WITH_2_FAMILIES, { match: { params: {} } })
   expect(Object.keys(mmeResults).length).toEqual(1)
   expect(mmeResults.MS021475_na19675_1.active.length).toEqual(1)
   expect(mmeResults.MS021475_na19675_1.active[0].id).toEqual('12531')
@@ -115,7 +116,7 @@ test('getMmeDefaultContactEmail', () => {
   expect(getMmeDefaultContactEmail(STATE_WITH_2_FAMILIES, { matchmakerResultGuid: 'MR0005038_HK018_0047' })).toEqual({
     matchmakerResultGuid: 'MR0005038_HK018_0047',
     patientId: '12531',
-    to: 'crowley@unc.edu,test@test.com,test@broadinstitute.org',
+    to: 'crowley@unc.edu,test@test.com,test@populationgenomics.org.au',
     subject: 'OR2M3 Matchmaker Exchange connection (NA19675_1)',
     body: 'Dear James Crowley,\n\nWe recently matched with one of your patients in Matchmaker Exchange harboring variants in OR2M3. Our patient has a homozygous missense variant 1:248367227 TC>T, a copy number deletion 1:248367227-248369100 (CN=0) and presents with childhood onset short-limb short stature and flexion contracture. Would you be willing to share whether your patient\'s phenotype and genotype match with ours? We are very grateful for your help and look forward to hearing more.\n\nBest wishes,\nTest User',
   })

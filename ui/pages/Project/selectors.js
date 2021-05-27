@@ -130,17 +130,17 @@ export const getIndividualTaggedVariants = createSelector(
     const { familyGuid } = individualsByGuid[individualGuid]
     return Object.values(savedVariants).filter(
       o => o.familyGuids.includes(familyGuid) && o.tagGuids.length).reduce((acc, variant) => {
-      const variantDetail = {
-        ...variant.genotypes[individualGuid],
-        ...variant,
-        tags: variant.tagGuids.map(tagGuid => variantTagsByGuid[tagGuid]),
-      }
-      return [...acc, ...Object.keys(variant.transcripts || {}).map(geneId => ({
-        ...variantDetail,
-        variantId: getVariantUniqueId(variant, geneId),
-        ...genesById[geneId],
-      }))]
-    }, [])
+        const variantDetail = {
+          ...variant.genotypes[individualGuid],
+          ...variant,
+          tags: variant.tagGuids.map(tagGuid => variantTagsByGuid[tagGuid]),
+        }
+        return [...acc, ...Object.keys(variant.transcripts || {}).map(geneId => ({
+          ...variantDetail,
+          variantId: getVariantUniqueId(variant, geneId),
+          ...genesById[geneId],
+        }))]
+      }, [])
   },
 )
 
@@ -181,11 +181,10 @@ export const getVisibleFamilies = createSelector(
   getFamiliesSearch,
   (familiesByGuid, individualsByGuid, samplesByGuid, user, familiesFilter, familiesSearch) => {
     const searchFilter = familiesSearch ? family =>
-      `${family.displayName};${family.familyId};${(family.assignedAnalyst || {}).fullName};${
-        (family.assignedAnalyst || {}).email};${family.analysedBy.map(({ createdBy }) =>
+      `${family.displayName};${family.familyId};${(family.assignedAnalyst || {}).fullName};${(family.assignedAnalyst || {}).email};${family.analysedBy.map(({ createdBy }) =>
         `${createdBy.fullName}${createdBy.email}`)};${family.individualGuids.map(individualGuid =>
-        (individualsByGuid[individualGuid].features || []).map(feature => feature.label).join(';'),
-      ).join(';')}`.toLowerCase().includes(familiesSearch) : family => family
+          (individualsByGuid[individualGuid].features || []).map(feature => feature.label).join(';'),
+        ).join(';')}`.toLowerCase().includes(familiesSearch) : family => family
     const searchedFamilies = Object.values(familiesByGuid).filter(searchFilter)
 
     if (!familiesFilter || !FAMILY_FILTER_LOOKUP[familiesFilter]) {
@@ -356,7 +355,7 @@ export const getMmeResultsBySubmission = createSelector(
         }
       })
       return acc
-    }, { }),
+    }, {}),
 )
 
 export const getMmeDefaultContactEmail = createSelector(
@@ -406,7 +405,7 @@ export const getMmeDefaultContactEmail = createSelector(
 
     const contacts = [
       patient.contact.href.replace('mailto:', ''),
-      contactHref.replace('mailto:', '').replace('seqr-matchmaker@populationgenomics.org.au,', ''),
+      contactHref.replace('mailto:', '').replace('matchmaker@populationgenomics.org.au,', ''),
       user.email,
     ]
     return {

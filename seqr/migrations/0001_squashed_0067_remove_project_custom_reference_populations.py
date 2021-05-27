@@ -9,608 +9,1571 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     replaces = [
-        ('seqr', '0001_initial'), ('seqr', '0002_auto_20170309_0751'), ('seqr', '0003_auto_20170313_0315'),
-        ('seqr', '0004_auto_20170313_0853'), ('seqr', '0005_auto_20170319_0332'),
-        ('seqr', '0006_auto_20170430_0044'), ('seqr', '0007_auto_20170509_0046'),
-        ('seqr', '0008_sample_deprecated_base_project'),
-        ('seqr', '0009_uploadedfileforfamily_uploadedfileforindividual'),
-        ('seqr', '0010_auto_20170516_0735'), ('seqr', '0011_auto_20170517_2222'),
-        ('seqr', '0012_auto_20170518_2015'), ('seqr', '0013_auto_20170526_0157'),
-        ('seqr', '0014_auto_20170527_1953'), ('seqr', '0015_auto_20170606_1910'),
-        ('seqr', '0016_auto_20170621_1800'), ('seqr', '0017_auto_20170623_1300'),
-        ('seqr', '0018_auto_20170626_1401'), ('seqr', '0019_auto_20170630_1754'),
-        ('seqr', '0020_auto_20170630_1759'), ('seqr', '0021_dataset_dataset_id'),
-        ('seqr', '0022_auto_20170704_1948'), ('seqr', '0023_auto_20170909_1828'),
-        ('seqr', '0024_auto_20171101_2354'), ('seqr', '0025_auto_20171106_0757'),
-        ('seqr', '0026_auto_20171112_1649'), ('seqr', '0027_auto_20171115_1532'),
-        ('seqr', '0028_auto_20171123_0200'), ('seqr', '0029_auto_20171130_0700'),
-        ('seqr', '0030_auto_20171213_1652'), ('seqr', '0031_auto_20171214_1104'),
-        ('seqr', '0032_auto_20171218_0423'), ('seqr', '0033_auto_20180111_1006'),
-        ('seqr', '0034_auto_20180411_1951'), ('seqr', '0035_variantnote_submit_to_clinvar'),
-        ('seqr', '0036_auto_20180415_2250'), ('seqr', '0037_remove_individual_case_review_status_accepted_for'),
-        ('seqr', '0037_project_disable_staff_access'), ('seqr', '0038_merge_20180530_2034'),
-        ('seqr', '0037_auto_20180515_1440'), ('seqr', '0038_merge_20180525_1800'),
-        ('seqr', '0039_merge_20180531_1604'), ('seqr', '0040_auto_20180612_1513'),
-        ('seqr', '0040_auto_20180603_1309'), ('seqr', '0041_merge_20180621_1247'),
-        ('seqr', '0041_genenote'), ('seqr', '0042_merge_20180625_1529'), ('seqr', '0043_auto_20180719_1212'),
-        ('seqr', '0044_familyanalysedby'), ('seqr', '0044_auto_20180723_1808'),
-        ('seqr', '0045_merge_20180726_1246'), ('seqr', '0045_auto_20180801_1933'),
-        ('seqr', '0046_merge_20180803_1534'), ('seqr', '0046_auto_20180803_1708'),
-        ('seqr', '0047_merge_20180809_1746'), ('seqr', '0048_auto_20181106_1639'),
-        ('seqr', '0049_auto_20190114_2030'), ('seqr', '0050_family_pubmed_ids'), ('seqr', '0051_auto_20190320_2109'),
-        ('seqr', '0052_remove_variantsearchresults_es_index'), ('seqr', '0053_auto_20190405_1525'),
-        ('seqr', '0054_project_has_new_search'), ('seqr', '0055_remove_sample_dataset_name'),
-        ('seqr', '0056_auto_20190513_1621'), ('seqr', '0056_auto_20190424_2059'),
-        ('seqr', '0057_merge_20190513_2009'), ('seqr', '0058_matchmakercontactnotes'),
-        ('seqr', '0059_auto_20190705_1450'), ('seqr', '0060_matchmakerresult_match_removed'),
-        ('seqr', '0061_family_assigned_analyst'), ('seqr', '0061_auto_20190715_1500'),
-        ('seqr', '0062_merge_20190723_1539'), ('seqr', '0063_auto_20190806_1801'),
-        ('seqr', '0064_auto_20190823_2112'), ('seqr', '0063_auto_20190723_1825'),
-        ('seqr', '0065_merge_20190827_2031'), ('seqr', '0066_auto_20191007_1946'),
-        ('seqr', '0067_remove_project_custom_reference_populations')
+        ("seqr", "0001_initial"),
+        ("seqr", "0002_auto_20170309_0751"),
+        ("seqr", "0003_auto_20170313_0315"),
+        ("seqr", "0004_auto_20170313_0853"),
+        ("seqr", "0005_auto_20170319_0332"),
+        ("seqr", "0006_auto_20170430_0044"),
+        ("seqr", "0007_auto_20170509_0046"),
+        ("seqr", "0008_sample_deprecated_base_project"),
+        ("seqr", "0009_uploadedfileforfamily_uploadedfileforindividual"),
+        ("seqr", "0010_auto_20170516_0735"),
+        ("seqr", "0011_auto_20170517_2222"),
+        ("seqr", "0012_auto_20170518_2015"),
+        ("seqr", "0013_auto_20170526_0157"),
+        ("seqr", "0014_auto_20170527_1953"),
+        ("seqr", "0015_auto_20170606_1910"),
+        ("seqr", "0016_auto_20170621_1800"),
+        ("seqr", "0017_auto_20170623_1300"),
+        ("seqr", "0018_auto_20170626_1401"),
+        ("seqr", "0019_auto_20170630_1754"),
+        ("seqr", "0020_auto_20170630_1759"),
+        ("seqr", "0021_dataset_dataset_id"),
+        ("seqr", "0022_auto_20170704_1948"),
+        ("seqr", "0023_auto_20170909_1828"),
+        ("seqr", "0024_auto_20171101_2354"),
+        ("seqr", "0025_auto_20171106_0757"),
+        ("seqr", "0026_auto_20171112_1649"),
+        ("seqr", "0027_auto_20171115_1532"),
+        ("seqr", "0028_auto_20171123_0200"),
+        ("seqr", "0029_auto_20171130_0700"),
+        ("seqr", "0030_auto_20171213_1652"),
+        ("seqr", "0031_auto_20171214_1104"),
+        ("seqr", "0032_auto_20171218_0423"),
+        ("seqr", "0033_auto_20180111_1006"),
+        ("seqr", "0034_auto_20180411_1951"),
+        ("seqr", "0035_variantnote_submit_to_clinvar"),
+        ("seqr", "0036_auto_20180415_2250"),
+        ("seqr", "0037_remove_individual_case_review_status_accepted_for"),
+        ("seqr", "0037_project_disable_staff_access"),
+        ("seqr", "0038_merge_20180530_2034"),
+        ("seqr", "0037_auto_20180515_1440"),
+        ("seqr", "0038_merge_20180525_1800"),
+        ("seqr", "0039_merge_20180531_1604"),
+        ("seqr", "0040_auto_20180612_1513"),
+        ("seqr", "0040_auto_20180603_1309"),
+        ("seqr", "0041_merge_20180621_1247"),
+        ("seqr", "0041_genenote"),
+        ("seqr", "0042_merge_20180625_1529"),
+        ("seqr", "0043_auto_20180719_1212"),
+        ("seqr", "0044_familyanalysedby"),
+        ("seqr", "0044_auto_20180723_1808"),
+        ("seqr", "0045_merge_20180726_1246"),
+        ("seqr", "0045_auto_20180801_1933"),
+        ("seqr", "0046_merge_20180803_1534"),
+        ("seqr", "0046_auto_20180803_1708"),
+        ("seqr", "0047_merge_20180809_1746"),
+        ("seqr", "0048_auto_20181106_1639"),
+        ("seqr", "0049_auto_20190114_2030"),
+        ("seqr", "0050_family_pubmed_ids"),
+        ("seqr", "0051_auto_20190320_2109"),
+        ("seqr", "0052_remove_variantsearchresults_es_index"),
+        ("seqr", "0053_auto_20190405_1525"),
+        ("seqr", "0054_project_has_new_search"),
+        ("seqr", "0055_remove_sample_dataset_name"),
+        ("seqr", "0056_auto_20190513_1621"),
+        ("seqr", "0056_auto_20190424_2059"),
+        ("seqr", "0057_merge_20190513_2009"),
+        ("seqr", "0058_matchmakercontactnotes"),
+        ("seqr", "0059_auto_20190705_1450"),
+        ("seqr", "0060_matchmakerresult_match_removed"),
+        ("seqr", "0061_family_assigned_analyst"),
+        ("seqr", "0061_auto_20190715_1500"),
+        ("seqr", "0062_merge_20190723_1539"),
+        ("seqr", "0063_auto_20190806_1801"),
+        ("seqr", "0064_auto_20190823_2112"),
+        ("seqr", "0063_auto_20190723_1825"),
+        ("seqr", "0065_merge_20190827_2031"),
+        ("seqr", "0066_auto_20191007_1946"),
+        ("seqr", "0067_remove_project_custom_reference_populations"),
     ]
 
     initial = True
 
     dependencies = [
-        ('auth', '0008_alter_user_username_max_length'),
+        ("auth", "0008_alter_user_username_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.TextField()),
-                ('description', models.TextField(blank=True, null=True)),
-                ('is_phenotips_enabled', models.BooleanField(default=False)),
-                ('phenotips_user_id', models.CharField(blank=True, db_index=True, max_length=100, null=True)),
-                ('is_mme_enabled', models.BooleanField(default=True)),
-                ('mme_primary_data_owner', models.TextField(blank=True, default='Samantha Baxter', null=True)),
-                ('last_accessed_date', models.DateTimeField(blank=True, null=True, db_index=True)),
-                ('deprecated_project_id', models.TextField(blank=True, db_index=True, default='')),
-                ('can_edit_group',
-                 models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='+', to='auth.Group')),
-                ('can_view_group',
-                 models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='+', to='auth.Group')),
-                ('created_by',
-                 models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                                   to=settings.AUTH_USER_MODEL)),
-                ('owners_group',
-                 models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='+', to='auth.Group')),
-                ('mme_contact_url', models.TextField(
-                    blank=True, default='mailto:seqr-matchmaker@populationgenomics.org.au', null=True)),
-                ('mme_contact_institution', models.TextField(
-                    blank=True, default='Broad Center for Mendelian Genomics', null=True)),
-                ('disease_area', models.CharField(blank=True, choices=[
-                    ('blood', 'Blood'), ('cardio', 'Cardio'), ('kidney', 'Kidney'), ('muscle', 'Muscle'),
-                    ('neurodev', 'Neurodev'), ('orphan_disease', 'Orphan Disease'), ('retinal', 'Retinal')
-                ], max_length=20, null=True)),
-                ('is_functional_data_enabled', models.BooleanField(default=False)),
-                ('disable_staff_access', models.BooleanField(default=False)),
-                ('genome_version', models.CharField(
-                    choices=[('37', 'GRCh37'), ('38', 'GRCh38')], default='37', max_length=5)),
-                ('has_new_search', models.BooleanField(default=False)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.TextField()),
+                ("description", models.TextField(blank=True, null=True)),
+                ("is_phenotips_enabled", models.BooleanField(default=False)),
+                (
+                    "phenotips_user_id",
+                    models.CharField(
+                        blank=True, db_index=True, max_length=100, null=True
+                    ),
+                ),
+                ("is_mme_enabled", models.BooleanField(default=True)),
+                (
+                    "mme_primary_data_owner",
+                    models.TextField(blank=True, default="Samantha Baxter", null=True),
+                ),
+                (
+                    "last_accessed_date",
+                    models.DateTimeField(blank=True, null=True, db_index=True),
+                ),
+                (
+                    "deprecated_project_id",
+                    models.TextField(blank=True, db_index=True, default=""),
+                ),
+                (
+                    "can_edit_group",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="+",
+                        to="auth.Group",
+                    ),
+                ),
+                (
+                    "can_view_group",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="+",
+                        to="auth.Group",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owners_group",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="+",
+                        to="auth.Group",
+                    ),
+                ),
+                (
+                    "mme_contact_url",
+                    models.TextField(
+                        blank=True,
+                        default="mailto:matchmaker@populationgenomics.org.au",
+                        null=True,
+                    ),
+                ),
+                (
+                    "mme_contact_institution",
+                    models.TextField(
+                        blank=True,
+                        default="Broad Center for Mendelian Genomics",
+                        null=True,
+                    ),
+                ),
+                (
+                    "disease_area",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("blood", "Blood"),
+                            ("cardio", "Cardio"),
+                            ("kidney", "Kidney"),
+                            ("muscle", "Muscle"),
+                            ("neurodev", "Neurodev"),
+                            ("orphan_disease", "Orphan Disease"),
+                            ("retinal", "Retinal"),
+                        ],
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                ("is_functional_data_enabled", models.BooleanField(default=False)),
+                ("disable_staff_access", models.BooleanField(default=False)),
+                (
+                    "genome_version",
+                    models.CharField(
+                        choices=[("37", "GRCh37"), ("38", "GRCh38")],
+                        default="37",
+                        max_length=5,
+                    ),
+                ),
+                ("has_new_search", models.BooleanField(default=False)),
             ],
             options={
-                'permissions': (('can_view', 'can_view'), ('can_edit', 'can_edit'), ('is_owner', 'is_owner')),
+                "permissions": (
+                    ("can_view", "can_view"),
+                    ("can_edit", "can_edit"),
+                    ("is_owner", "is_owner"),
+                ),
             },
         ),
-
         migrations.CreateModel(
-            name='Family',
+            name="Family",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('family_id', models.CharField(db_index=True, max_length=100)),
-                ('display_name', models.CharField(blank=True, db_index=True, max_length=100, null=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('pedigree_image', models.ImageField(blank=True, null=True, upload_to='pedigree_images')),
-                ('analysis_notes', models.TextField(blank=True, null=True)),
-                ('analysis_summary', models.TextField(blank=True, null=True)),
-                ('causal_inheritance_mode', models.CharField(choices=[
-                    ('r', 'recessive'), ('u', 'unknown'), ('d', 'dominant'), ('x', 'x-linked recessive'),
-                    ('n', 'de novo')], default='u', max_length=20)),
-                ('analysis_status', models.CharField(choices=[
-                    ('S', 'S'), ('S_kgfp', 'S'), ('S_kgdp', 'S'), ('S_ng', 'S'), ('Sc_kgfp', 'S'),
-                    ('Sc_kgdp', 'S'), ('Sc_ng', 'S'), ('Rcpc', 'R'), ('Rncc', 'R'), ('C', 'C'), ('I', 'A'),
-                    ('Q', 'W')
-                ], default='Q', max_length=10)),
-                ('internal_analysis_status', models.CharField(blank=True, choices=[
-                    ('S','S'), ('S_kgfp','S'), ('S_kgdp','S'), ('S_ng','S'), ('Sc_kgfp','S'),
-                    ('Sc_kgdp', 'S'), ('Sc_ng', 'S'), ('Rcpc', 'R'), ('Rncc', 'R'), ('C', 'C'),
-                    ('I', 'A'), ('Q', 'W')
-                ], max_length=10, null=True)),
-                ('internal_case_review_notes', models.TextField(blank=True, null=True)),
-                ('internal_case_review_summary', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='seqr.Project')),
-                ('coded_phenotype', models.TextField(blank=True, null=True)),
-                ('post_discovery_omim_number', models.TextField(blank=True, null=True)),
-                ('pubmed_ids', django.contrib.postgres.fields.ArrayField(
-                    base_field=models.TextField(), default=[], size=None)),
-                ('assigned_analyst', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_families',
-                    to=settings.AUTH_USER_MODEL)),
-                ('success_story', models.TextField(blank=True, null=True)),
-                ('success_story_types', django.contrib.postgres.fields.ArrayField(
-                    base_field=models.CharField(blank=True, choices=[
-                        ('N', 'Novel Discovery'), ('A', 'Altered Clinical Outcome'), ('C', 'Collaboration'),
-                        ('T', 'Technical Win'), ('D', 'Data Sharing'), ('O', 'Other')
-                    ], max_length=1, null=True), default=[], size=None)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("family_id", models.CharField(db_index=True, max_length=100)),
+                (
+                    "display_name",
+                    models.CharField(
+                        blank=True, db_index=True, max_length=100, null=True
+                    ),
+                ),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "pedigree_image",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="pedigree_images"
+                    ),
+                ),
+                ("analysis_notes", models.TextField(blank=True, null=True)),
+                ("analysis_summary", models.TextField(blank=True, null=True)),
+                (
+                    "causal_inheritance_mode",
+                    models.CharField(
+                        choices=[
+                            ("r", "recessive"),
+                            ("u", "unknown"),
+                            ("d", "dominant"),
+                            ("x", "x-linked recessive"),
+                            ("n", "de novo"),
+                        ],
+                        default="u",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "analysis_status",
+                    models.CharField(
+                        choices=[
+                            ("S", "S"),
+                            ("S_kgfp", "S"),
+                            ("S_kgdp", "S"),
+                            ("S_ng", "S"),
+                            ("Sc_kgfp", "S"),
+                            ("Sc_kgdp", "S"),
+                            ("Sc_ng", "S"),
+                            ("Rcpc", "R"),
+                            ("Rncc", "R"),
+                            ("C", "C"),
+                            ("I", "A"),
+                            ("Q", "W"),
+                        ],
+                        default="Q",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "internal_analysis_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("S", "S"),
+                            ("S_kgfp", "S"),
+                            ("S_kgdp", "S"),
+                            ("S_ng", "S"),
+                            ("Sc_kgfp", "S"),
+                            ("Sc_kgdp", "S"),
+                            ("Sc_ng", "S"),
+                            ("Rcpc", "R"),
+                            ("Rncc", "R"),
+                            ("C", "C"),
+                            ("I", "A"),
+                            ("Q", "W"),
+                        ],
+                        max_length=10,
+                        null=True,
+                    ),
+                ),
+                ("internal_case_review_notes", models.TextField(blank=True, null=True)),
+                (
+                    "internal_case_review_summary",
+                    models.TextField(blank=True, null=True),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="seqr.Project"
+                    ),
+                ),
+                ("coded_phenotype", models.TextField(blank=True, null=True)),
+                ("post_discovery_omim_number", models.TextField(blank=True, null=True)),
+                (
+                    "pubmed_ids",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.TextField(), default=[], size=None
+                    ),
+                ),
+                (
+                    "assigned_analyst",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="assigned_families",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("success_story", models.TextField(blank=True, null=True)),
+                (
+                    "success_story_types",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(
+                            blank=True,
+                            choices=[
+                                ("N", "Novel Discovery"),
+                                ("A", "Altered Clinical Outcome"),
+                                ("C", "Collaboration"),
+                                ("T", "Technical Win"),
+                                ("D", "Data Sharing"),
+                                ("O", "Other"),
+                            ],
+                            max_length=1,
+                            null=True,
+                        ),
+                        default=[],
+                        size=None,
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='family',
-            unique_together=set([('project', 'family_id')]),
+            name="family",
+            unique_together=set([("project", "family_id")]),
         ),
-
         migrations.CreateModel(
-            name='Individual',
+            name="Individual",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('individual_id', models.TextField(db_index=True)),
-                ('father', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
-                    related_name='paternal_children', to='seqr.Individual')),
-                ('mother', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
-                    related_name='maternal_children', to='seqr.Individual')),
-                ('sex', models.CharField(choices=[
-                    ('M', 'Male'), ('F', 'Female'), ('U', 'Unknown')], default='U', max_length=1)),
-                ('affected', models.CharField(choices=[
-                    ('A', 'Affected'), ('N', 'Unaffected'), ('U', 'Unknown')], default='U', max_length=1)),
-                ('display_name', models.TextField(blank=True, default='')),
-                ('case_review_status', models.CharField(choices=[
-                    ('I', 'In Review'), ('U', 'Uncertain'), ('A', 'Accepted'), ('R', 'Not Accepted'),
-                    ('Q', 'More Info Needed'), ('P', 'Pending Results and Records'), ('N', 'NMI Review'), ('W', 'Waitlist')
-                ], default='I', max_length=2)),
-                ('case_review_status_last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('case_review_discussion', models.TextField(blank=True, null=True)),
-                ('phenotips_patient_id', models.CharField(blank=True, db_index=True, max_length=30, null=True)),
-                ('phenotips_eid', models.CharField(blank=True, max_length=165, null=True)),
-                ('phenotips_data', models.TextField(blank=True, null=True)),
-                ('mme_id', models.CharField(blank=True, max_length=50, null=True)),
-                ('mme_submitted_data', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
-                ('case_review_status_last_modified_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('family', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='seqr.Family')),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('mme_deleted_by', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('mme_deleted_date', models.DateTimeField(null=True)),
-                ('mme_submitted_date', models.DateTimeField(null=True)),
-                ('filter_flags', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
-                ('pop_platform_filters', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
-                ('population', models.CharField(max_length=5, null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("individual_id", models.TextField(db_index=True)),
+                (
+                    "father",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="paternal_children",
+                        to="seqr.Individual",
+                    ),
+                ),
+                (
+                    "mother",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="maternal_children",
+                        to="seqr.Individual",
+                    ),
+                ),
+                (
+                    "sex",
+                    models.CharField(
+                        choices=[("M", "Male"), ("F", "Female"), ("U", "Unknown")],
+                        default="U",
+                        max_length=1,
+                    ),
+                ),
+                (
+                    "affected",
+                    models.CharField(
+                        choices=[
+                            ("A", "Affected"),
+                            ("N", "Unaffected"),
+                            ("U", "Unknown"),
+                        ],
+                        default="U",
+                        max_length=1,
+                    ),
+                ),
+                ("display_name", models.TextField(blank=True, default="")),
+                (
+                    "case_review_status",
+                    models.CharField(
+                        choices=[
+                            ("I", "In Review"),
+                            ("U", "Uncertain"),
+                            ("A", "Accepted"),
+                            ("R", "Not Accepted"),
+                            ("Q", "More Info Needed"),
+                            ("P", "Pending Results and Records"),
+                            ("N", "NMI Review"),
+                            ("W", "Waitlist"),
+                        ],
+                        default="I",
+                        max_length=2,
+                    ),
+                ),
+                (
+                    "case_review_status_last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("case_review_discussion", models.TextField(blank=True, null=True)),
+                (
+                    "phenotips_patient_id",
+                    models.CharField(
+                        blank=True, db_index=True, max_length=30, null=True
+                    ),
+                ),
+                (
+                    "phenotips_eid",
+                    models.CharField(blank=True, max_length=165, null=True),
+                ),
+                ("phenotips_data", models.TextField(blank=True, null=True)),
+                ("mme_id", models.CharField(blank=True, max_length=50, null=True)),
+                (
+                    "mme_submitted_data",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True),
+                ),
+                (
+                    "case_review_status_last_modified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "family",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="seqr.Family"
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, null=True)),
+                (
+                    "mme_deleted_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("mme_deleted_date", models.DateTimeField(null=True)),
+                ("mme_submitted_date", models.DateTimeField(null=True)),
+                (
+                    "filter_flags",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True),
+                ),
+                (
+                    "pop_platform_filters",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True),
+                ),
+                ("population", models.CharField(max_length=5, null=True)),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='individual',
-            unique_together=set([('family', 'individual_id')]),
+            name="individual",
+            unique_together=set([("family", "individual_id")]),
         ),
-
         migrations.CreateModel(
-            name='Sample',
+            name="Sample",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('sample_id', models.TextField(db_index=True)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
-                                                 related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('loaded_date', models.DateTimeField(blank=True, null=True)),
-                ('individual', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.PROTECT, to='seqr.Individual')),
-                ('sample_type', models.CharField(blank=True, choices=[
-                    ('WES', 'Exome'), ('WGS', 'Whole Genome'), ('RNA', 'RNA'), ('ARRAY', 'ARRAY')
-                ], max_length=20, null=True)),
-                ('elasticsearch_index', models.TextField(blank=True, db_index=True, null=True)),
-                ('is_active', models.BooleanField(default=False)),
-                ('dataset_file_path', models.TextField(blank=True, db_index=True, null=True)),
-                ('dataset_type', models.CharField(blank=True, choices=[
-                    ('ALIGN', 'Alignment'), ('VARIANTS', 'Variant Calls'), ('SV', 'SV Calls'),
-                    ('BREAK', 'Breakpoints'), ('SPLICE', 'Splice Junction Calls'),
-                    ('ASE', 'Allele Specific Expression')
-                ], max_length=20, null=True),
-        ),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("sample_id", models.TextField(db_index=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("loaded_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "individual",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="seqr.Individual",
+                    ),
+                ),
+                (
+                    "sample_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("WES", "Exome"),
+                            ("WGS", "Whole Genome"),
+                            ("RNA", "RNA"),
+                            ("ARRAY", "ARRAY"),
+                        ],
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                (
+                    "elasticsearch_index",
+                    models.TextField(blank=True, db_index=True, null=True),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                (
+                    "dataset_file_path",
+                    models.TextField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "dataset_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("ALIGN", "Alignment"),
+                            ("VARIANTS", "Variant Calls"),
+                            ("SV", "SV Calls"),
+                            ("BREAK", "Breakpoints"),
+                            ("SPLICE", "Splice Junction Calls"),
+                            ("ASE", "Allele Specific Expression"),
+                        ],
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
-
         migrations.CreateModel(
-            name='ProjectCategory',
+            name="ProjectCategory",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.TextField(db_index=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('projects', models.ManyToManyField(to='seqr.Project')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.TextField(db_index=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("projects", models.ManyToManyField(to="seqr.Project")),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
-
         migrations.CreateModel(
-            name='ProjectLastAccessedDate',
+            name="ProjectLastAccessedDate",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('last_accessed_date', models.DateTimeField(auto_now=True, db_index=True)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.Project')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "last_accessed_date",
+                    models.DateTimeField(auto_now=True, db_index=True),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.Project"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='SavedVariant',
+            name="SavedVariant",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('xpos_start', models.BigIntegerField()),
-                ('xpos_end', models.BigIntegerField(null=True)),
-                ('ref', models.TextField()),
-                ('alt', models.TextField()),
-                ('saved_variant_json', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('family', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.Family')),
-                ('selected_main_transcript_id', models.CharField(max_length=20, null=True))
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("xpos_start", models.BigIntegerField()),
+                ("xpos_end", models.BigIntegerField(null=True)),
+                ("ref", models.TextField()),
+                ("alt", models.TextField()),
+                (
+                    "saved_variant_json",
+                    django.contrib.postgres.fields.jsonb.JSONField(default=dict),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "family",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.Family"
+                    ),
+                ),
+                (
+                    "selected_main_transcript_id",
+                    models.CharField(max_length=20, null=True),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='savedvariant',
-            unique_together=set([('xpos_start', 'xpos_end', 'ref', 'alt', 'family')]),
+            name="savedvariant",
+            unique_together=set([("xpos_start", "xpos_end", "ref", "alt", "family")]),
         ),
-
         migrations.CreateModel(
-            name='VariantNote',
+            name="VariantNote",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('note', models.TextField(blank=True, null=True)),
-                ('search_parameters', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('submit_to_clinvar', models.BooleanField(default=False)),
-                ('search_hash', models.CharField(max_length=50, null=True)),
-                ('saved_variant', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.CASCADE, to='seqr.SavedVariant'))
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("note", models.TextField(blank=True, null=True)),
+                ("search_parameters", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("submit_to_clinvar", models.BooleanField(default=False)),
+                ("search_hash", models.CharField(max_length=50, null=True)),
+                (
+                    "saved_variant",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.SavedVariant",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
-
         migrations.CreateModel(
-            name='VariantTagType',
+            name="VariantTagType",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.TextField()),
-                ('description', models.TextField(blank=True, null=True)),
-                ('color', models.CharField(default='#1f78b4', max_length=20)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.CASCADE, to='seqr.Project')),
-                ('category', models.TextField(blank=True, null=True)),
-                ('order', models.FloatField(null=True)),
-                ('is_built_in', models.BooleanField(default=False))
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.TextField()),
+                ("description", models.TextField(blank=True, null=True)),
+                ("color", models.CharField(default="#1f78b4", max_length=20)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.Project",
+                    ),
+                ),
+                ("category", models.TextField(blank=True, null=True)),
+                ("order", models.FloatField(null=True)),
+                ("is_built_in", models.BooleanField(default=False)),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='varianttagtype',
-            unique_together=set([('project', 'name', 'color')]),
+            name="varianttagtype",
+            unique_together=set([("project", "name", "color")]),
         ),
-
         migrations.CreateModel(
-            name='VariantTag',
+            name="VariantTag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('search_parameters', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('variant_tag_type', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, to='seqr.VariantTagType')),
-                ('saved_variant', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.CASCADE, to='seqr.SavedVariant')),
-                ('search_hash', models.CharField(max_length=50, null=True))
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("search_parameters", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "variant_tag_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.VariantTagType",
+                    ),
+                ),
+                (
+                    "saved_variant",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.SavedVariant",
+                    ),
+                ),
+                ("search_hash", models.CharField(max_length=50, null=True)),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='varianttag',
-            unique_together=set([('variant_tag_type', 'saved_variant')]),
+            name="varianttag",
+            unique_together=set([("variant_tag_type", "saved_variant")]),
         ),
-
         migrations.CreateModel(
-            name='VariantFunctionalData',
+            name="VariantFunctionalData",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('functional_data_tag', models.TextField(choices=[
-                    ('Functional Data', (
-                        ('Biochemical Function', '{"description": "Gene product performs a biochemical function shared with other known genes in the disease of interest, or consistent with the phenotype.", "color": "#311B92"}'),
-                        ('Protein Interaction', '{"description": "Gene product interacts with proteins previously implicated (genetically or biochemically) in the disease of interest.", "color": "#4A148C"}'),
-                        ('Expression', '{"description": "Gene is expressed in tissues relevant to the disease of interest and/or is altered in expression in patients who have the disease.", "color": "#7C4DFF"}'),
-                        ('Patient Cells', '{"description": "Gene and/or gene product function is demonstrably altered in patients carrying candidate mutations.", "color": "#B388FF"}'),
-                        ('Non-patient cells', '{"description": "Gene and/or gene product function is demonstrably altered in human cell culture models carrying candidate mutations.", "color": "#9575CD"}'),
-                        ('Animal Model', '{"description": "Non-human animal models with a similarly disrupted copy of the affected gene show a phenotype consistent with human disease state.", "color": "#AA00FF"}'),
-                        ('Non-human cell culture model', '{"description": "Non-human cell-culture models with a similarly disrupted copy of the affected gene show a phenotype consistent with human disease state.", "color": "#BA68C8"}'),
-                        ('Rescue', '{"description": "The cellular phenotype in patient-derived cells or engineered equivalents can be rescued by addition of the wild-type gene product.", "color": "#663399"}'))),
-                    ('Functional Scores', (
-                        ('Genome-wide Linkage', '{"metadata_title": "LOD Score", "description": "Max LOD score used in analysis to restrict where you looked for causal variants; provide best score available, whether it be a cumulative LOD score across multiple families or just the best family\'s LOD score.", "color": "#880E4F"}'),
-                        ('Bonferroni corrected p-value', '{"metadata_title": "P-value", "description": "Bonferroni-corrected p-value for gene if association testing/burden testing/etc was used to identify the gene.", "color": "#E91E63"}'),
-                        ('Kindreds w/ Overlapping SV & Similar Phenotype', '{"metadata_title": "#", "description": "Number of kindreds (1+) previously reported/in databases as having structural variant overlapping the gene and a similar phenotype.", "color": "#FF5252"}'))),
-                    ('Additional Kindreds (Literature, MME)', (
-                        ('Additional Unrelated Kindreds w/ Causal Variants in Gene', '{"metadata_title": "# additional families", "description": "Number of additional kindreds with causal variants in this gene (Any other kindreds from collaborators, MME, literature etc). Do not count your family in this total.", "color": "#D84315"}'),
-                    ))])),
-                ('metadata', models.TextField(null=True)),
-                ('search_parameters', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('saved_variant', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.CASCADE, to='seqr.SavedVariant')),
-                ('search_hash', models.CharField(max_length=50, null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "functional_data_tag",
+                    models.TextField(
+                        choices=[
+                            (
+                                "Functional Data",
+                                (
+                                    (
+                                        "Biochemical Function",
+                                        '{"description": "Gene product performs a biochemical function shared with other known genes in the disease of interest, or consistent with the phenotype.", "color": "#311B92"}',
+                                    ),
+                                    (
+                                        "Protein Interaction",
+                                        '{"description": "Gene product interacts with proteins previously implicated (genetically or biochemically) in the disease of interest.", "color": "#4A148C"}',
+                                    ),
+                                    (
+                                        "Expression",
+                                        '{"description": "Gene is expressed in tissues relevant to the disease of interest and/or is altered in expression in patients who have the disease.", "color": "#7C4DFF"}',
+                                    ),
+                                    (
+                                        "Patient Cells",
+                                        '{"description": "Gene and/or gene product function is demonstrably altered in patients carrying candidate mutations.", "color": "#B388FF"}',
+                                    ),
+                                    (
+                                        "Non-patient cells",
+                                        '{"description": "Gene and/or gene product function is demonstrably altered in human cell culture models carrying candidate mutations.", "color": "#9575CD"}',
+                                    ),
+                                    (
+                                        "Animal Model",
+                                        '{"description": "Non-human animal models with a similarly disrupted copy of the affected gene show a phenotype consistent with human disease state.", "color": "#AA00FF"}',
+                                    ),
+                                    (
+                                        "Non-human cell culture model",
+                                        '{"description": "Non-human cell-culture models with a similarly disrupted copy of the affected gene show a phenotype consistent with human disease state.", "color": "#BA68C8"}',
+                                    ),
+                                    (
+                                        "Rescue",
+                                        '{"description": "The cellular phenotype in patient-derived cells or engineered equivalents can be rescued by addition of the wild-type gene product.", "color": "#663399"}',
+                                    ),
+                                ),
+                            ),
+                            (
+                                "Functional Scores",
+                                (
+                                    (
+                                        "Genome-wide Linkage",
+                                        '{"metadata_title": "LOD Score", "description": "Max LOD score used in analysis to restrict where you looked for causal variants; provide best score available, whether it be a cumulative LOD score across multiple families or just the best family\'s LOD score.", "color": "#880E4F"}',
+                                    ),
+                                    (
+                                        "Bonferroni corrected p-value",
+                                        '{"metadata_title": "P-value", "description": "Bonferroni-corrected p-value for gene if association testing/burden testing/etc was used to identify the gene.", "color": "#E91E63"}',
+                                    ),
+                                    (
+                                        "Kindreds w/ Overlapping SV & Similar Phenotype",
+                                        '{"metadata_title": "#", "description": "Number of kindreds (1+) previously reported/in databases as having structural variant overlapping the gene and a similar phenotype.", "color": "#FF5252"}',
+                                    ),
+                                ),
+                            ),
+                            (
+                                "Additional Kindreds (Literature, MME)",
+                                (
+                                    (
+                                        "Additional Unrelated Kindreds w/ Causal Variants in Gene",
+                                        '{"metadata_title": "# additional families", "description": "Number of additional kindreds with causal variants in this gene (Any other kindreds from collaborators, MME, literature etc). Do not count your family in this total.", "color": "#D84315"}',
+                                    ),
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+                ("metadata", models.TextField(null=True)),
+                ("search_parameters", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "saved_variant",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.SavedVariant",
+                    ),
+                ),
+                ("search_hash", models.CharField(max_length=50, null=True)),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='variantfunctionaldata',
-            unique_together=set([('functional_data_tag', 'saved_variant')]),
+            name="variantfunctionaldata",
+            unique_together=set([("functional_data_tag", "saved_variant")]),
         ),
-
         migrations.CreateModel(
-            name='UploadedFileForFamily',
+            name="UploadedFileForFamily",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.TextField()),
-                ('uploaded_file', models.FileField(max_length=200, upload_to='uploaded_family_files')),
-                ('uploaded_date', models.DateTimeField(blank=True, null=True)),
-                ('family', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='seqr.Family')),
-                ('uploaded_by', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.TextField()),
+                (
+                    "uploaded_file",
+                    models.FileField(max_length=200, upload_to="uploaded_family_files"),
+                ),
+                ("uploaded_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "family",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="seqr.Family"
+                    ),
+                ),
+                (
+                    "uploaded_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='UploadedFileForIndividual',
+            name="UploadedFileForIndividual",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.TextField()),
-                ('uploaded_file', models.FileField(max_length=200, upload_to='uploaded_individual_files')),
-                ('uploaded_date', models.DateTimeField(blank=True, null=True)),
-                ('individual', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='seqr.Individual')),
-                ('uploaded_by', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.TextField()),
+                (
+                    "uploaded_file",
+                    models.FileField(
+                        max_length=200, upload_to="uploaded_individual_files"
+                    ),
+                ),
+                ("uploaded_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "individual",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="seqr.Individual",
+                    ),
+                ),
+                (
+                    "uploaded_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='LocusList',
+            name="LocusList",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.TextField(db_index=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('is_public', models.BooleanField(default=False)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.TextField(db_index=True)),
+                ("description", models.TextField(blank=True, null=True)),
+                ("is_public", models.BooleanField(default=False)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'permissions': (('can_view', 'can_view'), ('can_edit', 'can_edit'), ('is_owner', 'is_owner')),
+                "permissions": (
+                    ("can_view", "can_view"),
+                    ("can_edit", "can_edit"),
+                    ("is_owner", "is_owner"),
+                ),
             },
         ),
         migrations.AlterUniqueTogether(
-            name='locuslist',
-            unique_together=set([('name', 'description', 'is_public', 'created_by')]),
+            name="locuslist",
+            unique_together=set([("name", "description", "is_public", "created_by")]),
         ),
-
         migrations.CreateModel(
-            name='LocusListGene',
+            name="LocusListGene",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('gene_id', models.TextField(db_index=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('locus_list', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.LocusList')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("gene_id", models.TextField(db_index=True)),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "locus_list",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.LocusList"
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='locuslistgene',
-            unique_together=set([('locus_list', 'gene_id')]),
+            name="locuslistgene",
+            unique_together=set([("locus_list", "gene_id")]),
         ),
-
         migrations.CreateModel(
-            name='LocusListInterval',
+            name="LocusListInterval",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('genome_version', models.CharField(
-                    choices=[('37', 'GRCh37'), ('38', 'GRCh38')], default='37', max_length=5)),
-                ('chrom', models.CharField(max_length=2)),
-                ('start', models.IntegerField()),
-                ('end', models.IntegerField()),
-                ('description', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('locus_list', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.LocusList'))
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "genome_version",
+                    models.CharField(
+                        choices=[("37", "GRCh37"), ("38", "GRCh38")],
+                        default="37",
+                        max_length=5,
+                    ),
+                ),
+                ("chrom", models.CharField(max_length=2)),
+                ("start", models.IntegerField()),
+                ("end", models.IntegerField()),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "locus_list",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.LocusList"
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='locuslistinterval',
-            unique_together=set([('locus_list', 'genome_version', 'chrom', 'start', 'end')]),
+            name="locuslistinterval",
+            unique_together=set(
+                [("locus_list", "genome_version", "chrom", "start", "end")]
+            ),
         ),
-
         migrations.CreateModel(
-            name='GeneNote',
+            name="GeneNote",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('note', models.TextField(blank=True, default='')),
-                ('gene_id', models.CharField(max_length=20)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("note", models.TextField(blank=True, default="")),
+                ("gene_id", models.CharField(max_length=20)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='FamilyAnalysedBy',
+            name="FamilyAnalysedBy",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('family', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.Family')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "family",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.Family"
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='AnalysisGroup',
+            name="AnalysisGroup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.TextField()),
-                ('description', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('families', models.ManyToManyField(to='seqr.Family')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='seqr.Project')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.TextField()),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("families", models.ManyToManyField(to="seqr.Family")),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="seqr.Project"
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='analysisgroup',
-            unique_together=set([('project', 'name')]),
+            name="analysisgroup",
+            unique_together=set([("project", "name")]),
         ),
-
         migrations.CreateModel(
-            name='VariantSearch',
+            name="VariantSearch",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('name', models.CharField(max_length=200, null=True)),
-                ('search', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("name", models.CharField(max_length=200, null=True)),
+                ("search", django.contrib.postgres.fields.jsonb.JSONField()),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='variantsearch',
-            unique_together=set([('created_by', 'name')]),
+            name="variantsearch",
+            unique_together=set([("created_by", "name")]),
         ),
-
         migrations.CreateModel(
-            name='VariantSearchResults',
+            name="VariantSearchResults",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('search_hash', models.CharField(db_index=True, max_length=50, unique=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('families', models.ManyToManyField(to='seqr.Family')),
-                ('variant_search', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, to='seqr.VariantSearch')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "search_hash",
+                    models.CharField(db_index=True, max_length=50, unique=True),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("families", models.ManyToManyField(to="seqr.Family")),
+                (
+                    "variant_search",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="seqr.VariantSearch",
+                    ),
+                ),
             ],
         ),
-
         migrations.CreateModel(
-            name='MatchmakerResult',
+            name="MatchmakerResult",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('result_data', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('we_contacted', models.BooleanField(default=False)),
-                ('host_contacted', models.BooleanField(default=False)),
-                ('deemed_irrelevant', models.BooleanField(default=False)),
-                ('flag_for_analysis', models.BooleanField(default=False)),
-                ('comments', models.TextField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
-                ('individual', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='seqr.Individual')),
-                ('last_modified_by', models.ForeignKey(
-                    null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('match_removed', models.BooleanField(default=False)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                ("result_data", django.contrib.postgres.fields.jsonb.JSONField()),
+                ("we_contacted", models.BooleanField(default=False)),
+                ("host_contacted", models.BooleanField(default=False)),
+                ("deemed_irrelevant", models.BooleanField(default=False)),
+                ("flag_for_analysis", models.BooleanField(default=False)),
+                ("comments", models.TextField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "individual",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="seqr.Individual",
+                    ),
+                ),
+                (
+                    "last_modified_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("match_removed", models.BooleanField(default=False)),
             ],
         ),
-
         migrations.CreateModel(
-            name='MatchmakerContactNotes',
+            name="MatchmakerContactNotes",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('guid', models.CharField(db_index=True, max_length=30, unique=True)),
-                ('created_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('last_modified_date', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('institution', models.CharField(db_index=True, max_length=200, unique=True)),
-                ('comments', models.TextField(blank=True)),
-                ('created_by', models.ForeignKey(
-                    blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+',
-                    to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("guid", models.CharField(db_index=True, max_length=30, unique=True)),
+                (
+                    "created_date",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                (
+                    "last_modified_date",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "institution",
+                    models.CharField(db_index=True, max_length=200, unique=True),
+                ),
+                ("comments", models.TextField(blank=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

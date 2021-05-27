@@ -5,7 +5,7 @@ export const FAMILY_GUID = 'F011652_1'
 export const ANALYSIS_GROUP_GUID = 'AG0000183_test_group'
 export const SEARCH_HASH = 'd380ed0fd28c3127d07a64ea2ba907d7'
 export const GENE_ID = 'ENSG00000228198'
-export const SEARCH = { projectFamilies: [{ projectGuid: PROJECT_GUID, familyGuid: FAMILY_GUID}], search: {} }
+export const SEARCH = { projectFamilies: [{ projectGuid: PROJECT_GUID, familyGuid: FAMILY_GUID }], search: {} }
 
 export const LOCUS_LIST_GUID = "LL00132_2017_monogenic_ibd_gen"
 export const LOCUS_LIST = {
@@ -18,7 +18,7 @@ export const LOCUS_LIST = {
   locusListGuid: LOCUS_LIST_GUID,
   name: "2017 Monogenic IBD Gene List",
   numEntries: 60,
-  parsedItems: { items:  [{ geneId: 'ENSG00000164458' }], itemMap: { 'TTN': { geneId: 'ENSG00000164458', symbol: 'TTN' } } }
+  parsedItems: { items: [{ geneId: 'ENSG00000164458' }], itemMap: { 'TTN': { geneId: 'ENSG00000164458', symbol: 'TTN' } } }
 }
 
 export const STATE = {
@@ -29,10 +29,10 @@ export const STATE = {
   locusListLoading: { isLoading: false },
   currentSearchHash: SEARCH_HASH,
   searchesByHash: { [SEARCH_HASH]: SEARCH },
-  searchGeneBreakdown: { [SEARCH_HASH]: {[GENE_ID]: { total: 3, families: { [FAMILY_GUID]: 2 }}} },
+  searchGeneBreakdown: { [SEARCH_HASH]: { [GENE_ID]: { total: 3, families: { [FAMILY_GUID]: 2 } } } },
   savedSearchesByGuid: {},
   familiesByGuid: {
-   [FAMILY_GUID]: {
+    [FAMILY_GUID]: {
       analysisNotes: 'added note',
       analysisStatus: 'Rcpc',
       analysisSummary: '',
@@ -198,12 +198,12 @@ export const STATE = {
       description: "",
       familyGuids: [FAMILY_GUID],
       name: "Test Group",
-      projectGuid:PROJECT_GUID,
+      projectGuid: PROJECT_GUID,
     },
   },
   locusListsByGuid: { [LOCUS_LIST_GUID]: LOCUS_LIST },
   projectsByGuid: {
-    [PROJECT_GUID] : {
+    [PROJECT_GUID]: {
       createdDate: '2016-05-16T05:37:08.634Z',
       deprecatedLastAccessedDate: '2017-03-14T15:15:42.580Z',
       description: '',
@@ -214,11 +214,12 @@ export const STATE = {
       projectCategoryGuids: [],
       projectGuid: PROJECT_GUID,
       locusListGuids: [LOCUS_LIST_GUID],
-    }},
+    }
+  },
   genesById: { [GENE_ID]: { geneId: GENE_ID, geneSymbol: 'OR2M3' } },
   user: {
     date_joined: '2015-02-19T20:22:50.633Z',
-    email: 'test@broadinstitute.org',
+    email: 'test@populationgenomics.org.au',
     first_name: '',
     id: 1,
     is_active: true,

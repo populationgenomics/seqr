@@ -2,7 +2,7 @@
 
 export const USER = {
   date_joined: '2015-02-19T20:22:50.633Z',
-  email: 'test@broadinstitute.org',
+  email: 'test@populationgenomics.org.au',
   first_name: '',
   id: 1,
   is_active: true,
@@ -53,7 +53,7 @@ export const VARIANT = {
       pl: "0,213,1918",
     },
   },
-  hgmd: {accession: null, class: null},
+  hgmd: { accession: null, class: null },
   liftedOverChrom: "",
   liftedOverGenomeVersion: "38",
   liftedOverPos: "",
@@ -172,12 +172,12 @@ export const LOCUS_LIST = {
   locusListGuid: LOCUS_LIST_GUID,
   name: "2017 Monogenic IBD Gene List",
   numEntries: 60,
-  parsedItems: { items:  [{ geneId: 'ENSG00000164458' }], itemMap: { 'TTN': { geneId: 'ENSG00000164458', symbol: 'TTN' } } }
+  parsedItems: { items: [{ geneId: 'ENSG00000164458' }], itemMap: { 'TTN': { geneId: 'ENSG00000164458', symbol: 'TTN' } } }
 }
 
 const GENE_ID = 'ENSG00000228198'
 export const SEARCH_HASH = 'd380ed0fd28c3127d07a64ea2ba907d7'
-export const SEARCH = { projectFamilies: [{ projectGuid: 'R0237_1000_genomes_demo', familyGuid: 'F011652_1'}], search: {} }
+export const SEARCH = { projectFamilies: [{ projectGuid: 'R0237_1000_genomes_demo', familyGuid: 'F011652_1' }], search: {} }
 
 export const STATE1 = {
   currentProjectGuid: 'R0237_1000_genomes_demo',
@@ -365,7 +365,7 @@ export const STATE1 = {
   variantTagsByGuid: {
     VT1726942_1248367227_r0390_100: {
       category: "Collaboration", color: "#668FE3", dateSaved: "2018-05-25T21:00:51.260Z", name: "Review",
-      tagGuid: "VT1726942_1248367227_r0390_100", user: "hsnow@broadinstitute.org",
+      tagGuid: "VT1726942_1248367227_r0390_100", user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000002_1248367227_r0390_100'],
     },
     VT1708635_1248367227_r0390_100: {
@@ -375,25 +375,29 @@ export const STATE1 = {
       name: "Tier 1 - Phenotype not delineated",
       searchHash: "c2edbeae",
       tagGuid: "VT1708635_1248367227_r0390_100",
-      user: "hsnow@broadinstitute.org",
+      user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000002_1248367227_r0390_100'],
     },
   },
   variantNotesByGuid: {},
   variantFunctionalDataByGuid: {
-    VFD0000002_1248367227_r0390_100: { color: "#311B92", dateSaved: "2018-05-24T15:30:04.483Z",
-      metadata: "An updated note", metadataTitle: null, name: "Biochemical Function", user: "hsnow@broadinstitute.org",
-      variantGuids: ['SV0000002_1248367227_r0390_100'], tagGuid: 'VFD0000002_1248367227_r0390_100' },
-    VFD0000001_1248367227_r0390_100: { color: "#880E4F", dateSaved: "2018-05-24T15:34:01.365Z", metadata: "2",
-      metadataTitle: "LOD Score", name: "Genome-wide Linkage", user: "hsnow@broadinstitute.org",
-      variantGuids: ['SV0000002_1248367227_r0390_100'], tagGuid: 'VFD0000001_1248367227_r0390_100'},
+    VFD0000002_1248367227_r0390_100: {
+      color: "#311B92", dateSaved: "2018-05-24T15:30:04.483Z",
+      metadata: "An updated note", metadataTitle: null, name: "Biochemical Function", user: "hsnow@populationgenomics.org.au",
+      variantGuids: ['SV0000002_1248367227_r0390_100'], tagGuid: 'VFD0000002_1248367227_r0390_100'
+    },
+    VFD0000001_1248367227_r0390_100: {
+      color: "#880E4F", dateSaved: "2018-05-24T15:34:01.365Z", metadata: "2",
+      metadataTitle: "LOD Score", name: "Genome-wide Linkage", user: "hsnow@populationgenomics.org.au",
+      variantGuids: ['SV0000002_1248367227_r0390_100'], tagGuid: 'VFD0000001_1248367227_r0390_100'
+    },
   },
   locusListsByGuid: { [LOCUS_LIST_GUID]: LOCUS_LIST },
   locusListsLoading: {},
   savedVariantsLoading: {},
   savedVariantTableState: {},
   searchesByHash: { [SEARCH_HASH]: SEARCH },
-  searchGeneBreakdown: { [SEARCH_HASH]: {[GENE_ID]: { total: 3, families: { F011652_1: 2 }}} },
+  searchGeneBreakdown: { [SEARCH_HASH]: { [GENE_ID]: { total: 3, families: { F011652_1: 2 } } } },
   searchGeneBreakdownLoading: { isLoading: false },
 }
 

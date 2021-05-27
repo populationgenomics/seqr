@@ -1,2222 +1,2836 @@
 [
-{
-    "model": "seqr.project",
-    "pk": 1,
-    "fields": {
-        "guid": "R0001_1kg",
-        "created_date": "2017-03-12T19:27:08.156Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.582Z",
-        "name": "1kg project n\u00e5me with uni\u00e7\u00f8de",
-        "description": "1000 genomes project description with uni\u00e7\u00f8de",
-	"can_edit_group": 2,
-	"can_view_group": 3,
-    "workspace_name": "anvil-1kg project n\u00e5me with uni\u00e7\u00f8de",
-    "workspace_namespace": "my-seqr-billing",
-    "genome_version": "37",
-	"is_mme_enabled": true,
-    "has_case_review": true,
-	"mme_primary_data_owner": "PI",
-    "mme_contact_url": "mailto:test@broadinstitute.org,seqr-matchmaker@populationgenomics.org.au",
-	"last_accessed_date": "2017-09-15T18:15:50.827Z"
-    }
-},
-{
-    "model": "seqr.project",
-    "pk": 2,
-    "fields": {
-        "guid": "R0002_empty",
-        "created_date": "2017-03-12T19:27:08.156Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.582Z",
-        "name": "Empty Project",
-        "description": "",
-	"can_edit_group": 2,
-	"can_view_group": 3,
-	"is_mme_enabled": false,
-	"mme_primary_data_owner": "",
-	"last_accessed_date": "2017-09-15T18:15:50.827Z"
-    }
-},
-{
-    "model": "seqr.project",
-    "pk": 3,
-    "fields": {
-        "guid": "R0003_test",
-        "created_date": "2017-03-12T19:27:08.156Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.582Z",
-        "name": "Test Reprocessed Project",
-        "description": "",
-	"can_edit_group": 2,
-	"can_view_group": 3,
-    "workspace_name": "anvil-project 1000 Genomes Demo",
-    "workspace_namespace": "my-seqr-billing",
-	"is_mme_enabled": false,
-	"mme_primary_data_owner": "",
-    "mme_contact_url": "mailto:seqr-test@gmail.com,test@broadinstitute.org",
-	"last_accessed_date": "2017-09-15T18:15:50.827Z"
-    }
-},
-{
-    "model": "seqr.project",
-    "pk": 4,
-    "fields": {
-        "guid": "R0004_non_analyst_project",
-        "created_date": "2017-03-12T19:27:08.156Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.582Z",
-        "name": "Non-Analyst Project",
-	    "can_edit_group": 2,
-	    "can_view_group": 2,
-	    "last_accessed_date": "2017-09-15T18:15:50.827Z"
-    }
-},
-{
-    "model": "seqr.projectcategory",
-    "pk": 1,
-    "fields": {
-        "guid": "PC000001_analyst_projects",
-        "created_date": "2020-03-12T23:52:36.401Z",
-        "created_by": null,
-        "last_modified_date": "2020-03-12T23:52:36.401Z",
-        "name": "analyst-projects",
-        "projects": [
-            1, 2, 3
-        ]
-    }
-},
-{
-    "model": "seqr.projectcategory",
-    "pk": 2,
-    "fields": {
-        "guid": "PC000002_categry_with_unicde",
-        "created_date": "2017-03-12T23:52:36.401Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T23:52:36.401Z",
-        "name": "c\u00e5teg\u00f8ry with uni\u00e7\u00f8de",
-        "projects": [
-            1
-        ]
-    }
-},
-{
-    "model": "seqr.projectcategory",
-    "pk": 3,
-    "fields": {
-        "guid": "PC000003_test_category_name",
-        "created_date": "2017-03-12T23:52:55.846Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T23:52:55.846Z",
-        "name": "CMG",
-        "projects": [
-            1, 3
-        ]
-    }
-},
-{
-    "model": "seqr.projectcategory",
-    "pk": 4,
-    "fields": {
-        "guid": "PC000004_demo",
-        "created_date": "2017-03-12T23:52:55.846Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T23:52:55.846Z",
-        "name": "Demo",
-        "projects": [
-            3
-        ]
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 1,
-    "fields": {
-        "guid": "F000001_1",
-        "created_date": "2017-03-12T19:27:08.199Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T07:53:27.973Z",
-        "project": 1,
-        "family_id": "1",
-        "display_name": "1",
-        "description": "test descripti\u00f8n",
-        "post_discovery_omim_number": "615120,615123",
-        "pedigree_image": "ped_1.png",
-        "analysis_notes": "<b>\r\n                        F\u00e5mily analysis n\u00f8tes\r\n                    </b>",
-        "analysis_summary": "<b>\r\n                        F\u00e5mily analysis summ\u00e5ry.\r\n                    </b>",
-        "analysis_status": "Q",
-        "case_review_notes": "<div>initial notes with uni&ccedil;&oslash;de</div>\n<div>test</div>",
-        "case_review_summary": "<div>internal case review summary with uni&ccedil;&oslash;de</div>"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 2,
-    "fields": {
-        "guid": "F000002_2",
-        "created_date": "2017-03-12T19:27:08.319Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T22:36:26.681Z",
-        "project": 1,
-        "family_id": "2",
-        "display_name": "2",
-        "description": "",
-        "pedigree_image": "ped_2.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "<div>internal notes 2</div>\n<div>&nbsp;</div>",
-        "case_review_summary": "<div>internal case review summary 2</div>\n<div>&nbsp;</div>"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 3,
-    "fields": {
-        "guid": "F000003_3",
-        "created_date": "2017-03-12T19:27:08.421Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.435Z",
-        "project": 1,
-        "family_id": "3",
-        "display_name": "3",
-        "description": "",
-        "pedigree_image": "ped_3.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 4,
-    "fields": {
-        "guid": "F000004_4",
-        "created_date": "2017-03-12T19:27:08.468Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.483Z",
-        "project": 1,
-        "family_id": "4",
-        "display_name": "4",
-        "description": "",
-        "pedigree_image": "ped_4.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 5,
-    "fields": {
-        "guid": "F000005_5",
-        "created_date": "2017-03-12T19:27:08.516Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.530Z",
-        "project": 1,
-        "family_id": "5",
-        "display_name": "5",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 6,
-    "fields": {
-        "guid": "F000006_6",
-        "created_date": "2017-03-12T19:27:08.563Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.577Z",
-        "project": 1,
-        "family_id": "6",
-        "display_name": "6",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 7,
-    "fields": {
-        "guid": "F000007_7",
-        "created_date": "2017-03-12T19:27:08.610Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.622Z",
-        "project": 1,
-        "family_id": "7",
-        "display_name": "7",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 8,
-    "fields": {
-        "guid": "F000008_8",
-        "created_date": "2017-03-12T19:27:08.652Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.666Z",
-        "project": 1,
-        "family_id": "8",
-        "display_name": "8",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 9,
-    "fields": {
-        "guid": "F000009_9",
-        "created_date": "2017-03-12T19:27:08.697Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.714Z",
-        "project": 1,
-        "family_id": "9",
-        "display_name": "9",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 10,
-    "fields": {
-        "guid": "F000010_10",
-        "created_date": "2017-03-12T19:27:08.760Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.773Z",
-        "project": 1,
-        "family_id": "10",
-        "display_name": "10",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 11,
-    "fields": {
-        "guid": "F000011_11",
-        "created_date": "2017-03-12T19:27:08.806Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T22:36:49.654Z",
-        "project": 3,
-        "family_id": "11",
-        "display_name": "11",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "case_review_notes": "",
-        "case_review_summary": ""
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 12,
-    "fields": {
-        "guid": "F000012_12",
-        "created_date": "2017-03-12T19:27:08.848Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T22:37:17.555Z",
-        "project": 3,
-        "family_id": "12",
-        "display_name": "12",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "success_story": "Published with Gleeson and Reza (PMID 31668703)",
-        "success_story_types": ["C", "D"],
-        "case_review_notes": "<div><span style=\"text-decoration: underline;\"><span style=\"font-family: 'book antiqua', palatino, serif;\">case review notes for family 12</span></span></div>\n<ul>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note1</span></li>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note 2</span></li>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note 3</span></li>\n</ul>",
-        "case_review_summary": "<div><span style=\"font-family: 'courier new', courier, monospace;\"><strong>summary for family 12</strong></span></div>"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 13,
-    "fields": {
-        "guid": "F000013_13",
-        "created_date": "2017-03-12T19:27:08.760Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T19:27:08.773Z",
-        "project": 1,
-        "family_id": "no_individuals",
-        "display_name": "family without individuals and samples",
-        "description": "",
-        "pedigree_image": "ped.png",
-        "analysis_notes": "",
-        "analysis_summary": "",
-        "analysis_status": "Q",
-        "success_story": "Treatment is now available on compassionate use protocol (nucleoside replacement protocol)",
-        "success_story_types": ["A"],
-        "case_review_notes": "family without individuals and samples",
-        "case_review_summary": "internal_case_review_summary"
-    }
-},
-{
-    "model": "seqr.family",
-    "pk": 14,
-    "fields": {
-        "guid": "F000014_14",
-        "created_date": "2017-03-12T19:27:08.848Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T22:37:17.555Z",
-        "project": 4,
-        "family_id": "14",
-        "success_story": "Differential treatement",
-        "success_story_types": ["A", "D"]
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 1,
-    "fields": {
-        "guid": "I000001_na19675",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.719Z",
-        "family": 1,
-        "individual_id": "NA19675_1",
-        "mother_id": 3,
-        "father_id": 2,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-        "notes": "",
-        "case_review_status": "I",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:43.204Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null,
-        "proband_relationship": "S",
-        "birth_year": null,
-        "death_year": null,
-        "onset_age": "A",
-        "maternal_ethnicity": ["Azerbaijanis"],
-        "paternal_ethnicity": ["African Americans"],
-        "consanguinity": true,
-        "affected_relatives": false,
-        "expected_inheritance": ["R"],
-        "features": [{"id": "HP:0001631"}, {"id": "HP:0002011"}, {"id": "HP:0001636"}],
-        "absent_features": [{"id": "HP:0011675"}, {"id": "HP:0001674"}, {"id": "HP:0001508"}],
-        "nonstandard_features": "[]",
-        "absent_nonstandard_features": null,
-        "disorders": ["615593"],
-        "candidate_genes": [{"gene": "EHBP1L1", "comments": "comments EHBP1L1"}, {"gene": "ACY3", "comments": "comments ACY3"}],
-        "rejected_genes": [{"gene": "IKBKAP", "comments": "comments IKBKAP"}, {"gene": "CCDC102B", "comments": "comments for CCDC102B"}],
-        "ar_fertility_meds": null,
-        "ar_iui": null,
-        "ar_ivf": null,
-        "ar_icsi": null,
-        "ar_surrogacy": null,
-        "ar_donoregg": null,
-        "ar_donorsperm": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 2,
-    "fields": {
-        "guid": "I000002_na19678",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.766Z",
-        "family": 1,
-        "individual_id": "NA19678",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "N",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "U",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:46.200Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 3,
-    "fields": {
-        "guid": "I000003_na19679",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.793Z",
-        "family": 1,
-        "individual_id": "NA19679",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "F",
-        "affected": "N",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "A",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:49.964Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 4,
-    "fields": {
-        "guid": "I000004_hg00731",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.928Z",
-        "family": 2,
-        "individual_id": "HG00731",
-        "mother_id": 6,
-        "father_id": 5,
-        "sex": "F",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "3",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:59.093Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null,
-        "features": [{"id": "HP:0002011"}, {"id": "HP:0011675"}],
-        "absent_features": [{"id": "HP:0002017"}]
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 5,
-    "fields": {
-        "guid": "I000005_hg00732",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.956Z",
-        "family": 2,
-        "individual_id": "HG00732",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "N",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "R",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 6,
-    "fields": {
-        "guid": "I000006_hg00733",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.980Z",
-        "family": 2,
-        "individual_id": "HG00733",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "F",
-        "affected": "N",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "H",
-        "case_review_status_last_modified_date": "2017-03-12T22:35:06.446Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 7,
-    "fields": {
-        "guid": "I000007_na20870",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.015Z",
-        "family": 3,
-        "individual_id": "NA20870",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 8,
-    "fields": {
-        "guid": "I000008_na20872",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.044Z",
-        "family": 4,
-        "individual_id": "NA20872",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 9,
-    "fields": {
-        "guid": "I000009_na20874",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.071Z",
-        "family": 5,
-        "individual_id": "NA20874",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "N",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 10,
-    "fields": {
-        "guid": "I000010_na20875",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.100Z",
-        "family": 6,
-        "individual_id": "NA20875",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 11,
-    "fields": {
-        "guid": "I000011_na20876",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.128Z",
-        "family": 7,
-        "individual_id": "NA20876",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 12,
-    "fields": {
-        "guid": "I000012_na20877",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.158Z",
-        "family": 8,
-        "individual_id": "NA20877",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 13,
-    "fields": {
-        "guid": "I000013_na20878",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.184Z",
-        "family": 9,
-        "individual_id": "NA20878",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 14,
-    "fields": {
-        "guid": "I000014_na20881",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.213Z",
-        "family": 10,
-        "individual_id": "NA20881",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "",
-        "case_review_status_last_modified_date": null,
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 15,
-    "fields": {
-        "guid": "I000015_na20885",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.239Z",
-        "family": 11,
-        "individual_id": "NA20885",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	    "notes": "",
-        "population": "ASJ",
-        "consanguinity": false,
-        "features": [{"id": "HP:0011675"}, {"id": "HP:0001509"}],
-        "case_review_status": "E",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:52.302Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 16,
-    "fields": {
-        "guid": "I000016_na20888",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.270Z",
-        "family": 12,
-        "individual_id": "NA20888",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "M",
-        "affected": "A",
-        "display_name": "",
-	"notes": "",
-        "case_review_status": "G",
-        "case_review_status_last_modified_date": "2017-03-12T22:34:55.895Z",
-        "case_review_status_last_modified_by": null,
-        "case_review_discussion": null
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 17,
-    "fields": {
-        "guid": "I000017_na20889",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.270Z",
-        "family": 12,
-        "individual_id": "NA20889",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "F",
-        "affected": "A",
-        "display_name": ""
-    }
-},
-{
-    "model": "seqr.individual",
-    "pk": 18,
-    "fields": {
-        "guid": "I000018_na21234",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.980Z",
-        "family": 14,
-        "individual_id": "NA21234",
-        "mother_id": null,
-        "father_id": null,
-        "sex": "F",
-        "affected": "A"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 129,
-    "fields": {
-        "guid": "S000129_na19675",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.744Z",
-
-        "individual": 1,
-        "sample_type": "WES",
-        "dataset_type": "VARIANTS",
-        "sample_id": "NA19675",
-        "is_active": true,
-        "elasticsearch_index": "test_index",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 130,
-    "fields": {
-        "guid": "S000130_na19678",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.744Z",
-
-        "individual": 2,
-        "sample_type": "WES",
-        "dataset_type": "VARIANTS",
-        "sample_id": "NA19678",
-        "is_active": true,
-        "elasticsearch_index": "test_index_old",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 131,
-    "fields": {
-        "guid": "S000131_na19679",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.800Z",
-
-        "sample_id": "NA19679",
-        "sample_type": "WES",
-        "is_active": false,
-        "elasticsearch_index": "test_index",
-        "individual": 3,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 132,
-    "fields": {
-        "guid": "S000132_hg00731",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.937Z",
-        "elasticsearch_index": "test_index",
-        "sample_id": "HG00731",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 4,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 133,
-    "fields": {
-        "guid": "S000133_hg00732",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.963Z",
-        "elasticsearch_index": "test_index",
-        "sample_id": "HG00732",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 5,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 134,
-    "fields": {
-        "guid": "S000134_hg00733",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.990Z",
-        "elasticsearch_index": "test_index",
-        "sample_id": "HG00733",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 6,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 135,
-    "fields": {
-        "guid": "S000135_na20870",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.022Z",
-        "elasticsearch_index": "test_index",
-        "sample_id": "NA20870",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 7,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 136,
-    "fields": {
-        "guid": "S000136_na20872",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.052Z",
-        
-        "sample_id": "NA20872",
-        "sample_type": "WES",
-        "is_active": false,
-        "individual": 8,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 137,
-    "fields": {
-        "guid": "S000137_na20874",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.079Z",
-        "elasticsearch_index": "test_index",
-        "sample_id": "NA20874",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 9,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 138,
-    "fields": {
-        "guid": "S000138_na20875",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.111Z",
-        
-        "sample_id": "NA20875",
-        "sample_type": "WES",
-        "is_active": false,
-        "individual": 10,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 139,
-    "fields": {
-        "guid": "S000139_na20876",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.136Z",
-
-        "sample_id": "NA20876",
-        "sample_type": "WES",
-        "is_active": false,
-        "individual": 11,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 140,
-    "fields": {
-        "guid": "S000140_na20877",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.165Z",
-
-        "sample_id": "NA19678",
-        "sample_type": "WES",
-        "is_active": false,
-    	"individual": 12,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 141,
-    "fields": {
-        "guid": "S000141_na20878",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.193Z",
-
-        "sample_id": "NA20878",
-        "sample_type": "WES",
-        "is_active": false,
-    	"individual": 13,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 142,
-    "fields": {
-        "guid": "S000142_na20881",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.220Z",
-
-        "sample_id": "NA20881",
-        "sample_type": "WES",
-        "is_active": false,
-    	"individual": 14,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 143,
-    "fields": {
-        "guid": "S000143_na20885",
-        "created_date": "2020-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2020-03-13T09:07:50.247Z",
-        "elasticsearch_index": "test_index_second",
-        "sample_id": "NA20885",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 15,
-        "dataset_type": "VARIANTS",
-        "loaded_date": "2020-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 144,
-    "fields": {
-        "guid": "S000144_na20888",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.277Z",
-
-        "sample_id": "NA20888",
-        "sample_type": "WES",
-        "is_active": false,
-        "individual": 16,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 154,
-    "fields": {
-        "guid": "S000154_na20889",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:50.277Z",
-
-        "sample_id": "NA20889",
-        "sample_type": "WES",
-        "is_active": false,
-        "individual": 17,
-        "dataset_type": "VARIANTS",
-        "elasticsearch_index": "1kg.vcf.gz",
-        "loaded_date": "2017-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 145,
-    "fields": {
-        "guid": "S000145_hg00731",
-        "created_date": "2018-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2018-03-13T09:07:49.937Z",
-        "elasticsearch_index": "test_index_sv",
-        "sample_id": "HG00731",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 4,
-        "dataset_type": "SV",
-        "loaded_date": "2018-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.sample",
-    "pk": 146,
-    "fields": {
-        "guid": "S000146_hg00732",
-        "created_date": "2018-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2018-03-13T09:07:49.963Z",
-        "elasticsearch_index": "test_index_sv",
-        "sample_id": "HG00732",
-        "sample_type": "WES",
-        "is_active": true,
-        "individual": 5,
-        "dataset_type": "SV",
-        "loaded_date": "2018-02-05T06:42:55.397Z"
-    }
-},
-{
-    "model": "seqr.igvsample",
-    "pk": 145,
-    "fields": {
-        "guid": "S000145_na19675",
-        "created_date": "2017-02-05T06:42:55.397Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-13T09:07:49.744Z",
-        "individual": 1,
-        "sample_type": "alignment",
-        "file_path": "/readviz/NA19675.cram"
-    }
-},
-{
-    "model": "seqr.varianttagtype",
-    "pk": 1,
-    "fields": {
-        "guid": "VTT_tier_1_novel_gene_and_phen",
-        "created_date": "2018-04-27T00:00:00.000Z",
-        "created_by": null,
-        "last_modified_date": null,
-        "project": null,
-        "name": "Tier 1 - Novel gene and phenotype",
-        "category": "CMG Discovery Tags",
-        "description": "Gene not previously associated with a Mendelian condition",
-        "color": "#03441E"
-    }
-},
-{
-    "model": "seqr.varianttagtype",
-    "pk": 2,
-    "fields": {
-        "guid": "VTT_review",
-        "created_date": "2018-04-27T00:00:00.000Z",
-        "created_by": null,
-        "last_modified_date": null,
-        "project": null,
-        "name": "Review",
-        "category": "Collaboration",
-        "description": "To mark a variant and/or gene of interest for further review.",
-        "color": "#668FE3",
-        "order": 11.0
-    }
-},
-{
-    "model": "seqr.varianttagtype",
-    "pk": 3,
-    "fields": {
-        "guid": "VTT_excluded",
-        "created_date": "2018-04-27T00:00:00.000Z",
-        "created_by": null,
-        "last_modified_date": null,
-        "project": 1,
-        "name": "Excluded",
-        "category": "Collaboration",
-        "description": "To mark a variant and/or gene you previously reviewed but do not think it contributing to the phenotype in this case. To help other members of your team (and yourself), please consider also adding a note with details of why you reprioritized this variant.",
-        "color": "#555555",
-        "order": 15.0
-    }
-},
-{
-    "model": "seqr.varianttagtype",
-    "pk": 4,
-    "fields": {
-        "guid": "VTT_Known_gene_for_phenotype",
-        "created_date": "2018-04-27T00:00:00.000Z",
-        "created_by": null,
-        "last_modified_date": null,
-        "project": null,
-        "name": "Known gene for phenotype",
-        "category": "CMG Discovery Tags",
-        "description": "Variant tag type for known gene for phenotype",
-        "color": "#777777",
-        "order": 16.0
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 1,
-    "fields": {
-        "guid": "SV0000001_2103343353_r0390_100",
-        "created_date": "2018-05-15T14:51:54.491Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.812Z",
-        "xpos": 21003343353,
-        "xpos_end": 21003343356,
-        "ref": "GAGA",
-        "alt": "G",
-        "variant_id": "21-3343353-GAGA-G",
-        "saved_variant_json": {
-            "variantId": "21-3343353-GAGA-G",
-            "clinvar": {"clinicalSignificance": "", "alleleId": null, "variationId": null, "goldStars": null},
-            "liftedOverGenomeVersion": "",
-            "familyGuids": ["F000001_1", "F000002_2"],
-            "liftedOverPos": "",
-            "genotypeFilters": "pass",
-            "mainTranscriptId": "ENST00000258436",
-            "populations": {"callset": {"ac": null, "an": null, "af": null}, "g1k": {"ac": null, "an": null, "af": 0.0}, "gnomad_genomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.0}, "gnomad_exomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 2.4418633044922146e-05}, "exac": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.000242306760358614}, "topmed": {"ac": null, "an": null, "af": null}},
-            "genomeVersion": "37",
-            "pos": 3343353,
-            "predictions": {"eigen": null, "revel": null, "sift": null, "cadd": "14.33", "metasvm": "", "mpc": null, "splice_ai": null, "phastcons_100_vert": null, "mut_taster": null, "fathmm": null, "polyphen": null, "dann": null, "primate_ai": null, "gerp_rs": null},
-            "hgmd": {"accession": null, "class": null},
-            "rsid": null,
-            "liftedOverChrom": "",
-            "originalAltAlleles": ["G"],
-            "transcripts": {"ENSG00000135953": [
-                {"transcriptId": "ENST00000258436", "lofFilter": "", "biotype": "protein_coding", "geneSymbol": "MFSD9", "majorConsequence": "inframe_deletion", "canonical": "YES", "hgvsp": "ENSP00000258436.5:p.Leu126del", "lof": "", "lofFlags": "", "codons": "ctTCTc/ctc", "hgvsc": "ENST00000258436.5:c.375_377delTCT", "transcriptRank": 0, "geneId": "ENSG00000135953", "aminoAcids": "LL/L", "cdnaPosition": "419-421"},
-                {"transcriptId": "ENST00000411991", "lofFilter": "", "biotype": "nonsense_mediated_decay", "geneSymbol": "MFSD9", "majorConsequence": "3_prime_UTR_variant", "canonical": "", "hgvsp": "", "lof": "", "lofFlags": "", "codons": "", "hgvsc": "ENST00000411991.1:c.*211_*213delTCT", "transcriptRank": 100, "geneId": "ENSG00000135953", "aminoAcids": "", "cdnaPosition": "558-560"},
-                {"transcriptId": "ENST00000421966", "lofFilter": "", "biotype": "nonsense_mediated_decay", "geneSymbol": "MFSD9", "majorConsequence": "downstream_gene_variant", "canonical": "", "hgvsp": "", "lof": "", "lofFlags": "", "codons": "", "hgvsc": "", "transcriptRank": 100, "geneId": "ENSG00000135953", "aminoAcids": "", "cdnaPosition": null}, {"transcriptId": "ENST00000428085", "lofFilter": "", "biotype": "nonsense_mediated_decay", "geneSymbol": "MFSD9", "majorConsequence": "inframe_deletion", "canonical": "", "hgvsp": "ENSP00000413641.1:p.Leu48del", "lof": "", "lofFlags": "", "codons": "ctTCTc/ctc", "hgvsc": "ENST00000428085.1:c.141_143delTCT", "transcriptRank": 100, "geneId": "ENSG00000135953", "aminoAcids": "LL/L", "cdnaPosition": "141-143"},
-                {"transcriptId": "ENST00000437075", "lofFilter": "", "biotype": "nonsense_mediated_decay", "geneSymbol": "MFSD9", "majorConsequence": "3_prime_UTR_variant", "canonical": "", "hgvsp": "", "lof": "", "lofFlags": "", "codons": "", "hgvsc": "ENST00000437075.2:c.*176_*178delTCT", "transcriptRank": 100, "geneId": "ENSG00000135953", "aminoAcids": "", "cdnaPosition": "541-543"},
-                {"transcriptId": "ENST00000438943", "lofFilter": "", "biotype": "nonsense_mediated_decay", "geneSymbol": "MFSD9", "majorConsequence": "3_prime_UTR_variant", "canonical": "", "hgvsp": "", "lof": "", "lofFlags": "", "codons": "", "hgvsc": "ENST00000438943.1:c.*211_*213delTCT", "transcriptRank": 100, "geneId": "ENSG00000135953", "aminoAcids": "", "cdnaPosition": "558-560"}]},
-            "chrom": "21",
-            "genotypes": {"I000003_na19679": {"sampleId": "NA19679", "ab": 0.0, "ad": "45,0", "gq": 99.0, "dp": "45", "pl": "0,135,1525", "cnvs": {"size": null, "snps": null, "cn": null, "LRR_sd": null, "array": null, "caller": null, "type": null, "freq": null, "LRR_median": null}, "numAlt": 0}, "I000002_na19678": {"sampleId": "NA19678", "ab": 0.0, "ad": "42,0", "gq": 99.0, "dp": "43", "pl": "0,126,1479", "cnvs": {"size": null, "snps": null, "cn": null, "LRR_sd": null, "array": null, "caller": null, "type": null, "freq": null, "LRR_median": null}, "numAlt": 0}, "I000001_na19675": {"sampleId": "NA19675_1", "ab": 0.7021276595744681, "ad": "14,33", "gq": 46.0, "dp": "50", "pl": "46,0,686", "cnvs": {"size": null, "snps": null, "cn": null, "LRR_sd": null, "array": null, "caller": null, "type": null, "freq": null, "LRR_median": null}, "numAlt": 1}}
-        },
-        "family": 1
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 2,
-    "fields": {
-        "guid": "SV0000002_1248367227_r0390_100",
-        "created_date": "2018-05-15T14:51:56.943Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.805Z",
-        "xpos": 1248367227,
-        "xpos_end": 1248367228,
-        "ref": "TC",
-        "alt": "T",
-        "variant_id": "12-48367227-TC-T",
-        "saved_variant_json": {
-            "clinvar": {
-                "clinicalSignificance": "",
-                "alleleId": null,
-                "variationId": null,
-                "goldStars": null
-            },
-            "liftedOverGenomeVersion": "38",
-            "familyGuids": [
-                "F000001_1"
-            ],
-            "liftedOverPos": "",
-            "genotypeFilters": "pass",
-            "mainTranscriptId": "ENST00000258436",
-            "populations": {
-                "callset": {
-                    "ac": null,
-                    "an": null,
-                    "af": null
-                },
-                "g1k": {
-                    "ac": null,
-                    "an": null,
-                    "af": 0.0
-                },
-                "gnomad_genomes": {
-                    "hemi": null,
-                    "ac": null,
-                    "an": null,
-                    "hom": null,
-                    "af": 0.00012925741614425127
-                },
-                "gnomad_exomes": {
-                    "hemi": null,
-                    "ac": null,
-                    "an": null,
-                    "hom": null,
-                    "af": 6.505916317651364e-05
-                },
-                "exac": {
-                    "hemi": null,
-                    "ac": null,
-                    "an": null,
-                    "hom": null,
-                    "af": 0.0006726888333653661
-                },
-                "topmed": {
-                    "ac": null,
-                    "an": null,
-                    "af": null
-                }
-            },
-            "genomeVersion": "37",
-            "pos": 248367227,
-            "predictions": {
-                "eigen": null,
-                "revel": null,
-                "sift": null,
-                "cadd": "27.2",
-                "metasvm": "",
-                "mpc": null,
-                "splice_ai": null,
-                "phastcons_100_vert": null,
-                "mut_taster": null,
-                "fathmm": null,
-                "polyphen": null,
-                "dann": null,
-                "primate_ai": null,
-                "gerp_rs": null
-            },
-            "hgmd": {
-                "accession": null,
-                "class": null
-            },
-            "rsid": null,
-            "liftedOverChrom": "",
-            "originalAltAlleles": [
-                "T"
-            ],
-            "transcripts": {
-                "ENSG00000135953": [
-                    {
-                        "transcriptId": "ENST00000258436",
-                        "lofFilter": "",
-                        "biotype": "protein_coding",
-                        "geneSymbol": "MFSD9",
-                        "majorConsequence": "inframe_deletion",
-                        "canonical": "YES",
-                        "hgvsp": "ENSP00000258436.5:p.Leu126del",
-                        "lof": "",
-                        "lofFlags": "",
-                        "codons": "ctTCTc/ctc",
-                        "hgvsc": "ENST00000258436.5:c.375_377delTCT",
-                        "transcriptRank": 0,
-                        "aminoAcids": "LL/L",
-                        "cdnaPosition": "419-421"
-                    }
-                ]
-            },
-            "chrom": "1",
-            "genotypes": {
-                "I000004_hg00731": {
-                    "sampleId": "HG00731",
-                    "ab": 0.0,
-                    "ad": "71,0",
-                    "gq": 99.0,
-                    "dp": "71",
-                    "pl": "0,213,1918",
-                    "numAlt": 2
-                },
-                "I000005_hg00732": {
-                    "sampleId": "HG00732",
-                    "ab": 0.0,
-                    "ad": "77,0",
-                    "gq": 99.0,
-                    "dp": "77",
-                    "pl": "0,232,3036",
-                    "numAlt": 1
-                }
-            }
-        },
-        "family": 2
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 4,
-    "fields": {
-        "guid": "SV0059956_11560662_f019313_1",
-        "created_date": "2018-05-15T14:51:57.255Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.817Z",
-        "xpos": 1001560662,
-        "xpos_end": 1003121324,
-        "ref": "G",
-        "alt": "A",
-        "variant_id": "1-46859832-G-A",
-        "saved_variant_json": {
-            "clinvar": {"clinicalSignificance": "", "alleleId": null, "variationId": null, "goldStars": null},
-            "liftedOverGenomeVersion": "38",
-            "familyGuids": ["F000001_1"],
-            "liftedOverPos": "",
-            "genotypeFilters": "pass",
-            "mainTranscriptId": "ENST00000505820",
-            "populations": {"callset": {"ac": null, "an": null, "af": null}, "g1k": {"ac": null, "an": null, "af": 0.0}, "gnomad_genomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.0}, "gnomad_exomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 8.142526788913136e-06}, "exac": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.0}, "topmed": {"ac": null, "an": null, "af": null}},
-            "genomeVersion": "37",
-            "pos": 1560662,
-            "predictions": {"eigen": null, "revel": null, "sift": "damaging", "cadd": "31", "metasvm": "D", "mpc": null, "splice_ai": null, "phastcons_100_vert": null, "mut_taster": "disease_causing", "fathmm": "tolerated", "polyphen": "probably_damaging", "dann": null, "primate_ai": null, "gerp_rs": null},
-            "hgmd": {"accession": null, "class": null},
-            "rsid": null,
-            "liftedOverChrom": "",
-            "originalAltAlleles": ["T"],
-            "transcripts": {
-                "ENSG00000197530": [
-                    {"transcriptId": "ENST00000505820", "lofFilter": "", "biotype": "protein_coding", "geneSymbol": "CELSR1", "majorConsequence": "splice_region_variant", "canonical": "YES", "hgvs": "ENST00000505820.2:c.1067-4G>A", "lof": "", "lofFlags": "", "codons": "Gtg/Atg", "hgvsc": "ENST00000505820.2:c.1067-4G>A", "transcriptRank": 0, "geneId": "ENSG00000197530", "aminoAcids": "V/M", "cdnaPosition": "3955"}
-                ]
-            },
-            "chrom": "1",
-            "genotypes": {
-                "I000003_na19679": {"sampleId": "NA19679", "ab": 0, "ad": null, "gq": 21, "dp": 7, "pl": null, "numAlt": 0},
-                "I000002_na19678": {"sampleId": "NA19678", "ab": 0, "ad": null, "gq": 6, "dp": 2, "pl": null, "numAlt": 0},
-                "I000002_na19675": {"sampleId": "NA19675", "ab": 0.125, "ad": null, "gq": 7, "dp": 8, "pl": null, "numAlt": 1}
-            }
-        },
-        "family": 1
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 5,
-    "fields": {
-        "guid": "SV0059957_11562437_f019313_1",
-        "created_date": "2018-05-15T14:51:57.255Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.817Z",
-        "xpos": 1001562437,
-        "xpos_end": 1003124874,
-        "ref": "G",
-        "alt": "C",
-        "variant_id": "1-1562437-G-C",
-        "saved_variant_json": {
-            "clinvar": {"clinicalSignificance": "", "alleleId": null, "variationId": null, "goldStars": null},
-            "liftedOverGenomeVersion": "38",
-            "familyGuids": ["F000001_1"],
-            "liftedOverPos": "",
-            "genotypeFilters": "pass",
-            "mainTranscriptId": "ENST00000505820",
-            "populations": {
-                "callset": {
-                    "ac": 11,
-                    "af": 0.344,
-                    "an": 32,
-                    "hemi": null,
-                    "hom": null
-                    },
-                "exac": {
-                    "ac": 28869,
-                    "af": 0.6478622327790974,
-                    "an": 80512,
-                    "hemi": 0,
-                    "hom": 5122
-                    },
-                "g1k": {
-                    "ac": 2206,
-                    "af": 0.6838,
-                    "an": 5008,
-                    "hemi": null,
-                    "hom": null
-                    },
-                "gnomad_exomes": {
-                    "ac": 67263,
-                    "af": 0.6339977851605758,
-                    "an": 216284,
-                    "hemi": 0,
-                    "hom": 12201
-                    },
-                "gnomad_genomes": {
-                    "ac": 10595,
-                    "af": 0.6165093253511398,
-                    "an": 30852,
-                    "hemi": 0,
-                    "hom": 2311
-                    },
-                "topmed": {
-                    "ac": 45912,
-                    "af": 0.365635,
-                    "an": 125568,
-                    "hemi": null,
-                    "hom": 10332
-                    }
-                },
-            "genomeVersion": "37",
-            "pos": 1562437,
-            "hgmd": {"accession": null, "class": null},
-            "rsid": null,
-            "liftedOverChrom": "",
-            "originalAltAlleles": ["G"],
-            "transcripts": {
-                "ENSG00000197530": [
-                    {"transcriptId": "ENST00000505820", "lofFilter": "", "biotype": "protein_coding", "geneSymbol": "MIB2", "majorConsequence": "intron_variant", "canonical": 1, "hgvsp": "ENST00000505820.2:c.1586-17C>G", "lof": "", "lofFlags": "", "codons": "Gtg/Atg", "hgvsc": "ENST00000262738.3:c.3955G>A", "transcriptRank": 0, "geneId": "ENSG00000197530", "aminoAcids": "V/M", "cdnaPosition": "3955"}
-                ]
-            },
-            "chrom": "1",
-            "genotypes": {
-                "I000003_na19679": {"sampleId": "NA19679", "ab": 0.71428573, "ad": null, "gq": 58, "dp": 7, "pl": null, "numAlt": 1},
-                "I000002_na19678": {"sampleId": "NA19678", "ab": 0, "ad": null, "gq": 30, "dp": 10, "pl": null, "numAlt": 0},
-                "I000002_na19675": {"sampleId": "NA19675", "ab": 0.5555556, "ad": null, "gq": 99, "dp": 9, "pl": null, "numAlt": 1}
-            }
-        },
-        "family": 1
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 6,
-    "fields": {
-        "guid": "SV0000006_1248367227_r0003_tes",
-        "created_date": "2018-05-15T14:51:56.943Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.805Z",
-        "xpos": 1248367227,
-        "xpos_end": 1248367228,
-        "ref": "TC",
-        "alt": "T",
-        "variant_id": "12-48367227-TC-T",
-        "saved_variant_json": {
-            "clinvar": {"clinicalSignificance": "", "alleleId": null, "variationId": null, "goldStars": null},
-            "liftedOverGenomeVersion": "38",  "liftedOverPos": "", "genotypeFilters": "pass",
-            "populations": {"callset": {"ac": null, "an": null, "af": null}, "g1k": {"ac": null, "an": null, "af": 0.0},
-                "gnomad_genomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.00012925741614425127},
-                "gnomad_exomes": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 6.505916317651364e-05},
-                "exac": {"hemi": null, "ac": null, "an": null, "hom": null, "af": 0.0006726888333653661},
-                "topmed": {"ac": null, "an": null, "af": null}},
-            "genomeVersion": "37", "pos": 248367227, "predictions": {
-                "eigen": null, "revel": null, "sift": null, "cadd": "27.2", "metasvm": "", "mpc": null,
-                "splice_ai": null, "phastcons_100_vert": null, "mut_taster": null, "fathmm": null, "polyphen": null,
-                "dann": null, "primate_ai": null, "gerp_rs": null},
-            "hgmd": {"accession": null, "class": null}, "rsid": null, "liftedOverChrom": "", "originalAltAlleles": ["T"],
-             "mainTranscriptId": "ENST00000505820", "transcripts": {
-                "ENSG00000135953": [
-                    {"transcriptId": "ENST00000371839", "biotype": "protein_coding", "geneId": "ENSG00000228198"}
-                ],
-                "ENSG00000240361": [
-                    {"transcriptId": "ENST00000505820", "lofFilter": "", "biotype": "protein_coding",
-                        "geneSymbol": "MIB2", "majorConsequence": "intron_variant", "canonical": 1,
-                        "hgvsp": "ENST00000505820.2:c.1586-17C>G", "lof": "", "lofFlags": "", "codons": "Gtg/Atg",
-                        "hgvsc": "ENST00000262738.3:c.3955G>A", "transcriptRank": 0, "geneId": "ENSG00000240361",
-                        "aminoAcids": "V/M", "cdnaPosition": "3955"}
-                ]
-            }, "chrom": "1", "genotypes": {
-                "I000015_na20885": {"sampleId": "NA20885", "ab": 0.0, "ad": "71,0", "gq": 99.0, "dp": "71", "pl": "0,213,1918", "numAlt": 1}}},
-        "family": 11
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 7,
-    "fields": {
-        "guid": "SV0000007_prefix_19107_DEL_r00",
-        "created_date": "2018-06-15T14:51:56.943Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.805Z",
-        "xpos": 1249045487,
-        "xpos_end": 1249045898,
-        "ref": null,
-        "alt": null,
-        "variant_id": "prefix_19107_DEL",
-        "saved_variant_json": {
-            "liftedOverGenomeVersion": null,
-            "pos": 49045487,
-            "end": 49045898,
-            "xpos": 1249045487,
-            "predictions": {"strvctvre": 0.374},
-            "alt": null,
-            "numExon": 2,
-            "genomeVersion": "37", "genotypeFilters": [],
-            "ref": null,
-            "genotypes": {
-                "I000015_na20885": { "cn": 1, "sampleId": "NA20885", "numAlt": -1,  "defragged": false, "qs": 33, "numExon": 2}
-            },
-            "liftedOverPos": null,
-            "liftedOverChrom": null,
-            "svType": "DEL",
-            "variantId": "prefix_19107_DEL",
-            "chrom": "12",
-            "transcripts": {"ENSG00000240361": [], "ENSG00000135953": []}
-        },
-        "family": 11
-    }
-},
-{
-    "model": "seqr.savedvariant",
-    "pk": 8,
-    "fields": {
-        "guid": "SV0000006_1248367227_r0004_non",
-        "created_date": "2018-05-15T14:51:56.943Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-31T16:36:02.805Z",
-        "xpos": 1248367227,
-        "xpos_end": 1248367228,
-        "ref": "TC",
-        "alt": "T",
-        "variant_id": "12-48367227-TC-T",
-        "saved_variant_json": {
-            "liftedOverGenomeVersion": "38",  "liftedOverPos": "", "genomeVersion": "37", "pos": 248367227,
-            "mainTranscriptId": "ENST00000505820", "transcripts": {
-                "ENSG00000135953": [
-                    {"transcriptId": "ENST00000371839", "biotype": "protein_coding", "geneId": "ENSG00000228198"}
-                ],
-                "ENSG00000240361": [
-                    {"transcriptId": "ENST00000505820", "lofFilter": "", "biotype": "protein_coding",
-                        "geneSymbol": "MIB2", "majorConsequence": "intron_variant", "canonical": 1,
-                        "hgvsp": "ENST00000505820.2:c.1586-17C>G", "lof": "", "lofFlags": "", "codons": "Gtg/Atg",
-                        "hgvsc": "ENST00000262738.3:c.3955G>A", "transcriptRank": 0, "geneId": "ENSG00000240361",
-                        "aminoAcids": "V/M", "cdnaPosition": "3955"}
-                ]
-            }, "chrom": "1", "genotypes": {
-                "I000018_na21234": {"sampleId": "NA20885", "ab": 0.0, "gq": 99.0, "numAlt": 1}}},
-        "family": 14
-    }
-},
-{
-    "model": "seqr.variantnote",
-    "pk": 714935,
-    "fields": {
-        "guid": "VN0714935_2103343353_r0390_100",
-        "created_date": "2018-05-15T14:51:58.410Z",
-        "created_by": null,
-        "last_modified_date": "2018-02-23T17:32:23.054Z",
-        "saved_variants": [2],
-        "note": "test n\u00f8te",
-        "submit_to_clinvar": false,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1708633,
-    "fields": {
-        "guid": "VT1708633_2103343353_r0390_100",
-        "created_date": "2018-05-15T14:54:47.121Z",
-        "created_by": null,
-        "last_modified_date": "2018-02-23T17:32:30.373Z",
-        "saved_variants": [1],
-        "variant_tag_type": 2,
-        "search_hash": "125897d6"
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1726945,
-    "fields": {
-        "guid": "VT1726945_2103343353_r0390_100",
-        "created_date": "2018-05-25T21:01:33.193Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-25T21:01:33.193Z",
-        "saved_variants": [2],
-        "variant_tag_type": 3,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1726961,
-    "fields": {
-        "guid": "VT1726961_2103343353_r0390_100",
-        "created_date": "2018-05-29T16:32:51.449Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-29T16:32:51.449Z",
-        "saved_variants": [1],
-        "variant_tag_type": 1,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1726963,
-    "fields": {
-        "guid": "VT1726961_2103343353_r0003_tes",
-        "created_date": "2018-05-29T16:32:51.449Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-29T16:32:51.449Z",
-        "saved_variants": [6, 7],
-        "variant_tag_type": 1,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1726970,
-    "fields": {
-        "guid": "VT1726970_2103343353_r0004_tes",
-        "created_date": "2018-05-29T16:32:51.449Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-29T16:32:51.449Z",
-        "saved_variants": [2],
-        "variant_tag_type": 4,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.varianttag",
-    "pk": 1726973,
-    "fields": {
-        "guid": "VT1726961_2103343353_r0005_tes",
-        "created_date": "2018-05-29T16:32:51.449Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-29T16:32:51.449Z",
-        "saved_variants": [8],
-        "variant_tag_type": 1,
-        "search_hash": null
-    }
-},
-{
-    "model": "seqr.variantfunctionaldata",
-    "pk": 23,
-    "fields": {
-        "guid": "VFD0000023_1248367227_r0390_10",
-        "created_date": "2018-05-24T15:30:04.465Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-24T15:30:04.483Z",
-        "saved_variants": [1],
-        "functional_data_tag": "Biochemical Function",
-        "metadata": "A note",
-        "search_hash": ""
-    }
-},
-{
-    "model": "seqr.variantfunctionaldata",
-    "pk": 24,
-    "fields": {
-        "guid": "VFD0000024_1248367227_r0390_10",
-        "created_date": "2018-05-24T15:34:01.353Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-24T15:34:01.365Z",
-        "saved_variants": [1],
-        "functional_data_tag": "Genome-wide Linkage",
-        "metadata": "2",
-        "search_hash": ""
-    }
-},
-{
-    "model": "seqr.variantfunctionaldata",
-    "pk": 25,
-    "fields": {
-        "guid": "VFD0000025_1248367227_r0390_10",
-        "created_date": "2018-05-24T15:34:01.353Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-24T15:34:01.365Z",
-        "saved_variants": [1],
-        "functional_data_tag": "Additional Unrelated Kindreds w/ Causal Variants in Gene",
-        "metadata": "2",
-        "search_hash": ""
-    }
-},
-{
-    "model": "seqr.variantfunctionaldata",
-    "pk": 26,
-    "fields": {
-        "guid": "VFD0000026_1248367227_r0390_10",
-        "created_date": "2018-05-24T15:34:01.353Z",
-        "created_by": null,
-        "last_modified_date": "2018-05-24T15:34:01.365Z",
-        "saved_variants": [1],
-        "functional_data_tag": "Kindreds w/ Overlapping SV & Similar Phenotype",
-        "metadata": "2",
-        "search_hash": ""
-    }
-},
-{
-    "model": "seqr.locuslist",
-    "pk": 1,
-    "fields": {
-        "guid": "LL00049_pid_genes_autosomal_do",
-        "projects": [3],
-        "created_date": "2017-02-07T12:55:30.700Z",
-        "created_by": 11,
-        "last_modified_date": "2018-05-01T00:02:38.733Z",
-        "name": "PID genes - Autosomal dominant",
-        "description": "Autosomal dominant inheritance PID genes",
-        "is_public": true
-    }
-},
-{
-    "model": "seqr.locuslist",
-    "pk": 2,
-    "fields": {
-        "guid": "LL00005_retina_proteome",
-        "projects": [1],
-        "created_date": "2017-02-07 07:55:06.032034-05",
-        "created_by": 10,
-        "last_modified_date": "2018-05-01T00:02:38.733Z",
-        "name": "Retina proteome",
-        "description": "",
-        "is_public": false
-    }
-},
-{
-  "model": "seqr.locuslistgene",
-  "pk": 11,
-  "fields": {
-    "guid": "LLG0000011_nmd_nclensg00000171",
-    "created_date": "2018-04-28T00:03:25.341Z",
-    "created_by": null,
-    "last_modified_date": "2018-04-28T00:03:25.341Z",
-    "locus_list": 1,
-    "gene_id": "ENSG00000223972"
-  }
-},
-{
-  "model": "seqr.locuslistgene",
-  "pk": 12,
-  "fields": {
-    "guid": "LLG0000012_nmd_nclensg00000169",
-    "created_date": "2018-04-28T00:03:25.347Z",
-    "created_by": null,
-    "last_modified_date": "2018-04-28T00:03:25.347Z",
-    "locus_list": 1,
-    "gene_id": "ENSG00000227232"
-  }
-},
-{
-  "model": "seqr.locuslistgene",
-  "pk": 13,
-  "fields": {
-    "guid": "LLG0000013_nmd_nclensg00000196",
-    "created_date": "2018-04-28T00:03:25.353Z",
-    "created_by": null,
-    "last_modified_date": "2018-04-28T00:03:25.353Z",
-    "locus_list": 1,
-    "gene_id": "ENSG00000243485"
-  }
-},
-{
-  "model": "seqr.locuslistinterval",
-  "pk": 12,
-  "fields": {
-    "guid": "LLI0000012_test_list_edit4545_",
-    "created_date": "2018-07-17T21:13:10.688Z",
-    "created_by": null,
-    "last_modified_date": "2018-07-18T14:57:35.302Z",
-    "locus_list": 1,
-    "genome_version": "37",
-    "chrom": "1",
-    "start": 248367200,
-    "end": 248367300
-  }
-},
-{
-  "model": "seqr.locuslistinterval",
-  "pk": 13,
-  "fields": {
-    "guid": "LLI0000013_a_new_list325_3000",
-    "created_date": "2018-07-17T21:16:12.224Z",
-    "created_by": null,
-    "last_modified_date": "2018-07-17T21:16:12.224Z",
-    "locus_list": 1,
-    "genome_version": "37",
-    "chrom": "3",
-    "start": 25,
-    "end": 3000
-  }
-},
-{
-    "model": "seqr.analysisgroup",
-    "pk": 1,
-    "fields": {
-        "guid": "AG0000183_test_group",
-        "created_date": "2018-08-09T18:53:24.207Z",
-        "created_by": null,
-        "last_modified_date": "2018-08-09T18:53:24.207Z",
-        "name": "Test Group 1",
-        "description": "A sample analysis group",
-        "project": 1,
-        "families": [1, 3, 5]
-    }
-},
-{
-    "model": "matchmaker.matchmakersubmission",
-    "pk": 1,
-    "fields": {
-        "individual": 1,
-        "guid": "MS000001_na19675",
-        "created_date": "2018-05-23T09:07:49.719Z",
-        "last_modified_date": "2018-05-23T09:07:49.719Z",
-        "submission_id": "NA19675_1_01",
-        "label": "NA19675_1",
-        "contact_name": "Sam Baxter",
-        "contact_href": "mailto:seqr-matchmaker@populationgenomics.org.au,test_user@broadinstitute.org",
-        "features": [
-            {
-                "id": "HP:0001252",
-                "observed": "yes"
-            },
-            {
-                "id": "HP:0001263",
-                "observed": "no"
-            },
-            {
-                "id": "HP:0012469",
-                "observed": "yes"
-            }
-        ],
-        "genomic_features": [
-            {
-                "gene": {
-                    "id": "ENSG00000186092"
-                },
-                "variant": {
-                    "end": 77027548,
-                    "start": 77027549,
-                    "assembly": "GRCh38",
-                    "referenceName": "14",
-                    "alternateBases": "C",
-                    "referenceBases": "CCACT"
-                },
-                "zygosity": 1
-            }
-        ]
-    }
-},
-{
-    "model": "matchmaker.matchmakersubmission",
-    "pk": 2,
-    "fields": {
-        "individual": 15,
-        "guid": "MS000015_na20885",
-        "created_date": "2019-02-05T06:42:55.397Z",
-        "last_modified_date": "2019-02-05T06:42:55.397Z",
-        "submission_id": "NA20885",
-        "label": "NA20885",
-        "contact_name": "Sam Baxter",
-        "contact_href": "mailto:seqr-matchmaker@populationgenomics.org.au",
-        "features": [
-            {
-                "id": "HP:0001252",
-                "label": "Muscular hypotonia",
-                "observed": "yes"
-            },
-            {
-                "id": "HP:0002017",
-                "label": "Nausea and vomiting",
-                "observed": "yes"
-            }
-        ],
-        "genomic_features": [
-            {
-                "gene": {
-                    "id": "ENSG00000227232"
-                },
-                "variant": {
-                    "end": 38739601,
-                    "start": 38739601,
-                    "assembly": "GRCh38",
-                    "referenceName": "17",
-                    "alternateBases": "A",
-                    "referenceBases": "G"
-                },
-                "zygosity": 1
-            }
-        ]
-    }
-},
     {
-    "model": "matchmaker.matchmakersubmission",
-    "pk": 3,
-    "fields": {
-        "individual": 16,
-        "guid": "MS000016_P0004515",
-        "created_date": "2019-02-05T06:42:55.397Z",
-        "last_modified_date": "2019-02-05T06:42:55.397Z",
-        "submission_id": "P0004515",
-        "label": "P0004515",
-        "contact_name": "Baylor UDN Clinical Site",
-        "contact_href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
-        "genomic_features": [
-            {
-                "gene": {
-                    "id": "ENSG00000186092"
-                }, "variant": {
-                    "referenceName": "14",
-                    "start": 77027630
-                }
-            },
-            {
-                "gene": {
-                    "id": "ENSG00000233750"
-                }
-            },
-            {
-                "gene": {
-                    "id": "ENSG00000223972"
-                }
-            },
-            {
-                "gene": {
-                    "id": "ABC"
-                }
-            }
-        ]
-    }
-},
-{
-    "model": "matchmaker.matchmakersubmission",
-    "pk": 4,
-    "fields": {
-        "individual": 18,
-        "guid": "MS000018_P0004517",
-        "created_date": "2019-02-05T06:42:55.397Z",
-        "last_modified_date": "2019-02-05T06:42:55.397Z",
-        "submission_id": "P0004517",
-        "label": "P0004517",
-       "contact_name": "Sam Baxter",
-        "contact_href": "mailto:seqr-matchmaker@populationgenomics.org.au",
-        "genomic_features": [
-            {
-                "gene": {
-                    "id": "ENSG00000233750"
-                }
-            }
-        ]
-    }
-},
-{
-    "model": "matchmaker.matchmakerresult",
-    "pk": 3552,
-    "fields": {
-        "guid": "MR0003552_SHE_1006P_1",
-        "created_date": "2019-02-12T18:43:56.358Z",
-        "created_by": null,
-        "last_modified_date": "2019-04-29T17:48:46.367Z",
-        "submission": 1,
-        "originating_submission": 3,
-        "result_data": {
-            "score": {
-                "patient": 0.5706712016939723
-            },
-            "patient": {
-                "genomicFeatures": [
-                    {
-                        "gene": {
-                            "id": "OR4F5"
-                        }
-                    },
-                    {
-                        "gene": {
-                            "id": "CICP27"
-                        }
-                    },
-                    {
-                        "gene": {
-                            "id": "DDX11L1"
-                        }
-                    }
-                ],
-                "contact": {
-                    "href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
-                    "name": "Baylor UDN Clinical Site"
+        "model": "seqr.project",
+        "pk": 1,
+        "fields": {
+            "guid": "R0001_1kg",
+            "created_date": "2017-03-12T19:27:08.156Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.582Z",
+            "name": "1kg project n\u00e5me with uni\u00e7\u00f8de",
+            "description": "1000 genomes project description with uni\u00e7\u00f8de",
+            "can_edit_group": 2,
+            "can_view_group": 3,
+            "workspace_name": "anvil-1kg project n\u00e5me with uni\u00e7\u00f8de",
+            "workspace_namespace": "my-seqr-billing",
+            "genome_version": "37",
+            "is_mme_enabled": true,
+            "has_case_review": true,
+            "mme_primary_data_owner": "PI",
+            "mme_contact_url": "mailto:test@populationgenomics.org.au,matchmaker@populationgenomics.org.au",
+            "last_accessed_date": "2017-09-15T18:15:50.827Z"
+        }
+    },
+    {
+        "model": "seqr.project",
+        "pk": 2,
+        "fields": {
+            "guid": "R0002_empty",
+            "created_date": "2017-03-12T19:27:08.156Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.582Z",
+            "name": "Empty Project",
+            "description": "",
+            "can_edit_group": 2,
+            "can_view_group": 3,
+            "is_mme_enabled": false,
+            "mme_primary_data_owner": "",
+            "last_accessed_date": "2017-09-15T18:15:50.827Z"
+        }
+    },
+    {
+        "model": "seqr.project",
+        "pk": 3,
+        "fields": {
+            "guid": "R0003_test",
+            "created_date": "2017-03-12T19:27:08.156Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.582Z",
+            "name": "Test Reprocessed Project",
+            "description": "",
+            "can_edit_group": 2,
+            "can_view_group": 3,
+            "workspace_name": "anvil-project 1000 Genomes Demo",
+            "workspace_namespace": "my-seqr-billing",
+            "is_mme_enabled": false,
+            "mme_primary_data_owner": "",
+            "mme_contact_url": "mailto:seqr-test@gmail.com,test@populationgenomics.org.au",
+            "last_accessed_date": "2017-09-15T18:15:50.827Z"
+        }
+    },
+    {
+        "model": "seqr.project",
+        "pk": 4,
+        "fields": {
+            "guid": "R0004_non_analyst_project",
+            "created_date": "2017-03-12T19:27:08.156Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.582Z",
+            "name": "Non-Analyst Project",
+            "can_edit_group": 2,
+            "can_view_group": 2,
+            "last_accessed_date": "2017-09-15T18:15:50.827Z"
+        }
+    },
+    {
+        "model": "seqr.projectcategory",
+        "pk": 1,
+        "fields": {
+            "guid": "PC000001_analyst_projects",
+            "created_date": "2020-03-12T23:52:36.401Z",
+            "created_by": null,
+            "last_modified_date": "2020-03-12T23:52:36.401Z",
+            "name": "analyst-projects",
+            "projects": [
+                1,
+                2,
+                3
+            ]
+        }
+    },
+    {
+        "model": "seqr.projectcategory",
+        "pk": 2,
+        "fields": {
+            "guid": "PC000002_categry_with_unicde",
+            "created_date": "2017-03-12T23:52:36.401Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T23:52:36.401Z",
+            "name": "c\u00e5teg\u00f8ry with uni\u00e7\u00f8de",
+            "projects": [
+                1
+            ]
+        }
+    },
+    {
+        "model": "seqr.projectcategory",
+        "pk": 3,
+        "fields": {
+            "guid": "PC000003_test_category_name",
+            "created_date": "2017-03-12T23:52:55.846Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T23:52:55.846Z",
+            "name": "CMG",
+            "projects": [
+                1,
+                3
+            ]
+        }
+    },
+    {
+        "model": "seqr.projectcategory",
+        "pk": 4,
+        "fields": {
+            "guid": "PC000004_demo",
+            "created_date": "2017-03-12T23:52:55.846Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T23:52:55.846Z",
+            "name": "Demo",
+            "projects": [
+                3
+            ]
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 1,
+        "fields": {
+            "guid": "F000001_1",
+            "created_date": "2017-03-12T19:27:08.199Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T07:53:27.973Z",
+            "project": 1,
+            "family_id": "1",
+            "display_name": "1",
+            "description": "test descripti\u00f8n",
+            "post_discovery_omim_number": "615120,615123",
+            "pedigree_image": "ped_1.png",
+            "analysis_notes": "<b>\r\n                        F\u00e5mily analysis n\u00f8tes\r\n                    </b>",
+            "analysis_summary": "<b>\r\n                        F\u00e5mily analysis summ\u00e5ry.\r\n                    </b>",
+            "analysis_status": "Q",
+            "case_review_notes": "<div>initial notes with uni&ccedil;&oslash;de</div>\n<div>test</div>",
+            "case_review_summary": "<div>internal case review summary with uni&ccedil;&oslash;de</div>"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 2,
+        "fields": {
+            "guid": "F000002_2",
+            "created_date": "2017-03-12T19:27:08.319Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T22:36:26.681Z",
+            "project": 1,
+            "family_id": "2",
+            "display_name": "2",
+            "description": "",
+            "pedigree_image": "ped_2.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "<div>internal notes 2</div>\n<div>&nbsp;</div>",
+            "case_review_summary": "<div>internal case review summary 2</div>\n<div>&nbsp;</div>"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 3,
+        "fields": {
+            "guid": "F000003_3",
+            "created_date": "2017-03-12T19:27:08.421Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.435Z",
+            "project": 1,
+            "family_id": "3",
+            "display_name": "3",
+            "description": "",
+            "pedigree_image": "ped_3.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 4,
+        "fields": {
+            "guid": "F000004_4",
+            "created_date": "2017-03-12T19:27:08.468Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.483Z",
+            "project": 1,
+            "family_id": "4",
+            "display_name": "4",
+            "description": "",
+            "pedigree_image": "ped_4.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 5,
+        "fields": {
+            "guid": "F000005_5",
+            "created_date": "2017-03-12T19:27:08.516Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.530Z",
+            "project": 1,
+            "family_id": "5",
+            "display_name": "5",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 6,
+        "fields": {
+            "guid": "F000006_6",
+            "created_date": "2017-03-12T19:27:08.563Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.577Z",
+            "project": 1,
+            "family_id": "6",
+            "display_name": "6",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 7,
+        "fields": {
+            "guid": "F000007_7",
+            "created_date": "2017-03-12T19:27:08.610Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.622Z",
+            "project": 1,
+            "family_id": "7",
+            "display_name": "7",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 8,
+        "fields": {
+            "guid": "F000008_8",
+            "created_date": "2017-03-12T19:27:08.652Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.666Z",
+            "project": 1,
+            "family_id": "8",
+            "display_name": "8",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 9,
+        "fields": {
+            "guid": "F000009_9",
+            "created_date": "2017-03-12T19:27:08.697Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.714Z",
+            "project": 1,
+            "family_id": "9",
+            "display_name": "9",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 10,
+        "fields": {
+            "guid": "F000010_10",
+            "created_date": "2017-03-12T19:27:08.760Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.773Z",
+            "project": 1,
+            "family_id": "10",
+            "display_name": "10",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 11,
+        "fields": {
+            "guid": "F000011_11",
+            "created_date": "2017-03-12T19:27:08.806Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T22:36:49.654Z",
+            "project": 3,
+            "family_id": "11",
+            "display_name": "11",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "case_review_notes": "",
+            "case_review_summary": ""
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 12,
+        "fields": {
+            "guid": "F000012_12",
+            "created_date": "2017-03-12T19:27:08.848Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T22:37:17.555Z",
+            "project": 3,
+            "family_id": "12",
+            "display_name": "12",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "success_story": "Published with Gleeson and Reza (PMID 31668703)",
+            "success_story_types": [
+                "C",
+                "D"
+            ],
+            "case_review_notes": "<div><span style=\"text-decoration: underline;\"><span style=\"font-family: 'book antiqua', palatino, serif;\">case review notes for family 12</span></span></div>\n<ul>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note1</span></li>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note 2</span></li>\n<li><span style=\"font-family: 'book antiqua', palatino, serif;\">note 3</span></li>\n</ul>",
+            "case_review_summary": "<div><span style=\"font-family: 'courier new', courier, monospace;\"><strong>summary for family 12</strong></span></div>"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 13,
+        "fields": {
+            "guid": "F000013_13",
+            "created_date": "2017-03-12T19:27:08.760Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T19:27:08.773Z",
+            "project": 1,
+            "family_id": "no_individuals",
+            "display_name": "family without individuals and samples",
+            "description": "",
+            "pedigree_image": "ped.png",
+            "analysis_notes": "",
+            "analysis_summary": "",
+            "analysis_status": "Q",
+            "success_story": "Treatment is now available on compassionate use protocol (nucleoside replacement protocol)",
+            "success_story_types": [
+                "A"
+            ],
+            "case_review_notes": "family without individuals and samples",
+            "case_review_summary": "internal_case_review_summary"
+        }
+    },
+    {
+        "model": "seqr.family",
+        "pk": 14,
+        "fields": {
+            "guid": "F000014_14",
+            "created_date": "2017-03-12T19:27:08.848Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-12T22:37:17.555Z",
+            "project": 4,
+            "family_id": "14",
+            "success_story": "Differential treatement",
+            "success_story_types": [
+                "A",
+                "D"
+            ]
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 1,
+        "fields": {
+            "guid": "I000001_na19675",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.719Z",
+            "family": 1,
+            "individual_id": "NA19675_1",
+            "mother_id": 3,
+            "father_id": 2,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "I",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:43.204Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null,
+            "proband_relationship": "S",
+            "birth_year": null,
+            "death_year": null,
+            "onset_age": "A",
+            "maternal_ethnicity": [
+                "Azerbaijanis"
+            ],
+            "paternal_ethnicity": [
+                "African Americans"
+            ],
+            "consanguinity": true,
+            "affected_relatives": false,
+            "expected_inheritance": [
+                "R"
+            ],
+            "features": [
+                {
+                    "id": "HP:0001631"
                 },
-                "id": "P0004515",
-                "features": [
-                    {
-                        "observed": "yes",
-                        "id": "HP:0012469"
+                {
+                    "id": "HP:0002011"
+                },
+                {
+                    "id": "HP:0001636"
+                }
+            ],
+            "absent_features": [
+                {
+                    "id": "HP:0011675"
+                },
+                {
+                    "id": "HP:0001674"
+                },
+                {
+                    "id": "HP:0001508"
+                }
+            ],
+            "nonstandard_features": "[]",
+            "absent_nonstandard_features": null,
+            "disorders": [
+                "615593"
+            ],
+            "candidate_genes": [
+                {
+                    "gene": "EHBP1L1",
+                    "comments": "comments EHBP1L1"
+                },
+                {
+                    "gene": "ACY3",
+                    "comments": "comments ACY3"
+                }
+            ],
+            "rejected_genes": [
+                {
+                    "gene": "IKBKAP",
+                    "comments": "comments IKBKAP"
+                },
+                {
+                    "gene": "CCDC102B",
+                    "comments": "comments for CCDC102B"
+                }
+            ],
+            "ar_fertility_meds": null,
+            "ar_iui": null,
+            "ar_ivf": null,
+            "ar_icsi": null,
+            "ar_surrogacy": null,
+            "ar_donoregg": null,
+            "ar_donorsperm": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 2,
+        "fields": {
+            "guid": "I000002_na19678",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.766Z",
+            "family": 1,
+            "individual_id": "NA19678",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "N",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "U",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:46.200Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 3,
+        "fields": {
+            "guid": "I000003_na19679",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.793Z",
+            "family": 1,
+            "individual_id": "NA19679",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "F",
+            "affected": "N",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "A",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:49.964Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 4,
+        "fields": {
+            "guid": "I000004_hg00731",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.928Z",
+            "family": 2,
+            "individual_id": "HG00731",
+            "mother_id": 6,
+            "father_id": 5,
+            "sex": "F",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "3",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:59.093Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null,
+            "features": [
+                {
+                    "id": "HP:0002011"
+                },
+                {
+                    "id": "HP:0011675"
+                }
+            ],
+            "absent_features": [
+                {
+                    "id": "HP:0002017"
+                }
+            ]
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 5,
+        "fields": {
+            "guid": "I000005_hg00732",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.956Z",
+            "family": 2,
+            "individual_id": "HG00732",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "N",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "R",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 6,
+        "fields": {
+            "guid": "I000006_hg00733",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.980Z",
+            "family": 2,
+            "individual_id": "HG00733",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "F",
+            "affected": "N",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "H",
+            "case_review_status_last_modified_date": "2017-03-12T22:35:06.446Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 7,
+        "fields": {
+            "guid": "I000007_na20870",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.015Z",
+            "family": 3,
+            "individual_id": "NA20870",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 8,
+        "fields": {
+            "guid": "I000008_na20872",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.044Z",
+            "family": 4,
+            "individual_id": "NA20872",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 9,
+        "fields": {
+            "guid": "I000009_na20874",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.071Z",
+            "family": 5,
+            "individual_id": "NA20874",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "N",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 10,
+        "fields": {
+            "guid": "I000010_na20875",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.100Z",
+            "family": 6,
+            "individual_id": "NA20875",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 11,
+        "fields": {
+            "guid": "I000011_na20876",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.128Z",
+            "family": 7,
+            "individual_id": "NA20876",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 12,
+        "fields": {
+            "guid": "I000012_na20877",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.158Z",
+            "family": 8,
+            "individual_id": "NA20877",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 13,
+        "fields": {
+            "guid": "I000013_na20878",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.184Z",
+            "family": 9,
+            "individual_id": "NA20878",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 14,
+        "fields": {
+            "guid": "I000014_na20881",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.213Z",
+            "family": 10,
+            "individual_id": "NA20881",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "",
+            "case_review_status_last_modified_date": null,
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 15,
+        "fields": {
+            "guid": "I000015_na20885",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.239Z",
+            "family": 11,
+            "individual_id": "NA20885",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "population": "ASJ",
+            "consanguinity": false,
+            "features": [
+                {
+                    "id": "HP:0011675"
+                },
+                {
+                    "id": "HP:0001509"
+                }
+            ],
+            "case_review_status": "E",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:52.302Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 16,
+        "fields": {
+            "guid": "I000016_na20888",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.270Z",
+            "family": 12,
+            "individual_id": "NA20888",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "M",
+            "affected": "A",
+            "display_name": "",
+            "notes": "",
+            "case_review_status": "G",
+            "case_review_status_last_modified_date": "2017-03-12T22:34:55.895Z",
+            "case_review_status_last_modified_by": null,
+            "case_review_discussion": null
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 17,
+        "fields": {
+            "guid": "I000017_na20889",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.270Z",
+            "family": 12,
+            "individual_id": "NA20889",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "F",
+            "affected": "A",
+            "display_name": ""
+        }
+    },
+    {
+        "model": "seqr.individual",
+        "pk": 18,
+        "fields": {
+            "guid": "I000018_na21234",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.980Z",
+            "family": 14,
+            "individual_id": "NA21234",
+            "mother_id": null,
+            "father_id": null,
+            "sex": "F",
+            "affected": "A"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 129,
+        "fields": {
+            "guid": "S000129_na19675",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.744Z",
+            "individual": 1,
+            "sample_type": "WES",
+            "dataset_type": "VARIANTS",
+            "sample_id": "NA19675",
+            "is_active": true,
+            "elasticsearch_index": "test_index",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 130,
+        "fields": {
+            "guid": "S000130_na19678",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.744Z",
+            "individual": 2,
+            "sample_type": "WES",
+            "dataset_type": "VARIANTS",
+            "sample_id": "NA19678",
+            "is_active": true,
+            "elasticsearch_index": "test_index_old",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 131,
+        "fields": {
+            "guid": "S000131_na19679",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.800Z",
+            "sample_id": "NA19679",
+            "sample_type": "WES",
+            "is_active": false,
+            "elasticsearch_index": "test_index",
+            "individual": 3,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 132,
+        "fields": {
+            "guid": "S000132_hg00731",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.937Z",
+            "elasticsearch_index": "test_index",
+            "sample_id": "HG00731",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 4,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 133,
+        "fields": {
+            "guid": "S000133_hg00732",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.963Z",
+            "elasticsearch_index": "test_index",
+            "sample_id": "HG00732",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 5,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 134,
+        "fields": {
+            "guid": "S000134_hg00733",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.990Z",
+            "elasticsearch_index": "test_index",
+            "sample_id": "HG00733",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 6,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 135,
+        "fields": {
+            "guid": "S000135_na20870",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.022Z",
+            "elasticsearch_index": "test_index",
+            "sample_id": "NA20870",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 7,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 136,
+        "fields": {
+            "guid": "S000136_na20872",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.052Z",
+            "sample_id": "NA20872",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 8,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 137,
+        "fields": {
+            "guid": "S000137_na20874",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.079Z",
+            "elasticsearch_index": "test_index",
+            "sample_id": "NA20874",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 9,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 138,
+        "fields": {
+            "guid": "S000138_na20875",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.111Z",
+            "sample_id": "NA20875",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 10,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 139,
+        "fields": {
+            "guid": "S000139_na20876",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.136Z",
+            "sample_id": "NA20876",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 11,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 140,
+        "fields": {
+            "guid": "S000140_na20877",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.165Z",
+            "sample_id": "NA19678",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 12,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 141,
+        "fields": {
+            "guid": "S000141_na20878",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.193Z",
+            "sample_id": "NA20878",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 13,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 142,
+        "fields": {
+            "guid": "S000142_na20881",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.220Z",
+            "sample_id": "NA20881",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 14,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 143,
+        "fields": {
+            "guid": "S000143_na20885",
+            "created_date": "2020-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2020-03-13T09:07:50.247Z",
+            "elasticsearch_index": "test_index_second",
+            "sample_id": "NA20885",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 15,
+            "dataset_type": "VARIANTS",
+            "loaded_date": "2020-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 144,
+        "fields": {
+            "guid": "S000144_na20888",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.277Z",
+            "sample_id": "NA20888",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 16,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 154,
+        "fields": {
+            "guid": "S000154_na20889",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:50.277Z",
+            "sample_id": "NA20889",
+            "sample_type": "WES",
+            "is_active": false,
+            "individual": 17,
+            "dataset_type": "VARIANTS",
+            "elasticsearch_index": "1kg.vcf.gz",
+            "loaded_date": "2017-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 145,
+        "fields": {
+            "guid": "S000145_hg00731",
+            "created_date": "2018-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2018-03-13T09:07:49.937Z",
+            "elasticsearch_index": "test_index_sv",
+            "sample_id": "HG00731",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 4,
+            "dataset_type": "SV",
+            "loaded_date": "2018-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.sample",
+        "pk": 146,
+        "fields": {
+            "guid": "S000146_hg00732",
+            "created_date": "2018-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2018-03-13T09:07:49.963Z",
+            "elasticsearch_index": "test_index_sv",
+            "sample_id": "HG00732",
+            "sample_type": "WES",
+            "is_active": true,
+            "individual": 5,
+            "dataset_type": "SV",
+            "loaded_date": "2018-02-05T06:42:55.397Z"
+        }
+    },
+    {
+        "model": "seqr.igvsample",
+        "pk": 145,
+        "fields": {
+            "guid": "S000145_na19675",
+            "created_date": "2017-02-05T06:42:55.397Z",
+            "created_by": null,
+            "last_modified_date": "2017-03-13T09:07:49.744Z",
+            "individual": 1,
+            "sample_type": "alignment",
+            "file_path": "/readviz/NA19675.cram"
+        }
+    },
+    {
+        "model": "seqr.varianttagtype",
+        "pk": 1,
+        "fields": {
+            "guid": "VTT_tier_1_novel_gene_and_phen",
+            "created_date": "2018-04-27T00:00:00.000Z",
+            "created_by": null,
+            "last_modified_date": null,
+            "project": null,
+            "name": "Tier 1 - Novel gene and phenotype",
+            "category": "CMG Discovery Tags",
+            "description": "Gene not previously associated with a Mendelian condition",
+            "color": "#03441E"
+        }
+    },
+    {
+        "model": "seqr.varianttagtype",
+        "pk": 2,
+        "fields": {
+            "guid": "VTT_review",
+            "created_date": "2018-04-27T00:00:00.000Z",
+            "created_by": null,
+            "last_modified_date": null,
+            "project": null,
+            "name": "Review",
+            "category": "Collaboration",
+            "description": "To mark a variant and/or gene of interest for further review.",
+            "color": "#668FE3",
+            "order": 11.0
+        }
+    },
+    {
+        "model": "seqr.varianttagtype",
+        "pk": 3,
+        "fields": {
+            "guid": "VTT_excluded",
+            "created_date": "2018-04-27T00:00:00.000Z",
+            "created_by": null,
+            "last_modified_date": null,
+            "project": 1,
+            "name": "Excluded",
+            "category": "Collaboration",
+            "description": "To mark a variant and/or gene you previously reviewed but do not think it contributing to the phenotype in this case. To help other members of your team (and yourself), please consider also adding a note with details of why you reprioritized this variant.",
+            "color": "#555555",
+            "order": 15.0
+        }
+    },
+    {
+        "model": "seqr.varianttagtype",
+        "pk": 4,
+        "fields": {
+            "guid": "VTT_Known_gene_for_phenotype",
+            "created_date": "2018-04-27T00:00:00.000Z",
+            "created_by": null,
+            "last_modified_date": null,
+            "project": null,
+            "name": "Known gene for phenotype",
+            "category": "CMG Discovery Tags",
+            "description": "Variant tag type for known gene for phenotype",
+            "color": "#777777",
+            "order": 16.0
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 1,
+        "fields": {
+            "guid": "SV0000001_2103343353_r0390_100",
+            "created_date": "2018-05-15T14:51:54.491Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.812Z",
+            "xpos": 21003343353,
+            "xpos_end": 21003343356,
+            "ref": "GAGA",
+            "alt": "G",
+            "variant_id": "21-3343353-GAGA-G",
+            "saved_variant_json": {
+                "variantId": "21-3343353-GAGA-G",
+                "clinvar": {
+                    "clinicalSignificance": "",
+                    "alleleId": null,
+                    "variationId": null,
+                    "goldStars": null
+                },
+                "liftedOverGenomeVersion": "",
+                "familyGuids": [
+                    "F000001_1",
+                    "F000002_2"
+                ],
+                "liftedOverPos": "",
+                "genotypeFilters": "pass",
+                "mainTranscriptId": "ENST00000258436",
+                "populations": {
+                    "callset": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
                     },
-                    {
-                        "observed": "no",
-                        "id": "HP:0003273"
+                    "g1k": {
+                        "ac": null,
+                        "an": null,
+                        "af": 0.0
+                    },
+                    "gnomad_genomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.0
+                    },
+                    "gnomad_exomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 2.4418633044922146e-05
+                    },
+                    "exac": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.000242306760358614
+                    },
+                    "topmed": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
                     }
-                ]
-            }
-        },
-        "last_modified_by": 10,
-        "we_contacted": false,
-        "host_contacted": true,
-        "deemed_irrelevant": true,
-        "flag_for_analysis": false,
-        "comments": "AMBRA1 c.2228G>C p.(Ser743Thr) missense variant. Maternally inherited, both have epilepsy"
-    }
-},
-{
-    "model": "matchmaker.matchmakerresult",
-    "pk": 7228,
-    "fields": {
-        "guid": "MR0007228_VCGS_FAM50_156",
-        "created_date": "2019-04-25T07:19:41.518Z",
-        "created_by": null,
-        "last_modified_date": "2019-04-29T17:50:03.101Z",
-        "submission": 1,
-        "originating_submission": 4,
-        "result_data": {
-            "score": {
-                "patient": 1.0
+                },
+                "genomeVersion": "37",
+                "pos": 3343353,
+                "predictions": {
+                    "eigen": null,
+                    "revel": null,
+                    "sift": null,
+                    "cadd": "14.33",
+                    "metasvm": "",
+                    "mpc": null,
+                    "splice_ai": null,
+                    "phastcons_100_vert": null,
+                    "mut_taster": null,
+                    "fathmm": null,
+                    "polyphen": null,
+                    "dann": null,
+                    "primate_ai": null,
+                    "gerp_rs": null
+                },
+                "hgmd": {
+                    "accession": null,
+                    "class": null
+                },
+                "rsid": null,
+                "liftedOverChrom": "",
+                "originalAltAlleles": [
+                    "G"
+                ],
+                "transcripts": {
+                    "ENSG00000135953": [
+                        {
+                            "transcriptId": "ENST00000258436",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "inframe_deletion",
+                            "canonical": "YES",
+                            "hgvsp": "ENSP00000258436.5:p.Leu126del",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "ctTCTc/ctc",
+                            "hgvsc": "ENST00000258436.5:c.375_377delTCT",
+                            "transcriptRank": 0,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "LL/L",
+                            "cdnaPosition": "419-421"
+                        },
+                        {
+                            "transcriptId": "ENST00000411991",
+                            "lofFilter": "",
+                            "biotype": "nonsense_mediated_decay",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "3_prime_UTR_variant",
+                            "canonical": "",
+                            "hgvsp": "",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "",
+                            "hgvsc": "ENST00000411991.1:c.*211_*213delTCT",
+                            "transcriptRank": 100,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "",
+                            "cdnaPosition": "558-560"
+                        },
+                        {
+                            "transcriptId": "ENST00000421966",
+                            "lofFilter": "",
+                            "biotype": "nonsense_mediated_decay",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "downstream_gene_variant",
+                            "canonical": "",
+                            "hgvsp": "",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "",
+                            "hgvsc": "",
+                            "transcriptRank": 100,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "",
+                            "cdnaPosition": null
+                        },
+                        {
+                            "transcriptId": "ENST00000428085",
+                            "lofFilter": "",
+                            "biotype": "nonsense_mediated_decay",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "inframe_deletion",
+                            "canonical": "",
+                            "hgvsp": "ENSP00000413641.1:p.Leu48del",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "ctTCTc/ctc",
+                            "hgvsc": "ENST00000428085.1:c.141_143delTCT",
+                            "transcriptRank": 100,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "LL/L",
+                            "cdnaPosition": "141-143"
+                        },
+                        {
+                            "transcriptId": "ENST00000437075",
+                            "lofFilter": "",
+                            "biotype": "nonsense_mediated_decay",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "3_prime_UTR_variant",
+                            "canonical": "",
+                            "hgvsp": "",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "",
+                            "hgvsc": "ENST00000437075.2:c.*176_*178delTCT",
+                            "transcriptRank": 100,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "",
+                            "cdnaPosition": "541-543"
+                        },
+                        {
+                            "transcriptId": "ENST00000438943",
+                            "lofFilter": "",
+                            "biotype": "nonsense_mediated_decay",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "3_prime_UTR_variant",
+                            "canonical": "",
+                            "hgvsp": "",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "",
+                            "hgvsc": "ENST00000438943.1:c.*211_*213delTCT",
+                            "transcriptRank": 100,
+                            "geneId": "ENSG00000135953",
+                            "aminoAcids": "",
+                            "cdnaPosition": "558-560"
+                        }
+                    ]
+                },
+                "chrom": "21",
+                "genotypes": {
+                    "I000003_na19679": {
+                        "sampleId": "NA19679",
+                        "ab": 0.0,
+                        "ad": "45,0",
+                        "gq": 99.0,
+                        "dp": "45",
+                        "pl": "0,135,1525",
+                        "cnvs": {
+                            "size": null,
+                            "snps": null,
+                            "cn": null,
+                            "LRR_sd": null,
+                            "array": null,
+                            "caller": null,
+                            "type": null,
+                            "freq": null,
+                            "LRR_median": null
+                        },
+                        "numAlt": 0
+                    },
+                    "I000002_na19678": {
+                        "sampleId": "NA19678",
+                        "ab": 0.0,
+                        "ad": "42,0",
+                        "gq": 99.0,
+                        "dp": "43",
+                        "pl": "0,126,1479",
+                        "cnvs": {
+                            "size": null,
+                            "snps": null,
+                            "cn": null,
+                            "LRR_sd": null,
+                            "array": null,
+                            "caller": null,
+                            "type": null,
+                            "freq": null,
+                            "LRR_median": null
+                        },
+                        "numAlt": 0
+                    },
+                    "I000001_na19675": {
+                        "sampleId": "NA19675_1",
+                        "ab": 0.7021276595744681,
+                        "ad": "14,33",
+                        "gq": 46.0,
+                        "dp": "50",
+                        "pl": "46,0,686",
+                        "cnvs": {
+                            "size": null,
+                            "snps": null,
+                            "cn": null,
+                            "LRR_sd": null,
+                            "array": null,
+                            "caller": null,
+                            "type": null,
+                            "freq": null,
+                            "LRR_median": null
+                        },
+                        "numAlt": 1
+                    }
+                }
             },
-            "patient": {
-                "genomicFeatures": [
-                    {
-                        "gene": {
-                            "id": "ENSG00000233750"
-                        }
-                    }
-                ],
-                "contact": {
-                    "href": "mailto:cfen@filadelfia.dk",
-                    "name": "Christina D\u00fchring Fenger",
-                    "institution": "The Danish Epilepsy Centre, Filadelfia, Institute for Regional Health Services"
+            "family": 1
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 2,
+        "fields": {
+            "guid": "SV0000002_1248367227_r0390_100",
+            "created_date": "2018-05-15T14:51:56.943Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.805Z",
+            "xpos": 1248367227,
+            "xpos_end": 1248367228,
+            "ref": "TC",
+            "alt": "T",
+            "variant_id": "12-48367227-TC-T",
+            "saved_variant_json": {
+                "clinvar": {
+                    "clinicalSignificance": "",
+                    "alleleId": null,
+                    "variationId": null,
+                    "goldStars": null
                 },
-                "id": "34301",
-                "label": "AMBRA1"
-            }
-        },
-        "last_modified_by": 10,
-        "we_contacted": false,
-        "host_contacted": false,
-        "deemed_irrelevant": false,
-        "flag_for_analysis": false,
-        "comments": ""
-    }
-},
-{
-    "model": "matchmaker.matchmakerresult",
-    "pk": 7229,
-    "fields": {
-        "guid": "MR0004688_RGP_105_3",
-        "created_date": "2019-04-25T07:19:41.518Z",
-        "created_by": null,
-        "last_modified_date": "2019-04-29T17:50:03.101Z",
-        "submission": 1,
-        "result_data": {
-            "patient": {
-                "contact": {
-                    "href": "mailto:j.weiss@vumc.nl",
-                    "institution": "VU University Medical Center",
-                    "name": "Janneke Weiss"
-                },
-                "genomicFeatures": [
-                    {
-                        "gene": {
-                            "id": "ENSG00000272333"
-                        }
-                    }
+                "liftedOverGenomeVersion": "38",
+                "familyGuids": [
+                    "F000001_1"
                 ],
-                "id": "10509",
-                "label": "2016-174",
-                "sex": "MALE",
-                "species": "NCBITaxon:9606"
-            }
-        },
-        "last_modified_by": 10,
-        "we_contacted": true,
-        "host_contacted": false,
-        "deemed_irrelevant": false,
-        "flag_for_analysis": false,
-        "comments": ""
+                "liftedOverPos": "",
+                "genotypeFilters": "pass",
+                "mainTranscriptId": "ENST00000258436",
+                "populations": {
+                    "callset": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    },
+                    "g1k": {
+                        "ac": null,
+                        "an": null,
+                        "af": 0.0
+                    },
+                    "gnomad_genomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.00012925741614425127
+                    },
+                    "gnomad_exomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 6.505916317651364e-05
+                    },
+                    "exac": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.0006726888333653661
+                    },
+                    "topmed": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    }
+                },
+                "genomeVersion": "37",
+                "pos": 248367227,
+                "predictions": {
+                    "eigen": null,
+                    "revel": null,
+                    "sift": null,
+                    "cadd": "27.2",
+                    "metasvm": "",
+                    "mpc": null,
+                    "splice_ai": null,
+                    "phastcons_100_vert": null,
+                    "mut_taster": null,
+                    "fathmm": null,
+                    "polyphen": null,
+                    "dann": null,
+                    "primate_ai": null,
+                    "gerp_rs": null
+                },
+                "hgmd": {
+                    "accession": null,
+                    "class": null
+                },
+                "rsid": null,
+                "liftedOverChrom": "",
+                "originalAltAlleles": [
+                    "T"
+                ],
+                "transcripts": {
+                    "ENSG00000135953": [
+                        {
+                            "transcriptId": "ENST00000258436",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "MFSD9",
+                            "majorConsequence": "inframe_deletion",
+                            "canonical": "YES",
+                            "hgvsp": "ENSP00000258436.5:p.Leu126del",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "ctTCTc/ctc",
+                            "hgvsc": "ENST00000258436.5:c.375_377delTCT",
+                            "transcriptRank": 0,
+                            "aminoAcids": "LL/L",
+                            "cdnaPosition": "419-421"
+                        }
+                    ]
+                },
+                "chrom": "1",
+                "genotypes": {
+                    "I000004_hg00731": {
+                        "sampleId": "HG00731",
+                        "ab": 0.0,
+                        "ad": "71,0",
+                        "gq": 99.0,
+                        "dp": "71",
+                        "pl": "0,213,1918",
+                        "numAlt": 2
+                    },
+                    "I000005_hg00732": {
+                        "sampleId": "HG00732",
+                        "ab": 0.0,
+                        "ad": "77,0",
+                        "gq": 99.0,
+                        "dp": "77",
+                        "pl": "0,232,3036",
+                        "numAlt": 1
+                    }
+                }
+            },
+            "family": 2
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 4,
+        "fields": {
+            "guid": "SV0059956_11560662_f019313_1",
+            "created_date": "2018-05-15T14:51:57.255Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.817Z",
+            "xpos": 1001560662,
+            "xpos_end": 1003121324,
+            "ref": "G",
+            "alt": "A",
+            "variant_id": "1-46859832-G-A",
+            "saved_variant_json": {
+                "clinvar": {
+                    "clinicalSignificance": "",
+                    "alleleId": null,
+                    "variationId": null,
+                    "goldStars": null
+                },
+                "liftedOverGenomeVersion": "38",
+                "familyGuids": [
+                    "F000001_1"
+                ],
+                "liftedOverPos": "",
+                "genotypeFilters": "pass",
+                "mainTranscriptId": "ENST00000505820",
+                "populations": {
+                    "callset": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    },
+                    "g1k": {
+                        "ac": null,
+                        "an": null,
+                        "af": 0.0
+                    },
+                    "gnomad_genomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.0
+                    },
+                    "gnomad_exomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 8.142526788913136e-06
+                    },
+                    "exac": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.0
+                    },
+                    "topmed": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    }
+                },
+                "genomeVersion": "37",
+                "pos": 1560662,
+                "predictions": {
+                    "eigen": null,
+                    "revel": null,
+                    "sift": "damaging",
+                    "cadd": "31",
+                    "metasvm": "D",
+                    "mpc": null,
+                    "splice_ai": null,
+                    "phastcons_100_vert": null,
+                    "mut_taster": "disease_causing",
+                    "fathmm": "tolerated",
+                    "polyphen": "probably_damaging",
+                    "dann": null,
+                    "primate_ai": null,
+                    "gerp_rs": null
+                },
+                "hgmd": {
+                    "accession": null,
+                    "class": null
+                },
+                "rsid": null,
+                "liftedOverChrom": "",
+                "originalAltAlleles": [
+                    "T"
+                ],
+                "transcripts": {
+                    "ENSG00000197530": [
+                        {
+                            "transcriptId": "ENST00000505820",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "CELSR1",
+                            "majorConsequence": "splice_region_variant",
+                            "canonical": "YES",
+                            "hgvs": "ENST00000505820.2:c.1067-4G>A",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "Gtg/Atg",
+                            "hgvsc": "ENST00000505820.2:c.1067-4G>A",
+                            "transcriptRank": 0,
+                            "geneId": "ENSG00000197530",
+                            "aminoAcids": "V/M",
+                            "cdnaPosition": "3955"
+                        }
+                    ]
+                },
+                "chrom": "1",
+                "genotypes": {
+                    "I000003_na19679": {
+                        "sampleId": "NA19679",
+                        "ab": 0,
+                        "ad": null,
+                        "gq": 21,
+                        "dp": 7,
+                        "pl": null,
+                        "numAlt": 0
+                    },
+                    "I000002_na19678": {
+                        "sampleId": "NA19678",
+                        "ab": 0,
+                        "ad": null,
+                        "gq": 6,
+                        "dp": 2,
+                        "pl": null,
+                        "numAlt": 0
+                    },
+                    "I000002_na19675": {
+                        "sampleId": "NA19675",
+                        "ab": 0.125,
+                        "ad": null,
+                        "gq": 7,
+                        "dp": 8,
+                        "pl": null,
+                        "numAlt": 1
+                    }
+                }
+            },
+            "family": 1
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 5,
+        "fields": {
+            "guid": "SV0059957_11562437_f019313_1",
+            "created_date": "2018-05-15T14:51:57.255Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.817Z",
+            "xpos": 1001562437,
+            "xpos_end": 1003124874,
+            "ref": "G",
+            "alt": "C",
+            "variant_id": "1-1562437-G-C",
+            "saved_variant_json": {
+                "clinvar": {
+                    "clinicalSignificance": "",
+                    "alleleId": null,
+                    "variationId": null,
+                    "goldStars": null
+                },
+                "liftedOverGenomeVersion": "38",
+                "familyGuids": [
+                    "F000001_1"
+                ],
+                "liftedOverPos": "",
+                "genotypeFilters": "pass",
+                "mainTranscriptId": "ENST00000505820",
+                "populations": {
+                    "callset": {
+                        "ac": 11,
+                        "af": 0.344,
+                        "an": 32,
+                        "hemi": null,
+                        "hom": null
+                    },
+                    "exac": {
+                        "ac": 28869,
+                        "af": 0.6478622327790974,
+                        "an": 80512,
+                        "hemi": 0,
+                        "hom": 5122
+                    },
+                    "g1k": {
+                        "ac": 2206,
+                        "af": 0.6838,
+                        "an": 5008,
+                        "hemi": null,
+                        "hom": null
+                    },
+                    "gnomad_exomes": {
+                        "ac": 67263,
+                        "af": 0.6339977851605758,
+                        "an": 216284,
+                        "hemi": 0,
+                        "hom": 12201
+                    },
+                    "gnomad_genomes": {
+                        "ac": 10595,
+                        "af": 0.6165093253511398,
+                        "an": 30852,
+                        "hemi": 0,
+                        "hom": 2311
+                    },
+                    "topmed": {
+                        "ac": 45912,
+                        "af": 0.365635,
+                        "an": 125568,
+                        "hemi": null,
+                        "hom": 10332
+                    }
+                },
+                "genomeVersion": "37",
+                "pos": 1562437,
+                "hgmd": {
+                    "accession": null,
+                    "class": null
+                },
+                "rsid": null,
+                "liftedOverChrom": "",
+                "originalAltAlleles": [
+                    "G"
+                ],
+                "transcripts": {
+                    "ENSG00000197530": [
+                        {
+                            "transcriptId": "ENST00000505820",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "MIB2",
+                            "majorConsequence": "intron_variant",
+                            "canonical": 1,
+                            "hgvsp": "ENST00000505820.2:c.1586-17C>G",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "Gtg/Atg",
+                            "hgvsc": "ENST00000262738.3:c.3955G>A",
+                            "transcriptRank": 0,
+                            "geneId": "ENSG00000197530",
+                            "aminoAcids": "V/M",
+                            "cdnaPosition": "3955"
+                        }
+                    ]
+                },
+                "chrom": "1",
+                "genotypes": {
+                    "I000003_na19679": {
+                        "sampleId": "NA19679",
+                        "ab": 0.71428573,
+                        "ad": null,
+                        "gq": 58,
+                        "dp": 7,
+                        "pl": null,
+                        "numAlt": 1
+                    },
+                    "I000002_na19678": {
+                        "sampleId": "NA19678",
+                        "ab": 0,
+                        "ad": null,
+                        "gq": 30,
+                        "dp": 10,
+                        "pl": null,
+                        "numAlt": 0
+                    },
+                    "I000002_na19675": {
+                        "sampleId": "NA19675",
+                        "ab": 0.5555556,
+                        "ad": null,
+                        "gq": 99,
+                        "dp": 9,
+                        "pl": null,
+                        "numAlt": 1
+                    }
+                }
+            },
+            "family": 1
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 6,
+        "fields": {
+            "guid": "SV0000006_1248367227_r0003_tes",
+            "created_date": "2018-05-15T14:51:56.943Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.805Z",
+            "xpos": 1248367227,
+            "xpos_end": 1248367228,
+            "ref": "TC",
+            "alt": "T",
+            "variant_id": "12-48367227-TC-T",
+            "saved_variant_json": {
+                "clinvar": {
+                    "clinicalSignificance": "",
+                    "alleleId": null,
+                    "variationId": null,
+                    "goldStars": null
+                },
+                "liftedOverGenomeVersion": "38",
+                "liftedOverPos": "",
+                "genotypeFilters": "pass",
+                "populations": {
+                    "callset": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    },
+                    "g1k": {
+                        "ac": null,
+                        "an": null,
+                        "af": 0.0
+                    },
+                    "gnomad_genomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.00012925741614425127
+                    },
+                    "gnomad_exomes": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 6.505916317651364e-05
+                    },
+                    "exac": {
+                        "hemi": null,
+                        "ac": null,
+                        "an": null,
+                        "hom": null,
+                        "af": 0.0006726888333653661
+                    },
+                    "topmed": {
+                        "ac": null,
+                        "an": null,
+                        "af": null
+                    }
+                },
+                "genomeVersion": "37",
+                "pos": 248367227,
+                "predictions": {
+                    "eigen": null,
+                    "revel": null,
+                    "sift": null,
+                    "cadd": "27.2",
+                    "metasvm": "",
+                    "mpc": null,
+                    "splice_ai": null,
+                    "phastcons_100_vert": null,
+                    "mut_taster": null,
+                    "fathmm": null,
+                    "polyphen": null,
+                    "dann": null,
+                    "primate_ai": null,
+                    "gerp_rs": null
+                },
+                "hgmd": {
+                    "accession": null,
+                    "class": null
+                },
+                "rsid": null,
+                "liftedOverChrom": "",
+                "originalAltAlleles": [
+                    "T"
+                ],
+                "mainTranscriptId": "ENST00000505820",
+                "transcripts": {
+                    "ENSG00000135953": [
+                        {
+                            "transcriptId": "ENST00000371839",
+                            "biotype": "protein_coding",
+                            "geneId": "ENSG00000228198"
+                        }
+                    ],
+                    "ENSG00000240361": [
+                        {
+                            "transcriptId": "ENST00000505820",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "MIB2",
+                            "majorConsequence": "intron_variant",
+                            "canonical": 1,
+                            "hgvsp": "ENST00000505820.2:c.1586-17C>G",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "Gtg/Atg",
+                            "hgvsc": "ENST00000262738.3:c.3955G>A",
+                            "transcriptRank": 0,
+                            "geneId": "ENSG00000240361",
+                            "aminoAcids": "V/M",
+                            "cdnaPosition": "3955"
+                        }
+                    ]
+                },
+                "chrom": "1",
+                "genotypes": {
+                    "I000015_na20885": {
+                        "sampleId": "NA20885",
+                        "ab": 0.0,
+                        "ad": "71,0",
+                        "gq": 99.0,
+                        "dp": "71",
+                        "pl": "0,213,1918",
+                        "numAlt": 1
+                    }
+                }
+            },
+            "family": 11
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 7,
+        "fields": {
+            "guid": "SV0000007_prefix_19107_DEL_r00",
+            "created_date": "2018-06-15T14:51:56.943Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.805Z",
+            "xpos": 1249045487,
+            "xpos_end": 1249045898,
+            "ref": null,
+            "alt": null,
+            "variant_id": "prefix_19107_DEL",
+            "saved_variant_json": {
+                "liftedOverGenomeVersion": null,
+                "pos": 49045487,
+                "end": 49045898,
+                "xpos": 1249045487,
+                "predictions": {
+                    "strvctvre": 0.374
+                },
+                "alt": null,
+                "numExon": 2,
+                "genomeVersion": "37",
+                "genotypeFilters": [],
+                "ref": null,
+                "genotypes": {
+                    "I000015_na20885": {
+                        "cn": 1,
+                        "sampleId": "NA20885",
+                        "numAlt": -1,
+                        "defragged": false,
+                        "qs": 33,
+                        "numExon": 2
+                    }
+                },
+                "liftedOverPos": null,
+                "liftedOverChrom": null,
+                "svType": "DEL",
+                "variantId": "prefix_19107_DEL",
+                "chrom": "12",
+                "transcripts": {
+                    "ENSG00000240361": [],
+                    "ENSG00000135953": []
+                }
+            },
+            "family": 11
+        }
+    },
+    {
+        "model": "seqr.savedvariant",
+        "pk": 8,
+        "fields": {
+            "guid": "SV0000006_1248367227_r0004_non",
+            "created_date": "2018-05-15T14:51:56.943Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-31T16:36:02.805Z",
+            "xpos": 1248367227,
+            "xpos_end": 1248367228,
+            "ref": "TC",
+            "alt": "T",
+            "variant_id": "12-48367227-TC-T",
+            "saved_variant_json": {
+                "liftedOverGenomeVersion": "38",
+                "liftedOverPos": "",
+                "genomeVersion": "37",
+                "pos": 248367227,
+                "mainTranscriptId": "ENST00000505820",
+                "transcripts": {
+                    "ENSG00000135953": [
+                        {
+                            "transcriptId": "ENST00000371839",
+                            "biotype": "protein_coding",
+                            "geneId": "ENSG00000228198"
+                        }
+                    ],
+                    "ENSG00000240361": [
+                        {
+                            "transcriptId": "ENST00000505820",
+                            "lofFilter": "",
+                            "biotype": "protein_coding",
+                            "geneSymbol": "MIB2",
+                            "majorConsequence": "intron_variant",
+                            "canonical": 1,
+                            "hgvsp": "ENST00000505820.2:c.1586-17C>G",
+                            "lof": "",
+                            "lofFlags": "",
+                            "codons": "Gtg/Atg",
+                            "hgvsc": "ENST00000262738.3:c.3955G>A",
+                            "transcriptRank": 0,
+                            "geneId": "ENSG00000240361",
+                            "aminoAcids": "V/M",
+                            "cdnaPosition": "3955"
+                        }
+                    ]
+                },
+                "chrom": "1",
+                "genotypes": {
+                    "I000018_na21234": {
+                        "sampleId": "NA20885",
+                        "ab": 0.0,
+                        "gq": 99.0,
+                        "numAlt": 1
+                    }
+                }
+            },
+            "family": 14
+        }
+    },
+    {
+        "model": "seqr.variantnote",
+        "pk": 714935,
+        "fields": {
+            "guid": "VN0714935_2103343353_r0390_100",
+            "created_date": "2018-05-15T14:51:58.410Z",
+            "created_by": null,
+            "last_modified_date": "2018-02-23T17:32:23.054Z",
+            "saved_variants": [
+                2
+            ],
+            "note": "test n\u00f8te",
+            "submit_to_clinvar": false,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1708633,
+        "fields": {
+            "guid": "VT1708633_2103343353_r0390_100",
+            "created_date": "2018-05-15T14:54:47.121Z",
+            "created_by": null,
+            "last_modified_date": "2018-02-23T17:32:30.373Z",
+            "saved_variants": [
+                1
+            ],
+            "variant_tag_type": 2,
+            "search_hash": "125897d6"
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1726945,
+        "fields": {
+            "guid": "VT1726945_2103343353_r0390_100",
+            "created_date": "2018-05-25T21:01:33.193Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-25T21:01:33.193Z",
+            "saved_variants": [
+                2
+            ],
+            "variant_tag_type": 3,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1726961,
+        "fields": {
+            "guid": "VT1726961_2103343353_r0390_100",
+            "created_date": "2018-05-29T16:32:51.449Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-29T16:32:51.449Z",
+            "saved_variants": [
+                1
+            ],
+            "variant_tag_type": 1,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1726963,
+        "fields": {
+            "guid": "VT1726961_2103343353_r0003_tes",
+            "created_date": "2018-05-29T16:32:51.449Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-29T16:32:51.449Z",
+            "saved_variants": [
+                6,
+                7
+            ],
+            "variant_tag_type": 1,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1726970,
+        "fields": {
+            "guid": "VT1726970_2103343353_r0004_tes",
+            "created_date": "2018-05-29T16:32:51.449Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-29T16:32:51.449Z",
+            "saved_variants": [
+                2
+            ],
+            "variant_tag_type": 4,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.varianttag",
+        "pk": 1726973,
+        "fields": {
+            "guid": "VT1726961_2103343353_r0005_tes",
+            "created_date": "2018-05-29T16:32:51.449Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-29T16:32:51.449Z",
+            "saved_variants": [
+                8
+            ],
+            "variant_tag_type": 1,
+            "search_hash": null
+        }
+    },
+    {
+        "model": "seqr.variantfunctionaldata",
+        "pk": 23,
+        "fields": {
+            "guid": "VFD0000023_1248367227_r0390_10",
+            "created_date": "2018-05-24T15:30:04.465Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-24T15:30:04.483Z",
+            "saved_variants": [
+                1
+            ],
+            "functional_data_tag": "Biochemical Function",
+            "metadata": "A note",
+            "search_hash": ""
+        }
+    },
+    {
+        "model": "seqr.variantfunctionaldata",
+        "pk": 24,
+        "fields": {
+            "guid": "VFD0000024_1248367227_r0390_10",
+            "created_date": "2018-05-24T15:34:01.353Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-24T15:34:01.365Z",
+            "saved_variants": [
+                1
+            ],
+            "functional_data_tag": "Genome-wide Linkage",
+            "metadata": "2",
+            "search_hash": ""
+        }
+    },
+    {
+        "model": "seqr.variantfunctionaldata",
+        "pk": 25,
+        "fields": {
+            "guid": "VFD0000025_1248367227_r0390_10",
+            "created_date": "2018-05-24T15:34:01.353Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-24T15:34:01.365Z",
+            "saved_variants": [
+                1
+            ],
+            "functional_data_tag": "Additional Unrelated Kindreds w/ Causal Variants in Gene",
+            "metadata": "2",
+            "search_hash": ""
+        }
+    },
+    {
+        "model": "seqr.variantfunctionaldata",
+        "pk": 26,
+        "fields": {
+            "guid": "VFD0000026_1248367227_r0390_10",
+            "created_date": "2018-05-24T15:34:01.353Z",
+            "created_by": null,
+            "last_modified_date": "2018-05-24T15:34:01.365Z",
+            "saved_variants": [
+                1
+            ],
+            "functional_data_tag": "Kindreds w/ Overlapping SV & Similar Phenotype",
+            "metadata": "2",
+            "search_hash": ""
+        }
+    },
+    {
+        "model": "seqr.locuslist",
+        "pk": 1,
+        "fields": {
+            "guid": "LL00049_pid_genes_autosomal_do",
+            "projects": [
+                3
+            ],
+            "created_date": "2017-02-07T12:55:30.700Z",
+            "created_by": 11,
+            "last_modified_date": "2018-05-01T00:02:38.733Z",
+            "name": "PID genes - Autosomal dominant",
+            "description": "Autosomal dominant inheritance PID genes",
+            "is_public": true
+        }
+    },
+    {
+        "model": "seqr.locuslist",
+        "pk": 2,
+        "fields": {
+            "guid": "LL00005_retina_proteome",
+            "projects": [
+                1
+            ],
+            "created_date": "2017-02-07 07:55:06.032034-05",
+            "created_by": 10,
+            "last_modified_date": "2018-05-01T00:02:38.733Z",
+            "name": "Retina proteome",
+            "description": "",
+            "is_public": false
+        }
+    },
+    {
+        "model": "seqr.locuslistgene",
+        "pk": 11,
+        "fields": {
+            "guid": "LLG0000011_nmd_nclensg00000171",
+            "created_date": "2018-04-28T00:03:25.341Z",
+            "created_by": null,
+            "last_modified_date": "2018-04-28T00:03:25.341Z",
+            "locus_list": 1,
+            "gene_id": "ENSG00000223972"
+        }
+    },
+    {
+        "model": "seqr.locuslistgene",
+        "pk": 12,
+        "fields": {
+            "guid": "LLG0000012_nmd_nclensg00000169",
+            "created_date": "2018-04-28T00:03:25.347Z",
+            "created_by": null,
+            "last_modified_date": "2018-04-28T00:03:25.347Z",
+            "locus_list": 1,
+            "gene_id": "ENSG00000227232"
+        }
+    },
+    {
+        "model": "seqr.locuslistgene",
+        "pk": 13,
+        "fields": {
+            "guid": "LLG0000013_nmd_nclensg00000196",
+            "created_date": "2018-04-28T00:03:25.353Z",
+            "created_by": null,
+            "last_modified_date": "2018-04-28T00:03:25.353Z",
+            "locus_list": 1,
+            "gene_id": "ENSG00000243485"
+        }
+    },
+    {
+        "model": "seqr.locuslistinterval",
+        "pk": 12,
+        "fields": {
+            "guid": "LLI0000012_test_list_edit4545_",
+            "created_date": "2018-07-17T21:13:10.688Z",
+            "created_by": null,
+            "last_modified_date": "2018-07-18T14:57:35.302Z",
+            "locus_list": 1,
+            "genome_version": "37",
+            "chrom": "1",
+            "start": 248367200,
+            "end": 248367300
+        }
+    },
+    {
+        "model": "seqr.locuslistinterval",
+        "pk": 13,
+        "fields": {
+            "guid": "LLI0000013_a_new_list325_3000",
+            "created_date": "2018-07-17T21:16:12.224Z",
+            "created_by": null,
+            "last_modified_date": "2018-07-17T21:16:12.224Z",
+            "locus_list": 1,
+            "genome_version": "37",
+            "chrom": "3",
+            "start": 25,
+            "end": 3000
+        }
+    },
+    {
+        "model": "seqr.analysisgroup",
+        "pk": 1,
+        "fields": {
+            "guid": "AG0000183_test_group",
+            "created_date": "2018-08-09T18:53:24.207Z",
+            "created_by": null,
+            "last_modified_date": "2018-08-09T18:53:24.207Z",
+            "name": "Test Group 1",
+            "description": "A sample analysis group",
+            "project": 1,
+            "families": [
+                1,
+                3,
+                5
+            ]
+        }
+    },
+    {
+        "model": "matchmaker.matchmakersubmission",
+        "pk": 1,
+        "fields": {
+            "individual": 1,
+            "guid": "MS000001_na19675",
+            "created_date": "2018-05-23T09:07:49.719Z",
+            "last_modified_date": "2018-05-23T09:07:49.719Z",
+            "submission_id": "NA19675_1_01",
+            "label": "NA19675_1",
+            "contact_name": "Sam Baxter",
+            "contact_href": "mailto:matchmaker@populationgenomics.org.au,test_user@populationgenomics.org.au",
+            "features": [
+                {
+                    "id": "HP:0001252",
+                    "observed": "yes"
+                },
+                {
+                    "id": "HP:0001263",
+                    "observed": "no"
+                },
+                {
+                    "id": "HP:0012469",
+                    "observed": "yes"
+                }
+            ],
+            "genomic_features": [
+                {
+                    "gene": {
+                        "id": "ENSG00000186092"
+                    },
+                    "variant": {
+                        "end": 77027548,
+                        "start": 77027549,
+                        "assembly": "GRCh38",
+                        "referenceName": "14",
+                        "alternateBases": "C",
+                        "referenceBases": "CCACT"
+                    },
+                    "zygosity": 1
+                }
+            ]
+        }
+    },
+    {
+        "model": "matchmaker.matchmakersubmission",
+        "pk": 2,
+        "fields": {
+            "individual": 15,
+            "guid": "MS000015_na20885",
+            "created_date": "2019-02-05T06:42:55.397Z",
+            "last_modified_date": "2019-02-05T06:42:55.397Z",
+            "submission_id": "NA20885",
+            "label": "NA20885",
+            "contact_name": "Sam Baxter",
+            "contact_href": "mailto:matchmaker@populationgenomics.org.au",
+            "features": [
+                {
+                    "id": "HP:0001252",
+                    "label": "Muscular hypotonia",
+                    "observed": "yes"
+                },
+                {
+                    "id": "HP:0002017",
+                    "label": "Nausea and vomiting",
+                    "observed": "yes"
+                }
+            ],
+            "genomic_features": [
+                {
+                    "gene": {
+                        "id": "ENSG00000227232"
+                    },
+                    "variant": {
+                        "end": 38739601,
+                        "start": 38739601,
+                        "assembly": "GRCh38",
+                        "referenceName": "17",
+                        "alternateBases": "A",
+                        "referenceBases": "G"
+                    },
+                    "zygosity": 1
+                }
+            ]
+        }
+    },
+    {
+        "model": "matchmaker.matchmakersubmission",
+        "pk": 3,
+        "fields": {
+            "individual": 16,
+            "guid": "MS000016_P0004515",
+            "created_date": "2019-02-05T06:42:55.397Z",
+            "last_modified_date": "2019-02-05T06:42:55.397Z",
+            "submission_id": "P0004515",
+            "label": "P0004515",
+            "contact_name": "Baylor UDN Clinical Site",
+            "contact_href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
+            "genomic_features": [
+                {
+                    "gene": {
+                        "id": "ENSG00000186092"
+                    },
+                    "variant": {
+                        "referenceName": "14",
+                        "start": 77027630
+                    }
+                },
+                {
+                    "gene": {
+                        "id": "ENSG00000233750"
+                    }
+                },
+                {
+                    "gene": {
+                        "id": "ENSG00000223972"
+                    }
+                },
+                {
+                    "gene": {
+                        "id": "ABC"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "model": "matchmaker.matchmakersubmission",
+        "pk": 4,
+        "fields": {
+            "individual": 18,
+            "guid": "MS000018_P0004517",
+            "created_date": "2019-02-05T06:42:55.397Z",
+            "last_modified_date": "2019-02-05T06:42:55.397Z",
+            "submission_id": "P0004517",
+            "label": "P0004517",
+            "contact_name": "Sam Baxter",
+            "contact_href": "mailto:matchmaker@populationgenomics.org.au",
+            "genomic_features": [
+                {
+                    "gene": {
+                        "id": "ENSG00000233750"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerresult",
+        "pk": 3552,
+        "fields": {
+            "guid": "MR0003552_SHE_1006P_1",
+            "created_date": "2019-02-12T18:43:56.358Z",
+            "created_by": null,
+            "last_modified_date": "2019-04-29T17:48:46.367Z",
+            "submission": 1,
+            "originating_submission": 3,
+            "result_data": {
+                "score": {
+                    "patient": 0.5706712016939723
+                },
+                "patient": {
+                    "genomicFeatures": [
+                        {
+                            "gene": {
+                                "id": "OR4F5"
+                            }
+                        },
+                        {
+                            "gene": {
+                                "id": "CICP27"
+                            }
+                        },
+                        {
+                            "gene": {
+                                "id": "DDX11L1"
+                            }
+                        }
+                    ],
+                    "contact": {
+                        "href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
+                        "name": "Baylor UDN Clinical Site"
+                    },
+                    "id": "P0004515",
+                    "features": [
+                        {
+                            "observed": "yes",
+                            "id": "HP:0012469"
+                        },
+                        {
+                            "observed": "no",
+                            "id": "HP:0003273"
+                        }
+                    ]
+                }
+            },
+            "last_modified_by": 10,
+            "we_contacted": false,
+            "host_contacted": true,
+            "deemed_irrelevant": true,
+            "flag_for_analysis": false,
+            "comments": "AMBRA1 c.2228G>C p.(Ser743Thr) missense variant. Maternally inherited, both have epilepsy"
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerresult",
+        "pk": 7228,
+        "fields": {
+            "guid": "MR0007228_VCGS_FAM50_156",
+            "created_date": "2019-04-25T07:19:41.518Z",
+            "created_by": null,
+            "last_modified_date": "2019-04-29T17:50:03.101Z",
+            "submission": 1,
+            "originating_submission": 4,
+            "result_data": {
+                "score": {
+                    "patient": 1.0
+                },
+                "patient": {
+                    "genomicFeatures": [
+                        {
+                            "gene": {
+                                "id": "ENSG00000233750"
+                            }
+                        }
+                    ],
+                    "contact": {
+                        "href": "mailto:cfen@filadelfia.dk",
+                        "name": "Christina D\u00fchring Fenger",
+                        "institution": "The Danish Epilepsy Centre, Filadelfia, Institute for Regional Health Services"
+                    },
+                    "id": "34301",
+                    "label": "AMBRA1"
+                }
+            },
+            "last_modified_by": 10,
+            "we_contacted": false,
+            "host_contacted": false,
+            "deemed_irrelevant": false,
+            "flag_for_analysis": false,
+            "comments": ""
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerresult",
+        "pk": 7229,
+        "fields": {
+            "guid": "MR0004688_RGP_105_3",
+            "created_date": "2019-04-25T07:19:41.518Z",
+            "created_by": null,
+            "last_modified_date": "2019-04-29T17:50:03.101Z",
+            "submission": 1,
+            "result_data": {
+                "patient": {
+                    "contact": {
+                        "href": "mailto:j.weiss@vumc.nl",
+                        "institution": "VU University Medical Center",
+                        "name": "Janneke Weiss"
+                    },
+                    "genomicFeatures": [
+                        {
+                            "gene": {
+                                "id": "ENSG00000272333"
+                            }
+                        }
+                    ],
+                    "id": "10509",
+                    "label": "2016-174",
+                    "sex": "MALE",
+                    "species": "NCBITaxon:9606"
+                }
+            },
+            "last_modified_by": 10,
+            "we_contacted": true,
+            "host_contacted": false,
+            "deemed_irrelevant": false,
+            "flag_for_analysis": false,
+            "comments": ""
+        }
+    },
+    {
+        "model": "matchmaker.matchmakercontactnotes",
+        "pk": 1,
+        "fields": {
+            "guid": "MCN0000001_st_georges,_univers",
+            "created_date": "2019-04-25T07:19:41.518Z",
+            "created_by": null,
+            "last_modified_date": "2019-04-29T17:50:03.101Z",
+            "institution": "st georges, university of london",
+            "comments": "Some additional data about this institution"
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerincomingquery",
+        "pk": 1,
+        "fields": {
+            "guid": "MIQ0000001",
+            "created_date": "2019-04-25T07:19:41.518Z",
+            "institution": "Baylor UDN Clinical Site",
+            "patient_id": null
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerincomingquery",
+        "pk": 2,
+        "fields": {
+            "guid": "MIQ0000002",
+            "created_date": "2019-04-30T07:19:41.518Z",
+            "institution": "Broad Center for Mendelian Genomics",
+            "patient_id": "NA19675"
+        }
+    },
+    {
+        "model": "matchmaker.matchmakerincomingquery",
+        "pk": 3,
+        "fields": {
+            "guid": "MIQ0000003",
+            "created_date": "2019-06-25T07:19:41.518Z",
+            "institution": "Broad Center for Mendelian Genomics",
+            "patient_id": "NA19675"
+        }
     }
-},
-{
-    "model": "matchmaker.matchmakercontactnotes",
-    "pk": 1,
-    "fields": {
-        "guid": "MCN0000001_st_georges,_univers",
-        "created_date": "2019-04-25T07:19:41.518Z",
-        "created_by": null,
-        "last_modified_date": "2019-04-29T17:50:03.101Z",
-        "institution": "st georges, university of london",
-        "comments": "Some additional data about this institution"
-    }
-}, {
-    "model": "matchmaker.matchmakerincomingquery",
-    "pk": 1,
-    "fields": {
-        "guid": "MIQ0000001",
-        "created_date": "2019-04-25T07:19:41.518Z",
-        "institution": "Baylor UDN Clinical Site",
-        "patient_id": null
-    }
-}, {
-    "model": "matchmaker.matchmakerincomingquery",
-    "pk": 2,
-    "fields": {
-        "guid": "MIQ0000002",
-        "created_date": "2019-04-30T07:19:41.518Z",
-        "institution": "Broad Center for Mendelian Genomics",
-        "patient_id": "NA19675"
-    }
-}, {
-    "model": "matchmaker.matchmakerincomingquery",
-    "pk": 3,
-    "fields": {
-        "guid": "MIQ0000003",
-        "created_date": "2019-06-25T07:19:41.518Z",
-        "institution": "Broad Center for Mendelian Genomics",
-        "patient_id": "NA19675"
-    }
-}
 ]

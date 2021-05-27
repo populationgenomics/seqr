@@ -136,7 +136,7 @@ export const STATE1 = {
   },
   user: {
     date_joined: '2015-02-19T20:22:50.633Z',
-    email: 'test@broadinstitute.org',
+    email: 'test@populationgenomics.org.au',
     first_name: '',
     id: 1,
     is_active: true,
@@ -320,7 +320,7 @@ export const STATE_WITH_2_FAMILIES = {
       lastModifiedDate: '2017-03-14T17:37:32.712Z',
       mmePrimaryDataOwner: 'PI',
       mmeContactInstitution: 'Broad',
-      mmeContactUrl: 'test@broadinstitute.org',
+      mmeContactUrl: 'test@populationgenomics.org.au',
       name: '1000 Genomes Demo',
       projectCategoryGuids: [],
       projectGuid: 'R0237_1000_genomes_demo',
@@ -328,7 +328,7 @@ export const STATE_WITH_2_FAMILIES = {
         {
           dateJoined: '2019-02-20T18:01:36.677Z',
           displayName: '',
-          email: 'test1@broadinstitute.org',
+          email: 'test1@populationgenomics.org.au',
           firstName: '',
           hasEditPermissions: true,
           hasViewPermissions: true,
@@ -341,7 +341,7 @@ export const STATE_WITH_2_FAMILIES = {
         {
           dateJoined: '2019-02-20T18:01:36.677Z',
           displayName: '',
-          email: 'test2@broadinstitute.org',
+          email: 'test2@populationgenomics.org.au',
           firstName: '',
           hasEditPermissions: true,
           hasViewPermissions: true,
@@ -362,7 +362,7 @@ export const STATE_WITH_2_FAMILIES = {
   },
   user: {
     date_joined: '2015-02-19T20:22:50.633Z',
-    email: 'test@broadinstitute.org',
+    email: 'test@populationgenomics.org.au',
     first_name: '',
     id: 1,
     is_active: true,
@@ -380,7 +380,7 @@ export const STATE_WITH_2_FAMILIES = {
       annotation: {
         cadd_phred: "27.2",
         freqs: { AF: null, exac: 0.0006726888333653661, g1k: 0, gnomad_exomes: 0.00006505916317651364 },
-        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null} ,
+        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null },
         vepAnnotations: [
           {
             aminoAcids: "P/X",
@@ -412,7 +412,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 1,
           ad: "0,74",
           alleles: ["T", "T"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "74",
           filter: "pass",
           gq: 99,
@@ -423,7 +423,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "77,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "77",
           filter: "pass",
           gq: 99,
@@ -434,7 +434,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "71,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "71",
           filter: "pass",
           gq: 99,
@@ -442,16 +442,18 @@ export const STATE_WITH_2_FAMILIES = {
           pl: "0,213,1918",
         },
       },
-      hgmd: {accession: null, class: null},
+      hgmd: { accession: null, class: null },
       liftedOverChrom: "",
       liftedOverGenomeVersion: "38",
       liftedOverPos: "",
       mainTranscriptId: 'ENST00000456743',
-      transcripts: {ENSG00000228198: [{
-        aminoAcids: "P/X", hgvsc: "ENST00000456743.1:c.862delC", hgvsp: "ENSP00000389625.1:p.Leu288SerfsTer10", lof: "HC",
-        lofFilter: "", lofFlags: "SINGLE_EXON", proteinPosition: "287", symbol: "OR2M3", geneId: 'ENSG00000228198',
-        majorConsequence: 'frameshift_variant', transcriptId: 'ENST00000456743'
-      }]},
+      transcripts: {
+        ENSG00000228198: [{
+          aminoAcids: "P/X", hgvsc: "ENST00000456743.1:c.862delC", hgvsp: "ENSP00000389625.1:p.Leu288SerfsTer10", lof: "HC",
+          lofFilter: "", lofFlags: "SINGLE_EXON", proteinPosition: "287", symbol: "OR2M3", geneId: 'ENSG00000228198',
+          majorConsequence: 'frameshift_variant', transcriptId: 'ENST00000456743'
+        }]
+      },
       noteGuids: ['VN0727076_116042722_r0390_1000'],
       origAltAlleles: ["T"],
       pos: 45919065,
@@ -467,7 +469,7 @@ export const STATE_WITH_2_FAMILIES = {
       annotation: {
         cadd_phred: "27.2",
         freqs: { AF: null, exac: 0.0006726888333653661, g1k: 0, gnomad_exomes: 0.00006505916317651364 },
-        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null} ,
+        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null },
         vepAnnotations: [
           {
             aminoAcids: "P/X",
@@ -511,7 +513,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 1,
           ad: "0,74",
           alleles: ["T", "T"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "74",
           filter: "pass",
           gq: 99,
@@ -522,7 +524,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "77,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "77",
           filter: "pass",
           gq: 99,
@@ -533,7 +535,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "71,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "71",
           filter: "pass",
           gq: 99,
@@ -541,14 +543,14 @@ export const STATE_WITH_2_FAMILIES = {
           pl: "0,213,1918",
         },
       },
-      hgmd: {accession: null, class: null},
+      hgmd: { accession: null, class: null },
       liftedOverChrom: "",
       liftedOverGenomeVersion: "38",
       liftedOverPos: "",
       noteGuids: [],
       origAltAlleles: ["T"],
       mainTranscriptId: 'ENST00000262738',
-      transcripts: {ENSG00000228198: [{transcriptId: 'ENST00000262738',  majorConsequence: 'missense_variant'}]},
+      transcripts: { ENSG00000228198: [{ transcriptId: 'ENST00000262738', majorConsequence: 'missense_variant' }] },
       pos: 248367227,
       projectGuid: 'R0237_1000_genomes_demo',
       ref: "TC",
@@ -618,7 +620,7 @@ export const STATE_WITH_2_FAMILIES = {
       annotation: {
         cadd_phred: "27.2",
         freqs: { AF: null, exac: 0.0006726888333653661, g1k: 0, gnomad_exomes: 0.00006505916317651364 },
-        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null} ,
+        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null },
         vepAnnotations: [
           {
             aminoAcids: "P/X",
@@ -662,7 +664,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 1,
           ad: "0,74",
           alleles: ["T", "T"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "74",
           filter: "pass",
           gq: 99,
@@ -673,7 +675,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "77,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "77",
           filter: "pass",
           gq: 99,
@@ -684,7 +686,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "71,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "71",
           filter: "pass",
           gq: 99,
@@ -692,7 +694,7 @@ export const STATE_WITH_2_FAMILIES = {
           pl: "0,213,1918",
         },
       },
-      hgmd: {accession: null, class: null},
+      hgmd: { accession: null, class: null },
       liftedOverChrom: "",
       liftedOverGenomeVersion: "38",
       liftedOverPos: "",
@@ -713,7 +715,7 @@ export const STATE_WITH_2_FAMILIES = {
       annotation: {
         cadd_phred: "27.2",
         freqs: { AF: null, exac: 0.0006726888333653661, g1k: 0, gnomad_exomes: 0.00006505916317651364 },
-        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null} ,
+        popCounts: { AC: null, AN: null, exac_hemi: null, exac_hom: null, gnomadExomesAC: null, gnomadGenomesAC: null },
         vepAnnotations: [
           {
             aminoAcids: "P/X",
@@ -757,7 +759,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 1,
           ad: "0,74",
           alleles: ["T", "T"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "74",
           filter: "pass",
           gq: 99,
@@ -768,7 +770,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "77,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "77",
           filter: "pass",
           gq: 99,
@@ -779,7 +781,7 @@ export const STATE_WITH_2_FAMILIES = {
           ab: 0,
           ad: "71,0",
           alleles: ["TC", "TC"],
-          cnvs: {LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null},
+          cnvs: { LRR_median: null, LRR_sd: null, array: null, caller: null, cn: null, freq: null, size: null },
           dp: "71",
           filter: "pass",
           gq: 99,
@@ -787,7 +789,7 @@ export const STATE_WITH_2_FAMILIES = {
           pl: "0,213,1918",
         },
       },
-      hgmd: {accession: null, class: null},
+      hgmd: { accession: null, class: null },
       liftedOverChrom: "",
       liftedOverGenomeVersion: "38",
       liftedOverPos: "",
@@ -807,12 +809,12 @@ export const STATE_WITH_2_FAMILIES = {
   variantTagsByGuid: {
     VT1726942_1248367227_r0390_101: {
       category: "Collaboration", color: "#668FE3", dateSaved: "2018-05-25T21:00:51.260Z", name: "Review",
-      tagGuid: "VT1726942_1248367227_r0390_101", user: "hsnow@broadinstitute.org",
+      tagGuid: "VT1726942_1248367227_r0390_101", user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000004_116042722_r0390_1000']
     },
-    VT1726942_1248367227_r0390_100:{
+    VT1726942_1248367227_r0390_100: {
       category: "Collaboration", color: "#668FE3", dateSaved: "2018-05-25T21:00:51.260Z", name: "Review",
-      tagGuid: "VT1726942_1248367227_r0390_100", user: "hsnow@broadinstitute.org",
+      tagGuid: "VT1726942_1248367227_r0390_100", user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000002_1248367227_r0390_100'],
     },
     VT1708635_1248367227_r0390_100: {
@@ -822,39 +824,45 @@ export const STATE_WITH_2_FAMILIES = {
       name: "Tier 1 - Phenotype not delineated",
       searchHash: "c2edbeae",
       tagGuid: "VT1708635_1248367227_r0390_100",
-      user: "hsnow@broadinstitute.org",
+      user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000002_1248367227_r0390_100'],
     },
     VT1726942_1248367227_r0390_102: {
       category: "Collaboration", color: "#668FE3", dateSaved: "2018-05-25T21:00:51.260Z", name: "Excluded",
-      tagGuid: "VT1726942_1248367227_r0390_102", user: "hsnow@broadinstitute.org",
+      tagGuid: "VT1726942_1248367227_r0390_102", user: "hsnow@populationgenomics.org.au",
       variantGuids: ['SV0000003_2246859832_r0390_100', 'SV0000005_2246859833_r0390_100'],
     }
   },
-  variantNotesByGuid: {VN0727076_116042722_r0390_1000: {
-    dateSaved: "2018-05-29T17:25:23.770Z", note: "test note edited", noteGuid: "VN0727076_116042722_r0390_1000",
-    submitToClinvar: true, user: "hsnow@broadinstitute.org", variantGuids: ['SV0000004_116042722_r0390_1000'],
-  }},
+  variantNotesByGuid: {
+    VN0727076_116042722_r0390_1000: {
+      dateSaved: "2018-05-29T17:25:23.770Z", note: "test note edited", noteGuid: "VN0727076_116042722_r0390_1000",
+      submitToClinvar: true, user: "hsnow@populationgenomics.org.au", variantGuids: ['SV0000004_116042722_r0390_1000'],
+    }
+  },
   variantFunctionalDataByGuid: {
-    FD_248367227_r0390_100_1: { color: "#311B92", dateSaved: "2018-05-24T15:30:04.483Z", metadata: "An updated note",
-      metadataTitle: null, name: "Biochemical Function", user: "hsnow@broadinstitute.org",
-      tagGuid: 'FD_248367227_r0390_100_1', variantGuids: ['SV0000002_1248367227_r0390_100'], },
-    FD_248367227_r0390_100_2: { color: "#880E4F", dateSaved: "2018-05-24T15:34:01.365Z", metadata: "2",
-      metadataTitle: "LOD Score", name: "Genome-wide Linkage", user: "hsnow@broadinstitute.org",
-      tagGuid: 'FD_248367227_r0390_100_2', variantGuids: ['SV0000002_1248367227_r0390_100'] },
+    FD_248367227_r0390_100_1: {
+      color: "#311B92", dateSaved: "2018-05-24T15:30:04.483Z", metadata: "An updated note",
+      metadataTitle: null, name: "Biochemical Function", user: "hsnow@populationgenomics.org.au",
+      tagGuid: 'FD_248367227_r0390_100_1', variantGuids: ['SV0000002_1248367227_r0390_100'],
+    },
+    FD_248367227_r0390_100_2: {
+      color: "#880E4F", dateSaved: "2018-05-24T15:34:01.365Z", metadata: "2",
+      metadataTitle: "LOD Score", name: "Genome-wide Linkage", user: "hsnow@populationgenomics.org.au",
+      tagGuid: 'FD_248367227_r0390_100_2', variantGuids: ['SV0000002_1248367227_r0390_100']
+    },
   },
   mmeSubmissionsByGuid: {
     MS021475_na19675_1: {
       submissionGuid: 'MS021475_na19675_1',
       individualGuid: 'I021475_na19675_1',
-      mmeResultGuids: ['MR0005038_HK018_0047','MR0004688_RGP_105_3'],
+      mmeResultGuids: ['MR0005038_HK018_0047', 'MR0004688_RGP_105_3'],
       createdDate: '2018-05-09T10:29:00.000Z',
       submissionId: 'NA19675_1',
-      contactHref: 'mailto:seqr-matchmaker@populationgenomics.org.au,test@test.com',
+      contactHref: 'mailto:matchmaker@populationgenomics.org.au,test@test.com',
       phenotypes: [
-        {id: 'HP:0011405', label: 'Childhood onset short-limb short stature', observed: 'yes'},
-        {id: "HP:0012638", label: "Abnormality of nervous system physiology", observed: "no"},
-        {id: "HP:0001371", label: "Flexion contracture", observed: "yes"}
+        { id: 'HP:0011405', label: 'Childhood onset short-limb short stature', observed: 'yes' },
+        { id: "HP:0012638", label: "Abnormality of nervous system physiology", observed: "no" },
+        { id: "HP:0001371", label: "Flexion contracture", observed: "yes" }
       ],
       geneVariants: [
         { geneId: "ENSG00000228198", alt: 'T', ref: 'TC', chrom: '1', pos: 248367227 },
@@ -865,10 +873,10 @@ export const STATE_WITH_2_FAMILIES = {
   mmeResultsByGuid: {
     MR0005038_HK018_0047: {
       submissionGuid: 'MS021475_na19675_1',
-      geneVariants: [{geneId: "ENSG00000228198"}],
+      geneVariants: [{ geneId: "ENSG00000228198" }],
       phenotypes: [
-        {id: "HP:0012638", label: "Abnormality of nervous system physiology", observed: "yes"},
-        {id: "HP:0001371", label: "Flexion contracture", observed: "yes"}
+        { id: "HP:0012638", label: "Abnormality of nervous system physiology", observed: "yes" },
+        { id: "HP:0001371", label: "Flexion contracture", observed: "yes" }
       ],
       id: "12531",
       matchStatus: {
@@ -893,26 +901,26 @@ export const STATE_WITH_2_FAMILIES = {
       id: "10509",
       submissionGuid: "MS021475_na19675_1",
       matchStatus: {
-          comments: "",
-          createdDate: "2018-07-26T17:36:25.422Z",
-          deemedIrrelevant: false,
-          flagForAnalysis: false,
-          hostContacted: false,
-          matchRemoved: true,
-          matchmakerResultGuid: "MR0004688_RGP_105_3",
-          weContacted: true
+        comments: "",
+        createdDate: "2018-07-26T17:36:25.422Z",
+        deemedIrrelevant: false,
+        flagForAnalysis: false,
+        hostContacted: false,
+        matchRemoved: true,
+        matchmakerResultGuid: "MR0004688_RGP_105_3",
+        weContacted: true
       },
       patient: {
-          contact: {
-              href: "mailto:j.weiss@vumc.nl",
-              institution: "VU University Medical Center",
-              name: "Janneke Weiss"
-          },
-          genomicFeatures: [{ gene: { id: "ENSG00000272333" } }],
-          id: "10509",
-          label: "2016-174",
-          sex: "MALE",
-          species: "NCBITaxon:9606"
+        contact: {
+          href: "mailto:j.weiss@vumc.nl",
+          institution: "VU University Medical Center",
+          name: "Janneke Weiss"
+        },
+        genomicFeatures: [{ gene: { id: "ENSG00000272333" } }],
+        id: "10509",
+        label: "2016-174",
+        sex: "MALE",
+        species: "NCBITaxon:9606"
       },
       phenotypes: [],
       score: 1.0
@@ -924,7 +932,7 @@ export const STATE_WITH_2_FAMILIES = {
   userOptionsByUsername: {
     '3v9tbN78K6': {
       displayName: '',
-      email: 'jperezde@broadinstitute.org',
+      email: 'jperezde@populationgenomics.org.au',
       firstName: '',
       isAnalyst: true,
       lastName: '',
@@ -932,7 +940,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     '4MW8vPtmHG': {
       displayName: 'Mekdes',
-      email: 'mgetaneh@broadinstitute.org',
+      email: 'mgetaneh@populationgenomics.org.au',
       firstName: 'Mekdes',
       isAnalyst: true,
       lastLogin: '2018-06-11T17:42:45.601Z',
@@ -941,7 +949,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     '5P4YVq2xNj': {
       displayName: '',
-      email: 'mwilson@broadinstitute.org',
+      email: 'mwilson@populationgenomics.org.au',
       firstName: '',
       isAnalyst: true,
       lastName: '',
@@ -949,7 +957,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     '5jRbtjU9Dz': {
       displayName: 'Alysia Lovgren',
-      email: 'alovgren@broadinstitute.org',
+      email: 'alovgren@populationgenomics.org.au',
       firstName: 'Alysia',
       isAnalyst: false,
       lastName: 'Lovgren',
@@ -957,7 +965,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     'test': {
       displayName: '',
-      email: 'test@broadinstitute.org',
+      email: 'test@populationgenomics.org.au',
       firName: '',
       isAnalyst: true,
       last_name: '',
@@ -965,7 +973,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     'test_user1': {
       displayName: '',
-      email: 'test1@broadinstitute.org',
+      email: 'test1@populationgenomics.org.au',
       firstName: '',
       isAnalyst: false,
       lastName: '',
@@ -973,7 +981,7 @@ export const STATE_WITH_2_FAMILIES = {
     },
     'test_user2': {
       displayName: '',
-      email: 'test2@broadinstitute.org',
+      email: 'test2@populationgenomics.org.au',
       firstName: '',
       isAnalyst: true,
       lastName: '',
