@@ -7,4 +7,3 @@ If you are experiencing any difficulties, email seqr@populationgenomics.org.au o
 
 Known, resolved incidents that occured on the CPG's seqr deployment (https://seqr.populationgenomics.org.au/): 
 - 
-W
