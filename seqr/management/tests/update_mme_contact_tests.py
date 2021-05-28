@@ -20,7 +20,7 @@ class TransferFamiliesTest(TestCase):
 
         call_command(
             "update_mme_contact",
-            "UDNCC@hms.harvard.edu",
+            "seqr+test3@populationgenomics.org.au",
             "--replace-email",
             "test_user@populationgenomics.org.au",
         )

@@ -10,7 +10,7 @@ export const SEARCH = { projectFamilies: [{ projectGuid: PROJECT_GUID, familyGui
 export const LOCUS_LIST_GUID = "LL00132_2017_monogenic_ibd_gen"
 export const LOCUS_LIST = {
   canEdit: false,
-  createdBy: "cjmoran@mgh.harvard.edu",
+  createdBy: "seqr+test1@populationgenomics.org.au",
   createdDate: "2017-11-03T00:01:51.912Z",
   description: "",
   isPublic: true,

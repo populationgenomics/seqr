@@ -67,7 +67,7 @@ PARSED_RESULT = {
             {"gene": {"id": "DDX11L1"}},
         ],
         "contact": {
-            "href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
+            "href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
             "name": "Baylor UDN Clinical Site",
         },
         "id": "P0004515",

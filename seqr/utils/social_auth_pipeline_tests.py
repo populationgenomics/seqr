@@ -15,19 +15,19 @@ class SocialAuthPipelineTest(TestCase):
     def test_validate_anvil_registration(self, mock_logger):
         url = TEST_TERRA_API_ROOT_URL + 'register'
         responses.add(responses.GET, url, status=404)
-        r = validate_anvil_registration(GoogleOAuth2(), {'access_token': '', 'email': 'test@seqr.org'})
-        mock_logger.warning.assert_called_with('User test@seqr.org is trying to login without registration on AnVIL. None called Terra API: GET /register got status 404 with reason: Not Found')
+        r = validate_anvil_registration(GoogleOAuth2(), {'access_token': '', 'email': 'seqr+test@populationgenomics.org.au'})
+        mock_logger.warning.assert_called_with('User seqr+test@populationgenomics.org.au is trying to login without registration on AnVIL. None called Terra API: GET /register got status 404 with reason: Not Found')
         self.assertEqual(r.url, '/login?anvilLoginFailed=true')
         self.assertEqual(len(mock_logger.method_calls), 1)
 
         backend = GoogleOAuth2()
         backend.strategy.session_set('next', '/foo/bar')
-        r = validate_anvil_registration(backend, {'access_token': '', 'email': 'test@seqr.org'})
+        r = validate_anvil_registration(backend, {'access_token': '', 'email': 'seqr+test@populationgenomics.org.au'})
         self.assertEqual(r.url, '/login?anvilLoginFailed=true&next=%2Ffoo%2Fbar')
 
         mock_logger.reset_mock()
         responses.replace(responses.GET, url, status=200, body=REGISTER_RESPONSE)
-        r = validate_anvil_registration(GoogleOAuth2(), {'access_token': '', 'email': 'test@seqr.org'})
+        r = validate_anvil_registration(GoogleOAuth2(), {'access_token': '', 'email': 'seqr+test@populationgenomics.org.au'})
         mock_logger.warning.assert_not_called()
         self.assertIsNone(r)
 

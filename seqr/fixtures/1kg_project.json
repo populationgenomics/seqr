@@ -2608,7 +2608,7 @@
             "submission_id": "P0004515",
             "label": "P0004515",
             "contact_name": "Baylor UDN Clinical Site",
-            "contact_href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
+            "contact_href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
             "genomic_features": [
                 {
                     "gene": {
@@ -2691,7 +2691,7 @@
                         }
                     ],
                     "contact": {
-                        "href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
+                        "href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
                         "name": "Baylor UDN Clinical Site"
                     },
                     "id": "P0004515",
