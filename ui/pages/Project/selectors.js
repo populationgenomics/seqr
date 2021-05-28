@@ -128,8 +128,9 @@ export const getIndividualTaggedVariants = createSelector(
   (state, props) => props.individualGuid,
   (savedVariants, individualsByGuid, genesById, variantTagsByGuid, individualGuid) => {
     const { familyGuid } = individualsByGuid[individualGuid]
-    return Object.values(savedVariants).filter(
-      o => o.familyGuids.includes(familyGuid) && o.tagGuids.length).reduce((acc, variant) => {
+    return Object.values(savedVariants)
+      .filter(o => o.familyGuids.includes(familyGuid) && o.tagGuids.length)
+      .reduce((acc, variant) => {
         const variantDetail = {
           ...variant.genotypes[individualGuid],
           ...variant,
@@ -180,11 +181,25 @@ export const getVisibleFamilies = createSelector(
   getFamiliesFilter,
   getFamiliesSearch,
   (familiesByGuid, individualsByGuid, samplesByGuid, user, familiesFilter, familiesSearch) => {
-    const searchFilter = familiesSearch ? family =>
-      `${family.displayName};${family.familyId};${(family.assignedAnalyst || {}).fullName};${(family.assignedAnalyst || {}).email};${family.analysedBy.map(({ createdBy }) =>
-        `${createdBy.fullName}${createdBy.email}`)};${family.individualGuids.map(individualGuid =>
-          (individualsByGuid[individualGuid].features || []).map(feature => feature.label).join(';'),
-        ).join(';')}`.toLowerCase().includes(familiesSearch) : family => family
+
+    let searchFilter = family => family
+    if (familiesSearch) {
+      searchFilter = (family) => {
+        const assignedAnalyst = (family.assignedAnalyst || {})
+        const analysedEmails = family.analysedBy
+          .map(({ createdBy }) => `${createdBy.fullName}${createdBy.email}`)
+
+        const featureLabels = family.individualGuids
+          .map(individualGuid =>
+            (individualsByGuid[individualGuid].features || [])
+              .map(feature => feature.label)
+              .join(';'),
+          ).join(';')
+
+        return `${family.displayName};${family.familyId};${assignedAnalyst.fullName};${assignedAnalyst.email};${analysedEmails};${featureLabels}`.toLowerCase().includes(familiesSearch)
+      }
+    }
+
     const searchedFamilies = Object.values(familiesByGuid).filter(searchFilter)
 
     if (!familiesFilter || !FAMILY_FILTER_LOOKUP[familiesFilter]) {
