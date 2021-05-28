@@ -20,9 +20,9 @@ class TransferFamiliesTest(TestCase):
 
         call_command(
             "update_mme_contact",
-            "seqr+test3@populationgenomics.org.au",
+            "UDNCC@hms.harvard.edu",
             "--replace-email",
-            "test_user@populationgenomics.org.au",
+            "seqr+test_user.org.au",
         )
         mock_logger.assert_has_calls(
             [
@@ -32,11 +32,11 @@ class TransferFamiliesTest(TestCase):
         )
         self.assertEqual(
             MatchmakerSubmission.objects.get(id=3).contact_href,
-            "mailto:test_user@populationgenomics.org.au,matchmaker@phenomecentral.org",
+            "mailto:seqr+test_user.org.au,matchmaker@phenomecentral.org",
         )
 
         mock_logger.reset_mock()
-        call_command("update_mme_contact", "test_user@populationgenomics.org.au")
+        call_command("update_mme_contact", "seqr+test_user.org.au")
         mock_logger.assert_has_calls(
             [
                 mock.call("Updating 2 submissions"),

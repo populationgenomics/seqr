@@ -2522,7 +2522,7 @@
             "submission_id": "NA19675_1_01",
             "label": "NA19675_1",
             "contact_name": "Sam Baxter",
-            "contact_href": "mailto:matchmaker@populationgenomics.org.au,test_user@populationgenomics.org.au",
+            "contact_href": "mailto:matchmaker@populationgenomics.org.au,seqr+test_user.org.au",
             "features": [
                 {
                     "id": "HP:0001252",
@@ -2608,7 +2608,7 @@
             "submission_id": "P0004515",
             "label": "P0004515",
             "contact_name": "Baylor UDN Clinical Site",
-            "contact_href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
+            "contact_href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
             "genomic_features": [
                 {
                     "gene": {
@@ -2691,7 +2691,7 @@
                         }
                     ],
                     "contact": {
-                        "href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
+                        "href": "mailto:UDNCC@hms.harvard.edu,matchmaker@phenomecentral.org",
                         "name": "Baylor UDN Clinical Site"
                     },
                     "id": "P0004515",

@@ -301,7 +301,7 @@ class UsersAPITest(object):
         response = self.client.post(
             url,
             content_type="application/json",
-            data=json.dumps({"email": "test_user@populationgenomics.org.au"}),
+            data=json.dumps({"email": "seqr+test_user.org.au"}),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -315,7 +315,7 @@ class UsersAPITest(object):
             "Reset your seqr password",
             expected_email_content,
             None,
-            ["test_user@populationgenomics.org.au"],
+            ["seqr+test_user.org.au"],
             fail_silently=False,
         )
 
@@ -324,7 +324,7 @@ class UsersAPITest(object):
         response = self.client.post(
             url,
             content_type="application/json",
-            data=json.dumps({"email": "test_user@populationgenomics.org.au"}),
+            data=json.dumps({"email": "seqr+test_user.org.au"}),
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.reason_phrase, "Connection err")

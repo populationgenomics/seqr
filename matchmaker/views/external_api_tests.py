@@ -159,7 +159,7 @@ class ExternalAPITest(TestCase):
                     "id": "NA19675_1_01",
                     "label": "NA19675_1",
                     "contact": {
-                        "href": "mailto:matchmaker@populationgenomics.org.au,test_user@populationgenomics.org.au",
+                        "href": "mailto:matchmaker@populationgenomics.org.au,seqr+seqr+test_user.org.au",
                         "name": "Sam Baxter",
                         "institution": "Broad Center for Mendelian Genomics",
                     },
@@ -199,7 +199,7 @@ class ExternalAPITest(TestCase):
                     "id": "P0004515",
                     "label": "P0004515",
                     "contact": {
-                        "href": "mailto:seqr+test3@populationgenomics.org.au,matchmaker@phenomecentral.org",
+                        "href": "mailto:matchmaker+UDNCC@populationgenomics.org.au,matchmaker+phenomecentral@populationgenomics.org.au",
                         "name": "Baylor UDN Clinical Site",
                         "institution": "Broad Center for Mendelian Genomics",
                     },
@@ -245,8 +245,8 @@ class ExternalAPITest(TestCase):
     We sent this email alert to: {emails}
 
 Thank you for using the matchbox system for the Matchmaker Exchange at the Broad Center for Mendelian Genomics. 
-Our website can be found at https://seqr.populationgenomics.org.au/matchmaker/matchbox and our legal disclaimers can 
-be found found at https://seqr.populationgenomics.org.au/matchmaker/disclaimer."""
+Our website can be found at https://seqr.broadinstitute.org/matchmaker/matchbox and our legal disclaimers can 
+be found found at https://seqr.broadinstitute.org/matchmaker/disclaimer."""
         match1 = "seqr ID NA19675_1 from project 1kg project n\u00e5me with uni\u00e7\u00f8de in family 1 inserted into matchbox on May 23, 2018, with seqr link /project/R0001_1kg/family_page/F000001_1/matchmaker_exchange"
         match2 = "seqr ID NA20888 from project Test Reprocessed Project in family 12 inserted into matchbox on Feb 05, 2019, with seqr link /project/R0003_test/family_page/F000012_12/matchmaker_exchange"
 
@@ -254,7 +254,7 @@ be found found at https://seqr.populationgenomics.org.au/matchmaker/disclaimer."
             "matchmaker_matches",
             message_template.format(
                 matches="{}\n{}".format(match1, match2),
-                emails="seqr+test3@populationgenomics.org.au, matchmaker@phenomecentral.org, test_user@populationgenomics.org.au",
+                emails="matchmaker+UDNCC@populationgenomics.org.au, matchmaker+phenomecentral@populationgenomics.org.au, seqr+seqr+test_user.org.au",
             ),
         )
 
@@ -263,9 +263,10 @@ be found found at https://seqr.populationgenomics.org.au/matchmaker/disclaimer."
                 mock.call(
                     subject="Received new MME match",
                     body=message_template.format(
-                        matches=match1, emails="test_user@populationgenomics.org.au"
+                        matches=match1,
+                        emails="seqr+seqr+test_user.org.au",
                     ),
-                    to=["test_user@populationgenomics.org.au"],
+                    to=["seqr+seqr+test_user.org.au"],
                     from_email="matchmaker@populationgenomics.org.au",
                 ),
                 mock.call().send(),
@@ -273,11 +274,11 @@ be found found at https://seqr.populationgenomics.org.au/matchmaker/disclaimer."
                     subject="Received new MME match",
                     body=message_template.format(
                         matches=match2,
-                        emails="seqr+test3@populationgenomics.org.au, matchmaker@phenomecentral.org",
+                        emails="matchmaker+UDNCC@populationgenomics.org.au, matchmaker+phenomecentral@populationgenomics.org.au",
                     ),
                     to=[
-                        "seqr+test3@populationgenomics.org.au",
-                        "matchmaker@phenomecentral.org",
+                        "matchmaker+UDNCC@populationgenomics.org.au",
+                        "matchmaker+phenomecentral@populationgenomics.org.au",
                     ],
                     from_email="matchmaker@populationgenomics.org.au",
                 ),

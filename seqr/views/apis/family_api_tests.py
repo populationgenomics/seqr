@@ -219,7 +219,7 @@ class FamilyAPITest(AuthenticationTestCase):
         self.assertListEqual(list(response_json.keys()), [FAMILY_GUID])
         self.assertEqual(
             response_json[FAMILY_GUID]["assignedAnalyst"]["email"],
-            "test_user@populationgenomics.org.au",
+            "seqr+test_user.org.au",
         )
         self.assertEqual(
             response_json[FAMILY_GUID]["assignedAnalyst"]["fullName"], "Test User"
