@@ -13,7 +13,7 @@ jobs:
     env:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-      DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr
+      DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-prod
 
     steps:
       # - uses: actions/checkout@v2
@@ -29,12 +29,12 @@ jobs:
 
       - name: pull dockers
         run: |
-          docker pull ${{ env.DOCKER_IMAGE }}:gcloud-prod
+          docker pull ${{ env.DOCKER_IMAGE }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.DOCKER_IMAGE }}:gcloud-prod'
+          image-ref: '${{ env.DOCKER_IMAGE }}'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
@@ -55,7 +55,7 @@ jobs:
     env:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-      DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr
+      DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-dev
 
     steps:
       # - uses: actions/checkout@v2
@@ -71,12 +71,12 @@ jobs:
 
       - name: pull dockers
         run: |
-          docker pull ${{ env.DOCKER_IMAGE }}:gcloud-dev
+          docker pull ${{ env.DOCKER_IMAGE }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.DOCKER_IMAGE }}:gcloud-dev'
+          image-ref: '${{ env.DOCKER_IMAGE }}'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
