@@ -31,6 +31,11 @@ jobs:
         run: |
           gcloud auth configure-docker australia-southeast1-docker.pkg.dev
 
+      - name: pull dockers
+        run: |
+          docker pull ${{ env.DOCKER_IMAGE }}:gcloud-prod
+          docker pull ${{ env.DOCKER_IMAGE }}:gcloud-dev
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
