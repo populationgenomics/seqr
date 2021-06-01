@@ -5,10 +5,6 @@ on:
   schedule:
     - cron:  '0 22 * * 0' # each Monday at 9am AEST+10 / 10am AEDT+11
 
-  push:
-    branches:
-      - add-trivy-to-security
-
 jobs:
   trivy-prod:
     name: Trivy check
