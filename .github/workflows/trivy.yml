@@ -15,12 +15,21 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BUILDKIT_PROGRESS: plain
+      # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr
 
     steps:
       # - uses: actions/checkout@v2
+      - name: gcloud setup
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: seqr-308602
+          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+
+      - name: gcloud docker auth
+        run: |
+          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
