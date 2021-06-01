@@ -1,0 +1,58 @@
+
+name: trivy
+on:
+  # runs on default branch
+  schedule:
+    - cron:  '0 22 * * 0' # each Monday at 9am AEST+10 / 10am AEDT+11
+
+  push:
+    branches:
+      - add-trivy-to-security
+
+jobs:
+  trivy:
+    name: Trivy check
+    runs-on: ubuntu-latest
+
+    env:
+      BUILDKIT_PROGRESS: plain
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+      DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr
+
+    steps:
+      # - uses: actions/checkout@v2
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.DOCKER_IMAGE }}:prod'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          # upload trivvy results to GH security tab
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results-prod.sarif'
+          
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results-prod.sarif'
+
+      # dev
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.DOCKER_IMAGE }}:dev'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          # upload trivvy results to GH security tab
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results-dev.sarif'
+          
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results-dev.sarif'
