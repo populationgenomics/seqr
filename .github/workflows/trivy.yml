@@ -34,7 +34,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.DOCKER_IMAGE }}:prod'
+          image-ref: '${{ env.DOCKER_IMAGE }}:gcloud-prod'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
@@ -52,7 +52,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.DOCKER_IMAGE }}:dev'
+          image-ref: '${{ env.DOCKER_IMAGE }}:gcloud-dev'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
