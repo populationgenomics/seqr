@@ -23,6 +23,15 @@ Install dependencies:
    cd ..
    ```
 
+1. Build seqr python environment
+
+   ```shell
+   conda env create -n seqr python=3.7
+   conda activate seqr
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+   
 1. Run migrations to set-up Postgres database
 
    ```shell
@@ -36,15 +45,6 @@ Install dependencies:
    python -u manage.py loaddata variant_tag_types
    python -u manage.py loaddata variant_searches
    python -u manage.py update_all_reference_data --use-cached-omim
-   ```
-
-1. Build seqr python environment
-
-   ```shell
-   conda env create -n seqr python=3.7
-   conda activate seqr
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
    ```
 
 1. Create seqr superuser
