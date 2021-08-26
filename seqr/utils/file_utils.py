@@ -79,7 +79,10 @@ def file_iter(file_path, byte_range=None, raw_content=False, user=None):
                 chunk_end = end
             data = blob.download_as_bytes(start=current, end=chunk_end, checksum=None)
             current += len(data)
-            yield data if raw_content else data.decode("utf-8")
+            if not raw_content:
+                data = data.decode("utf-8")
+            for line in data.split('\n'):
+                yield line
             # We're done if we couldn't read the full range or we've reached the end.
             if current <= chunk_end or (end and current > end):
                 break
