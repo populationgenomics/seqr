@@ -154,8 +154,18 @@ class Project(ModelWithGUID):
 
     last_accessed_date = models.DateTimeField(null=True, blank=True, db_index=True)
 
-    workspace_namespace = models.TextField(null = True, blank = True)
-    workspace_name = models.TextField(null = True, blank = True)
+    workspace_namespace = models.TextField(null=True, blank=True)
+    workspace_name = models.TextField(null=True, blank=True)
+
+    has_completed_onboarding = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        help_text=(
+            "Boolean indicating if a project has completed "
+            "the on-boarding process."
+        )
+    )
 
     def __unicode__(self):
         return self.name.strip()
@@ -214,9 +224,11 @@ class Project(ModelWithGUID):
         )
 
         json_fields = [
-            'name', 'description', 'created_date', 'last_modified_date', 'genome_version', 'mme_contact_institution',
-            'last_accessed_date', 'is_mme_enabled', 'mme_primary_data_owner', 'mme_contact_url', 'guid',
-            'workspace_namespace', 'workspace_name', 'has_case_review'
+            'name', 'description', 'created_date', 'last_modified_date',
+            'genome_version', 'mme_contact_institution', 'last_accessed_date',
+            'is_mme_enabled', 'mme_primary_data_owner', 'mme_contact_url',
+            'guid', 'workspace_namespace', 'workspace_name', 'has_case_review',
+            'has_completed_onboarding',
         ]
 
 
