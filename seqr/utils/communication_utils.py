@@ -32,7 +32,7 @@ def _post_to_slack(channel, message):
 
 def send_welcome_email(user, referrer):
     if google_auth_enabled():
-        setup_message = 'You can now login to seqr using your connected google account:\n    {}login/google-oauth2'.format(BASE_URL)
+        setup_message = 'You can now login to seqr using your google account:\n    {}login/google-oauth2'.format(BASE_URL)
     elif anvil_enabled():
         setup_message = 'Please make sure this account is registered in AnVIL by signing in to {} and registering.'.format(
             ANVIL_UI_URL
