@@ -38,9 +38,8 @@ class Project extends React.PureComponent
   render() {
     if (this.props.project && this.props.project.detailsLoaded) {
 
-      console.log(this.props)
       if (!this.props.project.hasCompletedOnboarding &&
-        !this.props?.location?.pathname?.includes('onboarding')
+        !this.props.location?.pathname?.includes('onboarding')
       ) {
         return <Redirect to={`${this.props.match.url}/onboarding`} />
       }
