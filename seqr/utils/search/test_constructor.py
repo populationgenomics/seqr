@@ -12,10 +12,19 @@ from .constructor import SearchModel, build_expression_from, get_samples_by_fami
 
 class TestPathogenicity(TestCase):
     def test_pathogenic(self):
+        family_ids = ["F000001_trio"]
+
         search_model = SearchModel(
             **{"pathogenicity": {"clinvar": ["pathogenic", "likely_pathogenic"]}}
         )
-        expression = build_expression_from(search_model)
+        expression = build_expression_from(
+            search_model,
+            samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
+            indices=["na12878-trio"],
+        )
+        # SELECT * FROM variants WHERE (clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic"))
+        print(expression.output_sql("variants"))
+
         s = expression.output_protobuff(fields=[], arrow_urls=[])
         self.assertEqual(
             """\
@@ -42,26 +51,22 @@ max_rows: 10000""",
         )
         print(json.dumps(es))
         expected = {
-            "query": {
                 "bool": {
-                    "filter": {
-                        "terms": {
-                            "clinvar_clinical_significance": [
-                                "Likely_pathogenic",
-                                "Pathogenic",
-                                "Pathogenic/Likely_pathogenic",
-                            ]
+                    "must": [
+                        {
+                            "terms": {
+                                "clinvar_clinical_significance": [
+                                    "Likely_pathogenic",
+                                    "Pathogenic",
+                                    "Pathogenic/Likely_pathogenic",
+                                ]
+                            }
                         }
-                    }
+                    ]
                 }
-            },
-            "sort": ["xpos", "variantId"],
-            "from": 0,
-            "size": 100,
-            "_source": [],
-        }
+            }
 
-        self.assertDictEqual(expected, es)
+        self.assertDictEqual(expected, es['query'])
 
     def test_2(self):
         search_model_dict = {
@@ -101,11 +106,14 @@ max_rows: 10000""",
             indices=["na12878-trio"],
         )
 
+        # Expected: SELECT * FROM variants WHERE ((transcriptConsequenceTerms in ("BND", "CNV", "CPX", "CTX", "DEL", "DUP", "INS", "INV", "frameshift_variant", "inframe_deletion", "inframe_insertion", "initiator_codon_variant", "missense_variant", "protein_altering_variant", "splice_acceptor_variant", "splice_donor_variant", "start_lost", "stop_gained", "stop_lost") OR clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic")) AND (((samples_num_alt_2 = "NA12878") AND NOT (samples_no_call = "NA12891" OR samples_num_alt_2 = "NA12891"))))
+        expr = expression.output_sql("variants")
+        print(expr)
+
         # protobuff = expression.output_protobuff(fields=[], arrow_urls=[])
         # print(protobuff)
 
         es = expression.output_elasticsearch([], 0, 1000, source=["xpos", "variantId"])
-
         es_query_expected = {
             "bool": {
                 "must": [
@@ -145,28 +153,46 @@ max_rows: 10000""",
                                     ]
                                 }
                             },
-                        ]
+                        ],
+                        "minimum_should_match": 1,
                     },
                     {
                         "must": [
-                            {"term": {"samples_num_alt_2": "NA12878"}},
                             {
-                                "negate": {
-                                    "should": [
-                                        {"term": {"samples_no_call": "NA12891"}},
-                                        {"term": {"samples_num_alt_2": "NA12891"}},
-                                    ]
-                                }
-                            },
+                                "must": [
+                                    {
+                                        "should": [
+                                            {"term": {"samples_num_alt_2": "NA12878"}}
+                                        ],
+                                        "minimum_should_match": 1,
+                                    },
+                                    {
+                                        "negate": {
+                                            "should": [
+                                                {
+                                                    "term": {
+                                                        "samples_no_call": "NA12891"
+                                                    }
+                                                },
+                                                {
+                                                    "term": {
+                                                        "samples_num_alt_2": "NA12891"
+                                                    }
+                                                },
+                                            ],
+                                            "minimum_should_match": 1,
+                                        }
+                                    },
+                                ]
+                            }
                         ]
                     },
                 ]
             }
         }
-
         self.assertDictEqual(es_query_expected, es["query"])
 
-        es_expected = {
+        es_actual = {
             "query": {
                 "bool": {
                     "filter": [
@@ -268,67 +294,48 @@ max_rows: 10000""",
             samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
             indices=["na12878-trio"],
         )
-        es = expression.output_elasticsearch([], 0, 1000, source=["xpos", "variantId"])
-        # print(json.dumps(es))
+
+        sql = expression.output_sql('variants')
+        # SELECT * FROM variants WHERE (clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic") AND (((samples_num_alt_1 = "NA12878" OR samples_num_alt_2 = "NA12878") AND NOT (samples_no_call = "NA12891" OR samples_num_alt_1 = "NA12891" OR samples_num_alt_2 = "NA12891"))))
+        print(sql)
 
         protobuff = expression.output_protobuff(fields=[], arrow_urls=[])
         print(protobuff)
 
-
+        es = expression.output_elasticsearch([], 0, 1000, source=["xpos", "variantId"])
         es_expected = {
-                "bool": {
-                    "filter": [
-                        {
-                            "terms": {
-                                "clinvar_clinical_significance": [
-                                    "Likely_pathogenic",
-                                    "Pathogenic",
-                                    "Pathogenic/Likely_pathogenic",
-                                ]
-                            }
-                        },
-                        {
-                            "bool": {
-                                "must": [
-                                    {
-                                        "bool": {
-                                            "should": [
-                                                {
-                                                    "term": {
-                                                        "samples_num_alt_1": "NA12878"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "samples_num_alt_2": "NA12878"
-                                                    }
-                                                },
-                                            ],
-                                            "must_not": [
-                                                {
-                                                    "term": {
-                                                        "samples_no_call": "NA12891"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "samples_num_alt_1": "NA12891"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "samples_num_alt_2": "NA12891"
-                                                    }
-                                                },
-                                            ],
-                                            "minimum_should_match": 1,
-                                        }
+            "bool": {
+                "filter": [
+                    {
+                        "terms": {
+                            "clinvar_clinical_significance": [
+                                "Likely_pathogenic",
+                                "Pathogenic",
+                                "Pathogenic/Likely_pathogenic",
+                            ]
+                        }
+                    },
+                    {
+                        "bool": {
+                            "must": [
+                                {
+                                    "bool": {
+                                        "should": [
+                                            {"term": {"samples_num_alt_1": "NA12878"}},
+                                            {"term": {"samples_num_alt_2": "NA12878"}},
+                                        ],
+                                        "must_not": [
+                                            {"term": {"samples_no_call": "NA12891"}},
+                                            {"term": {"samples_num_alt_1": "NA12891"}},
+                                            {"term": {"samples_num_alt_2": "NA12891"}},
+                                        ],
+                                        "minimum_should_match": 1,
                                     }
-                                ],
-                                "_name": "F000001_trio",
-                            }
-                        },
-                    ]
-                }
-
+                                }
+                            ],
+                            "_name": "F000001_trio",
+                        }
+                    },
+                ]
+            }
         }
