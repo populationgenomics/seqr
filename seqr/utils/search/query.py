@@ -1,5 +1,5 @@
 from textwrap import indent
-from typing import List, Optional, Dict, Tuple, Union, Type
+from typing import List, Optional, Dict, Tuple, Union, Type, Iterable, Collection, Sequence
 
 from enum import Enum
 from abc import ABC, abstractmethod
@@ -34,8 +34,10 @@ class Expression(ABC):
 
     def output_elasticsearch(self, sort: List[str], from_: int, size: int, source: List[str]):
         query = self.to_elasticsearch()
+        if isinstance(query, list):
+            query = {'filter': query}
         return {
-            'query': {'bool': {'filter': query}},
+            'query': {'bool': query},
             'sort': sort,
             'from': from_,
             'size': size,
@@ -71,6 +73,9 @@ max_rows: {10000}
     def and_(self, expression: 'Expression'):
         return CallAnd(self, expression)
 
+    def negate(self):
+        return CallNegate(self)
+
 
 
 class Field(Expression):
@@ -82,7 +87,7 @@ class Field(Expression):
         return f'column: "{self.name}"'
 
     def to_elasticsearch(self) -> Dict[str, any]:
-        raise NotImplementedError('This should never be called directly')
+        return self.name
 
 
 class Literal(Expression):
@@ -144,6 +149,8 @@ class Call(Expression, ABC):
 
     @abstractmethod
     def protobuff_call_name(self):
+        # should be a function_name declared in:
+        # https://arrow.apache.org/docs/cpp/compute.html
         raise NotImplementedError
 
     def to_protobuff(self) -> str:
@@ -168,8 +175,12 @@ arguments {{
         str_internals = indent("\n".join(internals), INDENT)
         return f"call {{\n{str_internals}\n}}"
 
+
+# Function definitions
+
+class MaxTwoArgumentsCall(Call, ABC):
     @classmethod
-    def split_into_calls_of_two(cls: Type['Call'], iterable: List[Expression]):
+    def split_into_calls_of_two(cls: Type['Call'], iterable: Sequence[Expression]):
         if len(iterable) == 0:
             return None
         if len(iterable) == 1:
@@ -181,22 +192,27 @@ arguments {{
 
         return call
 
-# Function definitions
+    def to_protobuff(self) -> str:
+        if len(self.arguments) == 2:
+            return super().to_protobuff()
+        expr = self.split_into_calls_of_two(self.arguments)
+        return expr.to_protobuff()
 
-class CallAnd(Call):
+
+class CallAnd(MaxTwoArgumentsCall):
     def protobuff_call_name(self):
         return 'and'
 
     def to_elasticsearch(self) -> Dict[str, any]:
-        return {'filter': [a.to_elasticsearch() for a in self.arguments]}
+        return {'must': [a.to_elasticsearch() for a in self.arguments]}
 
 
-class CallOr(Call):
+class CallOr(MaxTwoArgumentsCall):
     def protobuff_call_name(self):
         return 'or'
 
     def to_elasticsearch(self) -> Dict[str, any]:
-        return {'should': [a.to_elasticsearch() for a in self.arguments]}
+        return {'should': [a.to_elasticsearch() for a in self.arguments], 'minimum_should_match': 1}
 
 
 class CallNegate(Call):
@@ -207,7 +223,7 @@ class CallNegate(Call):
         return "invert"
 
     def to_elasticsearch(self) -> Dict[str, any]:
-        return {'negate': self.arguments[0].name}
+        return {'negate': self.arguments[0].to_elasticsearch()}
 
 class CallIsNotNull(Call):
     def __init__(self, argument: Expression):
@@ -228,6 +244,17 @@ class CallExists(Call):
 class CallEqual(Call):
     def protobuff_call_name(self):
         return "equal"
+
+    def to_elasticsearch(self) -> Dict[str, any]:
+        lhs, rhs = self.arguments
+        if not isinstance(rhs, Literal) or not isinstance(lhs, Field):
+            raise ValueError(
+                'Only know how to compare CallEqual with Field == Literal, '
+                f'got {type(lhs)} == {type(rhs)}'
+            )
+
+        return {'term': {lhs.name: rhs.literal}}
+
 
 
 class CallNotEqual(Call):

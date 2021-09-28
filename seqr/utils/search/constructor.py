@@ -34,28 +34,32 @@ class SearchModel:
         self.skip_genotype_filter = skip_genotype_filter
 
 
-def build_expression_from(search_model: SearchModel, samples, indices) -> Expression:
+def build_expression_from(search_model: SearchModel, samples_by_family_index: Dict[str, Dict[str, Dict[str, Sample]]], indices: List[str]) -> Expression:
+    """
+    Where the magic happens ;)
+
+    :param search_model: Search model the drives the query
+    :param samples_by_family_index: see `get_samples_by_family_index(families)`
+    :type samples_by_family_index: Dict[ESIndex, Dict[FamilyGuid, Dict[SampleId, Sample]]]
+    :indices: A list of ES indices (or equivalent) to query against
+    """
     _indices_by_dataset_type = defaultdict(list)
     _index_searches = defaultdict(list)
-
-    _samples_by_family_index = defaultdict(lambda: defaultdict(dict))
-    for s in samples.select_related("individual__family"):
-        _samples_by_family_index[s.elasticsearch_index][s.individual.family.guid][
-            s.sample_id
-        ] = s
 
     _family_individual_affected_status = {}
     _skipped_sample_count = defaultdict(int)
 
     if search_model.inheritance is not None:
-        for index, family_samples in list(_samples_by_family_index.items()):
+        for index, family_samples in list(samples_by_family_index.items()):
             index_skipped_families = []
             for family_guid, samples_by_id in family_samples.items():
-                individual_affected_status = _get_family_affected_status(samples_by_id,
-                                                                         search_model.inheritance.get('filter') or {})
+                individual_affected_status = _get_family_affected_status(
+                    samples_by_id, search_model.inheritance.get("filter") or {}
+                )
 
                 has_affected_samples = any(
-                    aftd == Individual.AFFECTED_STATUS_AFFECTED for aftd in individual_affected_status.values()
+                    aftd == Individual.AFFECTED_STATUS_AFFECTED
+                    for aftd in individual_affected_status.values()
                 )
                 if not has_affected_samples:
                     index_skipped_families.append(family_guid)
@@ -64,21 +68,24 @@ def build_expression_from(search_model: SearchModel, samples, indices) -> Expres
 
                 if family_guid not in _family_individual_affected_status:
                     _family_individual_affected_status[family_guid] = {}
-                _family_individual_affected_status[family_guid].update(individual_affected_status)
+                _family_individual_affected_status[family_guid].update(
+                    individual_affected_status
+                )
 
             for family_guid in index_skipped_families:
-                del _samples_by_family_index[index][family_guid]
+                del samples_by_family_index[index][family_guid]
 
-            if not _samples_by_family_index[index]:
-                del _samples_by_family_index[index]
+            if not samples_by_family_index[index]:
+                del samples_by_family_index[index]
 
-        if len(_samples_by_family_index) < 1:
+        if len(samples_by_family_index) < 1:
             # raise InvalidSearchException(
             raise Exception(
-                'Inheritance based search is disabled in families with no data loaded for affected individuals')
+                "Inheritance based search is disabled in families with no data loaded for affected individuals"
+            )
 
     expression = filter_by_annotation_and_genotype(
-        samples_by_family_index=_samples_by_family_index,
+        samples_by_family_index=samples_by_family_index,
         indices=indices,
         family_individual_affected_status=_family_individual_affected_status,
         # other params
@@ -93,11 +100,22 @@ def build_expression_from(search_model: SearchModel, samples, indices) -> Expres
     return expression
 
 
+def get_samples_by_famiy_index(families: List[str]):
+    samples = Sample.objects.filter(is_active=True, individual__family__guid__in=families)
+
+    _samples_by_family_index = defaultdict(lambda: defaultdict(dict))
+    for s in samples.select_related("individual__family"):
+        _samples_by_family_index[s.elasticsearch_index][s.individual.family.guid][
+            s.sample_id
+        ] = s
+
+    return _samples_by_family_index
+
 def filter_by_annotation_and_genotype(
     *,
     samples_by_family_index,
-family_individual_affected_status,
-# other params
+    family_individual_affected_status,
+    # other params
     indices,
     inheritance,
     quality_filter=None,
@@ -181,7 +199,7 @@ family_individual_affected_status,
             secondary_dataset_type=secondary_dataset_type,
         )
     )
-    return CallAnd.split_into_calls_of_two(filters)
+    return CallAnd(*filters)
 
 
 def _by_annotations_filter(
@@ -233,8 +251,140 @@ def _by_genotype_filters(
         family_samples_by_id: Dict[str, Dict[str, Sample]] = samples_by_family_index[
             index
         ]
-        index_fields = [] # index_metadata[index]["fields"]
-        index_fields = {"AC": "integer", "AF": "double", "AN": "integer", "aIndex": "integer", "alt": "keyword", "cadd_PHRED": "float", "clinvar_allele_id": "integer", "clinvar_clinical_significance": "keyword", "clinvar_gold_stars": "integer", "codingGeneIds": "keyword", "contig": "keyword", "dbnsfp_FATHMM_pred": "keyword", "dbnsfp_GERP_RS": "keyword", "dbnsfp_MetaSVM_pred": "keyword", "dbnsfp_MutationTaster_pred": "keyword", "dbnsfp_Polyphen2_HVAR_pred": "keyword", "dbnsfp_REVEL_score": "keyword", "dbnsfp_SIFT_pred": "keyword", "dbnsfp_phastCons100way_vertebrate": "keyword", "docId": "keyword", "domains": "keyword", "eigen_Eigen_phred": "double", "end": "integer", "exac_AC_Adj": "integer", "exac_AC_Hemi": "integer", "exac_AC_Het": "integer", "exac_AC_Hom": "integer", "exac_AF": "double", "exac_AF_POPMAX": "double", "exac_AN_Adj": "integer", "filters": "keyword", "g1k_AC": "integer", "g1k_AF": "double", "g1k_AN": "integer", "g1k_POPMAX_AF": "double", "geneIds": "keyword", "geno2mp_HPO_Count": "integer", "genotypes": "nested", "gnomad_exome_coverage": "double", "gnomad_exomes_AC": "integer", "gnomad_exomes_AF": "double", "gnomad_exomes_AF_POPMAX_OR_GLOBAL": "double", "gnomad_exomes_AN": "integer", "gnomad_exomes_FAF_AF": "double", "gnomad_exomes_Hemi": "integer", "gnomad_exomes_Hom": "integer", "gnomad_genome_coverage": "double", "gnomad_genomes_AC": "integer", "gnomad_genomes_AF": "double", "gnomad_genomes_AF_POPMAX_OR_GLOBAL": "double", "gnomad_genomes_AN": "integer", "gnomad_genomes_FAF_AF": "double", "gnomad_genomes_Hemi": "integer", "gnomad_genomes_Hom": "integer", "mainTranscript_amino_acids": "keyword", "mainTranscript_biotype": "keyword", "mainTranscript_canonical": "integer", "mainTranscript_category": "keyword", "mainTranscript_cdna_end": "integer", "mainTranscript_cdna_start": "integer", "mainTranscript_codons": "keyword", "mainTranscript_domains": "keyword", "mainTranscript_gene_id": "keyword", "mainTranscript_gene_symbol": "keyword", "mainTranscript_hgvs": "keyword", "mainTranscript_hgvsc": "keyword", "mainTranscript_hgvsp": "keyword", "mainTranscript_lof": "keyword", "mainTranscript_lof_filter": "keyword", "mainTranscript_lof_flags": "keyword", "mainTranscript_lof_info": "keyword", "mainTranscript_major_consequence": "keyword", "mainTranscript_major_consequence_rank": "integer", "mainTranscript_polyphen_prediction": "keyword", "mainTranscript_protein_id": "keyword", "mainTranscript_sift_prediction": "keyword", "mainTranscript_transcript_id": "keyword", "mpc_MPC": "keyword", "originalAltAlleles": "keyword", "pos": "integer", "primate_ai_score": "double", "ref": "keyword", "rg37_locus": None, "rsid": "keyword", "samples_ab_0_to_5": "keyword", "samples_ab_10_to_15": "keyword", "samples_ab_15_to_20": "keyword", "samples_ab_20_to_25": "keyword", "samples_ab_25_to_30": "keyword", "samples_ab_30_to_35": "keyword", "samples_ab_35_to_40": "keyword", "samples_ab_40_to_45": "keyword", "samples_ab_5_to_10": "keyword", "samples_gq_0_to_5": "keyword", "samples_gq_10_to_15": "keyword", "samples_gq_15_to_20": "keyword", "samples_gq_20_to_25": "keyword", "samples_gq_25_to_30": "keyword", "samples_gq_30_to_35": "keyword", "samples_gq_35_to_40": "keyword", "samples_gq_40_to_45": "keyword", "samples_gq_45_to_50": "keyword", "samples_gq_50_to_55": "keyword", "samples_gq_55_to_60": "keyword", "samples_gq_5_to_10": "keyword", "samples_gq_60_to_65": "keyword", "samples_gq_65_to_70": "keyword", "samples_gq_70_to_75": "keyword", "samples_gq_75_to_80": "keyword", "samples_gq_80_to_85": "keyword", "samples_gq_85_to_90": "keyword", "samples_gq_90_to_95": "keyword", "samples_no_call": "keyword", "samples_num_alt_1": "keyword", "samples_num_alt_2": "keyword", "sortedTranscriptConsequences": "nested", "splice_ai_delta_score": "float", "splice_ai_splice_consequence": "keyword", "start": "integer", "topmed_AC": "integer", "topmed_AF": "double", "topmed_AN": "integer", "topmed_Het": "integer", "topmed_Hom": "integer", "transcriptConsequenceTerms": "keyword", "transcriptIds": "keyword", "variantId": "keyword", "wasSplit": "boolean", "xpos": "long", "xstart": "long", "xstop": "long"}
+        index_fields = []  # index_metadata[index]["fields"]
+        index_fields = {
+            "AC": "integer",
+            "AF": "double",
+            "AN": "integer",
+            "aIndex": "integer",
+            "alt": "keyword",
+            "cadd_PHRED": "float",
+            "clinvar_allele_id": "integer",
+            "clinvar_clinical_significance": "keyword",
+            "clinvar_gold_stars": "integer",
+            "codingGeneIds": "keyword",
+            "contig": "keyword",
+            "dbnsfp_FATHMM_pred": "keyword",
+            "dbnsfp_GERP_RS": "keyword",
+            "dbnsfp_MetaSVM_pred": "keyword",
+            "dbnsfp_MutationTaster_pred": "keyword",
+            "dbnsfp_Polyphen2_HVAR_pred": "keyword",
+            "dbnsfp_REVEL_score": "keyword",
+            "dbnsfp_SIFT_pred": "keyword",
+            "dbnsfp_phastCons100way_vertebrate": "keyword",
+            "docId": "keyword",
+            "domains": "keyword",
+            "eigen_Eigen_phred": "double",
+            "end": "integer",
+            "exac_AC_Adj": "integer",
+            "exac_AC_Hemi": "integer",
+            "exac_AC_Het": "integer",
+            "exac_AC_Hom": "integer",
+            "exac_AF": "double",
+            "exac_AF_POPMAX": "double",
+            "exac_AN_Adj": "integer",
+            "filters": "keyword",
+            "g1k_AC": "integer",
+            "g1k_AF": "double",
+            "g1k_AN": "integer",
+            "g1k_POPMAX_AF": "double",
+            "geneIds": "keyword",
+            "geno2mp_HPO_Count": "integer",
+            "genotypes": "nested",
+            "gnomad_exome_coverage": "double",
+            "gnomad_exomes_AC": "integer",
+            "gnomad_exomes_AF": "double",
+            "gnomad_exomes_AF_POPMAX_OR_GLOBAL": "double",
+            "gnomad_exomes_AN": "integer",
+            "gnomad_exomes_FAF_AF": "double",
+            "gnomad_exomes_Hemi": "integer",
+            "gnomad_exomes_Hom": "integer",
+            "gnomad_genome_coverage": "double",
+            "gnomad_genomes_AC": "integer",
+            "gnomad_genomes_AF": "double",
+            "gnomad_genomes_AF_POPMAX_OR_GLOBAL": "double",
+            "gnomad_genomes_AN": "integer",
+            "gnomad_genomes_FAF_AF": "double",
+            "gnomad_genomes_Hemi": "integer",
+            "gnomad_genomes_Hom": "integer",
+            "mainTranscript_amino_acids": "keyword",
+            "mainTranscript_biotype": "keyword",
+            "mainTranscript_canonical": "integer",
+            "mainTranscript_category": "keyword",
+            "mainTranscript_cdna_end": "integer",
+            "mainTranscript_cdna_start": "integer",
+            "mainTranscript_codons": "keyword",
+            "mainTranscript_domains": "keyword",
+            "mainTranscript_gene_id": "keyword",
+            "mainTranscript_gene_symbol": "keyword",
+            "mainTranscript_hgvs": "keyword",
+            "mainTranscript_hgvsc": "keyword",
+            "mainTranscript_hgvsp": "keyword",
+            "mainTranscript_lof": "keyword",
+            "mainTranscript_lof_filter": "keyword",
+            "mainTranscript_lof_flags": "keyword",
+            "mainTranscript_lof_info": "keyword",
+            "mainTranscript_major_consequence": "keyword",
+            "mainTranscript_major_consequence_rank": "integer",
+            "mainTranscript_polyphen_prediction": "keyword",
+            "mainTranscript_protein_id": "keyword",
+            "mainTranscript_sift_prediction": "keyword",
+            "mainTranscript_transcript_id": "keyword",
+            "mpc_MPC": "keyword",
+            "originalAltAlleles": "keyword",
+            "pos": "integer",
+            "primate_ai_score": "double",
+            "ref": "keyword",
+            "rg37_locus": None,
+            "rsid": "keyword",
+            "samples_ab_0_to_5": "keyword",
+            "samples_ab_10_to_15": "keyword",
+            "samples_ab_15_to_20": "keyword",
+            "samples_ab_20_to_25": "keyword",
+            "samples_ab_25_to_30": "keyword",
+            "samples_ab_30_to_35": "keyword",
+            "samples_ab_35_to_40": "keyword",
+            "samples_ab_40_to_45": "keyword",
+            "samples_ab_5_to_10": "keyword",
+            "samples_gq_0_to_5": "keyword",
+            "samples_gq_10_to_15": "keyword",
+            "samples_gq_15_to_20": "keyword",
+            "samples_gq_20_to_25": "keyword",
+            "samples_gq_25_to_30": "keyword",
+            "samples_gq_30_to_35": "keyword",
+            "samples_gq_35_to_40": "keyword",
+            "samples_gq_40_to_45": "keyword",
+            "samples_gq_45_to_50": "keyword",
+            "samples_gq_50_to_55": "keyword",
+            "samples_gq_55_to_60": "keyword",
+            "samples_gq_5_to_10": "keyword",
+            "samples_gq_60_to_65": "keyword",
+            "samples_gq_65_to_70": "keyword",
+            "samples_gq_70_to_75": "keyword",
+            "samples_gq_75_to_80": "keyword",
+            "samples_gq_80_to_85": "keyword",
+            "samples_gq_85_to_90": "keyword",
+            "samples_gq_90_to_95": "keyword",
+            "samples_no_call": "keyword",
+            "samples_num_alt_1": "keyword",
+            "samples_num_alt_2": "keyword",
+            "sortedTranscriptConsequences": "nested",
+            "splice_ai_delta_score": "float",
+            "splice_ai_splice_consequence": "keyword",
+            "start": "integer",
+            "topmed_AC": "integer",
+            "topmed_AF": "double",
+            "topmed_AN": "integer",
+            "topmed_Het": "integer",
+            "topmed_Hom": "integer",
+            "transcriptConsequenceTerms": "keyword",
+            "transcriptIds": "keyword",
+            "variantId": "keyword",
+            "wasSplit": "boolean",
+            "xpos": "long",
+            "xstart": "long",
+            "xstop": "long",
+        }
         genotypes_q = None
         if all_sample_search:
             search_sample_count = (
@@ -518,15 +668,15 @@ def _family_genotype_inheritance_filter(
             ]
             num_alt_to_filter = not_allowed_num_alt or allowed_num_alt
             sample_filters = [
-                CallFieldListContains(Field(num_alt_key), sample_id)
+                CallEqual(Field(num_alt_key), Literal(sample_id))
                 for num_alt_key in num_alt_to_filter
             ]
 
             # sample_q = _build_or_filter('term', sample_filters)
-            sample_q = CallOr.split_into_calls_of_two(sample_filters)
+            sample_q = CallOr(*sample_filters)
             if not_allowed_num_alt:
                 # sample_q = ~Q(sample_q)
-                samples_q = CallNegate(sample_q)
+                sample_q = CallNegate(sample_q)
 
             if not samples_q:
                 samples_q = sample_q
@@ -544,14 +694,17 @@ def _named_family_sample_q(
     if quality_q:
         sample_queries.append(quality_q)
 
-    return CallAnd.split_into_calls_of_two(sample_queries)
+    return CallAnd(*sample_queries)
     # return Q('bool', must=sample_queries, _name=family_guid)
 
+
 def _get_family_affected_status(samples_by_id, inheritance_filter: Dict):
-    individual_affected_status = inheritance_filter.get('affected') or {}
+    individual_affected_status = inheritance_filter.get("affected") or {}
     affected_status = {}
     for sample in samples_by_id.values():
         indiv = sample.individual
-        affected_status[indiv.guid] = individual_affected_status.get(indiv.guid) or indiv.affected
+        affected_status[indiv.guid] = (
+            individual_affected_status.get(indiv.guid) or indiv.affected
+        )
 
     return affected_status
