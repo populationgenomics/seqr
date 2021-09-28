@@ -32,6 +32,17 @@ class Expression(ABC):
     def to_elasticsearch(self) -> Dict[str, any]:
         pass
 
+    @abstractmethod
+    def to_sql(self):
+        pass
+
+    def output_sql(self, tablename: str, fields: str = '*'):
+        if isinstance(fields, list):
+            fields = ', '.join(fields)
+
+        expr = self.to_sql()
+        return f'SELECT {fields} FROM {tablename} WHERE {expr}'
+
     def output_elasticsearch(self, sort: List[str], from_: int, size: int, source: List[str]):
         query = self.to_elasticsearch()
         if isinstance(query, list):
@@ -89,6 +100,9 @@ class Field(Expression):
     def to_elasticsearch(self) -> Dict[str, any]:
         return self.name
 
+    def to_sql(self):
+        return self.name
+
 
 class Literal(Expression):
     def __init__(self, literal: any, literal_type: Optional[str]=None):
@@ -97,6 +111,9 @@ class Literal(Expression):
         self.protobuff_type = literal_type or self.infer_protobuff_type(literal)
 
     def to_elasticsearch(self) -> any:
+        return quote_value(self.literal) if isinstance(self.literal, str) else self.literal
+
+    def to_sql(self):
         return quote_value(self.literal) if isinstance(self.literal, str) else self.literal
 
     def to_protobuff(self) -> str:
@@ -126,9 +143,6 @@ literal {{
         if isinstance(literal, bool):
             return "bool_value"
 
-
-
-
 class Call(Expression, ABC):
     def __init__(
         self,
@@ -136,6 +150,8 @@ class Call(Expression, ABC):
         protobuff_options: Dict[str, List[Tuple[str, any]]] = None,
         **kwargs,
     ):
+        if any(a is None for a in arguments):
+            raise ValueError('An argument was None')
         if not isinstance(arguments, (tuple, list)):
             raise ValueError(
                 f"Expected arguments to be a list, received: {type(arguments)}"
@@ -203,6 +219,9 @@ class CallAnd(MaxTwoArgumentsCall):
     def protobuff_call_name(self):
         return 'and'
 
+    def to_sql(self):
+        return '(' + ' AND '.join(a.to_sql() for a in self.arguments) + ')'
+
     def to_elasticsearch(self) -> Dict[str, any]:
         return {'must': [a.to_elasticsearch() for a in self.arguments]}
 
@@ -214,6 +233,9 @@ class CallOr(MaxTwoArgumentsCall):
     def to_elasticsearch(self) -> Dict[str, any]:
         return {'should': [a.to_elasticsearch() for a in self.arguments], 'minimum_should_match': 1}
 
+    def to_sql(self):
+        return '(' + ' OR '.join(a.to_sql() for a in self.arguments) + ')'
+
 
 class CallNegate(Call):
     def __init__(self, argument: Expression):
@@ -222,8 +244,12 @@ class CallNegate(Call):
     def protobuff_call_name(self):
         return "invert"
 
+    def to_sql(self):
+        return f'NOT {self.arguments[0].to_sql()}'
+
     def to_elasticsearch(self) -> Dict[str, any]:
         return {'negate': self.arguments[0].to_elasticsearch()}
+
 
 class CallIsNotNull(Call):
     def __init__(self, argument: Expression):
@@ -232,6 +258,9 @@ class CallIsNotNull(Call):
     def protobuff_call_name(self):
         return "is_valid"
 
+    def to_sql(self):
+        return f'{self.arguments[0].to_sql()} IS NOT NULL'
+
 
 class CallExists(Call):
     def __init__(self, argument: Field):
@@ -239,6 +268,9 @@ class CallExists(Call):
 
     def protobuff_call_name(self):
         return 'is_valid'
+
+    def to_sql(self):
+        return f'{self.arguments[0].to_sql()} IS NOT NULL'
 
 
 class CallEqual(Call):
@@ -255,26 +287,51 @@ class CallEqual(Call):
 
         return {'term': {lhs.name: rhs.literal}}
 
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} = {rhs}'
+
 
 
 class CallNotEqual(Call):
     def protobuff_call_name(self):
         return "not_equal"
 
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} != {rhs}'
+
 
 class CallLessThan(Call):
     def protobuff_call_name(self):
         return "less"
+
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} < {rhs}'
 
 
 class CallGreaterThan(Call):
     def protobuff_call_name(self):
         return "greater"
 
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} > {rhs}'
+
 
 class CallLessThanOrEqual(Call):
     def protobuff_call_name(self):
         return "less_equal"
+
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} <= {rhs}'
 
     def to_elasticsearch(self) -> Dict[str, any]:
         col, value = self.arguments
@@ -284,6 +341,11 @@ class CallLessThanOrEqual(Call):
 class CallGreaterEqual(Call):
     def protobuff_call_name(self):
         return "greater_equal"
+
+    def to_sql(self):
+        lhs, rhs = (a.to_sql() for a in self.arguments)
+
+        return f'{lhs} >= {rhs}'
 
 
 class CallFieldIsOneOf(Call):
@@ -302,6 +364,12 @@ class CallFieldIsOneOf(Call):
     def to_elasticsearch(self) -> Dict[str, any]:
         return {'terms': {self.arguments[0].name: self.values}}
 
+    def to_sql(self):
+        a = self.arguments[0].to_sql()
+        values = ', '.join(quote_value(v) if isinstance(v, str) else v for v in self.values)
+
+        return f'{a} in ({values})'
+
 
 class CallFieldListContains(Call):
     def __init__(self, field: Field, value: Union[str, int, float]):
@@ -317,3 +385,10 @@ class CallFieldListContains(Call):
 
     def to_elasticsearch(self) -> Dict[str, any]:
         return {'terms': {self.arguments[0].name: self.values}}
+
+    def to_sql(self):
+        a = self.arguments[0].to_sql()
+        values = ', '.join(self.values)
+
+        # this isn't valid because you nested structures don't exist in SQL
+        return f'{a} in ({values})'
