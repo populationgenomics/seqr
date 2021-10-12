@@ -1,7 +1,14 @@
+from copy import deepcopy
 from collections import defaultdict
 
+from reference_data.models import GENOME_VERSION_GRCh37, GENOME_VERSION_GRCh38
 from seqr.models import Sample, Individual
+from seqr.utils.elasticsearch.es_search import (
+    _liftover_grch38_to_grch37,
+    _liftover_grch37_to_grch38,
+)
 from seqr.utils.search.query import *
+from seqr.utils.xpos_utils import get_xpos, MIN_POS, MAX_POS
 from seqr.utils.elasticsearch.constants import (
     CLINVAR_SIGNFICANCE_MAP,
     HGMD_CLASS_MAP,
@@ -16,6 +23,11 @@ from seqr.utils.elasticsearch.constants import (
 )
 
 
+class DatasetType(Enum):
+    VARIANT_CALLS = "VARIANTS"
+    SV_CALLS = "SV"
+
+
 class SearchModel:
     def __init__(
         self,
@@ -23,85 +35,109 @@ class SearchModel:
         quality_filter=None,
         annotations=None,
         annotations_secondary=None,
-        pathogenicity: List[str] = None,
+        pathogenicity: Dict[str, List[str]] = None,
         skip_genotype_filter=None,
+            freqs=None,
+            custom_query=None
     ):
+        """
+        :param pathogenicity: Dict with keys {"clinvar": [CLINVAR_SIGNFICANCE_MAP values], "hgmd": [HGMD_CLASS_MAP values]}
+        """
         self.pathogenicity = pathogenicity
         self.inheritance = inheritance
         self.quality_filter = quality_filter
         self.annotations = annotations
         self.annotations_secondary = annotations_secondary
         self.skip_genotype_filter = skip_genotype_filter
+        self.freqs = freqs
+
+        if custom_query:
+            raise NotImplementedError(f'Unsupported customQuery: {custom_query}')
+        self.custom_query = custom_query
 
 
-def build_expression_from(search_model: SearchModel, samples_by_family_index: Dict[str, Dict[str, Dict[str, Sample]]], indices: List[str]) -> Expression:
+    @staticmethod
+    def from_dict(d):
+        return SearchModel(
+            inheritance=d.get('inheritance'),
+        quality_filter=d.get('qualityFilter'),
+        annotations=d.get('annotations'),
+        annotations_secondary=d.get('annotations_secondary'),
+        pathogenicity=d.get('pathogenicity'),
+        skip_genotype_filter=d.get('skip_genotype_filter'),
+            freqs=d.get('freqs'),
+        custom_query=d.get('customQuery'),
+        )
+
+
+
+def build_expression_from(
+    search_model: SearchModel,
+    # I personally think it's dangerous to use positional arguments for this function
+    *,
+    indices: List[str],
+    samples_by_family_index: Dict[str, Dict[str, Dict[str, Sample]]],
+) -> Expression:
     """
     Where the magic happens ;)
 
     :param search_model: Search model the drives the query
+    :param indices: list of database indices (collections / tables)
     :param samples_by_family_index: see `get_samples_by_family_index(families)`
     :type samples_by_family_index: Dict[ESIndex, Dict[FamilyGuid, Dict[SampleId, Sample]]]
     :indices: A list of ES indices (or equivalent) to query against
     """
     _indices_by_dataset_type = defaultdict(list)
-    _index_searches = defaultdict(list)
+    # _index_searches = defaultdict(list)
 
     _family_individual_affected_status = {}
-    _skipped_sample_count = defaultdict(int)
+
+    filters = []
+
+    # customQuery NOT IMPLEMENTED
+    # if search_model.customQuery:
+    #     if not isinstance(search_model.customQuery, list):
+    #         custom_q = [search_model.customQuery]
+    #     for q_dict in search_model.customQuery:
+    #         # how to convert Dict to Expression
+    #         filters.append(q_dict)
 
     if search_model.inheritance is not None:
-        for index, family_samples in list(samples_by_family_index.items()):
-            index_skipped_families = []
-            for family_guid, samples_by_id in family_samples.items():
-                individual_affected_status = _get_family_affected_status(
-                    samples_by_id, search_model.inheritance.get("filter") or {}
-                )
-
-                has_affected_samples = any(
-                    aftd == Individual.AFFECTED_STATUS_AFFECTED
-                    for aftd in individual_affected_status.values()
-                )
-                if not has_affected_samples:
-                    index_skipped_families.append(family_guid)
-
-                    _skipped_sample_count[index] += len(samples_by_id)
-
-                if family_guid not in _family_individual_affected_status:
-                    _family_individual_affected_status[family_guid] = {}
-                _family_individual_affected_status[family_guid].update(
-                    individual_affected_status
-                )
-
-            for family_guid in index_skipped_families:
-                del samples_by_family_index[index][family_guid]
-
-            if not samples_by_family_index[index]:
-                del samples_by_family_index[index]
-
+        (
+            samples_by_family_index,
+            _family_individual_affected_status,
+        ) = _filter_families_for_inheritance(
+            inheritance=search_model.inheritance,
+            samples_by_family_index=samples_by_family_index,
+        )
         if len(samples_by_family_index) < 1:
             # raise InvalidSearchException(
             raise Exception(
                 "Inheritance based search is disabled in families with no data loaded for affected individuals"
             )
 
-    expression = filter_by_annotation_and_genotype(
-        samples_by_family_index=samples_by_family_index,
-        indices=indices,
-        family_individual_affected_status=_family_individual_affected_status,
-        # other params
-        inheritance=search_model.inheritance,
-        quality_filter=search_model.quality_filter,
-        annotations=search_model.annotations,
-        annotations_secondary=search_model.annotations_secondary,
-        pathogenicity=search_model.pathogenicity,
-        skip_genotype_filter=search_model.skip_genotype_filter,
+    filters.append(
+        filter_by_annotation_and_genotype(
+            samples_by_family_index=samples_by_family_index,
+            indices=indices,
+            family_individual_affected_status=_family_individual_affected_status,
+            # other params
+            inheritance=search_model.inheritance,
+            quality_filter=search_model.quality_filter,
+            annotations=search_model.annotations,
+            annotations_secondary=search_model.annotations_secondary,
+            pathogenicity=search_model.pathogenicity,
+            skip_genotype_filter=search_model.skip_genotype_filter,
+        )
     )
 
-    return expression
+    return filters[0] if len(filters) == 1 else CallAnd(*filters)
 
 
 def get_samples_by_famiy_index(families: List[str]):
-    samples = Sample.objects.filter(is_active=True, individual__family__guid__in=families)
+    samples = Sample.objects.filter(
+        is_active=True, individual__family__guid__in=families
+    )
 
     _samples_by_family_index = defaultdict(lambda: defaultdict(dict))
     for s in samples.select_related("individual__family"):
@@ -110,6 +146,7 @@ def get_samples_by_famiy_index(families: List[str]):
         ] = s
 
     return _samples_by_family_index
+
 
 def filter_by_annotation_and_genotype(
     *,
@@ -185,21 +222,169 @@ def filter_by_annotation_and_genotype(
         if inheritance_mode == COMPOUND_HET:
             return
 
-    filters.append(
-        _by_genotype_filters(
-            indices=indices,
-            indices_by_dataset_type=None,
-            samples_by_family_index=samples_by_family_index,
-            index_metadata=None,
-            family_individual_affected_status=family_individual_affected_status,
-            # other params
-            inheritance_mode=inheritance_mode,
-            inheritance_filter=inheritance_filter,
-            quality_filters_by_family=quality_filters_by_family,
-            secondary_dataset_type=secondary_dataset_type,
-        )
+    expr = _by_genotype_filters(
+        indices=indices,
+        indices_by_dataset_type=None,
+        samples_by_family_index=samples_by_family_index,
+        index_metadata=None,
+        family_individual_affected_status=family_individual_affected_status,
+        # other params
+        inheritance_mode=inheritance_mode,
+        inheritance_filter=inheritance_filter,
+        quality_filters_by_family=quality_filters_by_family,
+        secondary_dataset_type=secondary_dataset_type,
     )
+    if expr:
+        filters.append(expr)
     return CallAnd(*filters)
+
+
+def _filter_families_for_inheritance(inheritance: Dict, samples_by_family_index):
+    _family_individual_affected_status = {}
+    _skipped_sample_count = defaultdict(int)
+
+    _samples_by_family_index = deepcopy(samples_by_family_index)
+
+    for index, family_samples in list(_samples_by_family_index.items()):
+        index_skipped_families = []
+        for family_guid, samples_by_id in family_samples.items():
+            individual_affected_status = _get_family_affected_status(
+                samples_by_id, inheritance.get("filter") or {}
+            )
+
+            has_affected_samples = any(
+                aftd == Individual.AFFECTED_STATUS_AFFECTED
+                for aftd in individual_affected_status.values()
+            )
+            if not has_affected_samples:
+                index_skipped_families.append(family_guid)
+
+                _skipped_sample_count[index] += len(samples_by_id)
+
+            if family_guid not in _family_individual_affected_status:
+                _family_individual_affected_status[family_guid] = {}
+            _family_individual_affected_status[family_guid].update(
+                individual_affected_status
+            )
+
+        for family_guid in index_skipped_families:
+            del _samples_by_family_index[index][family_guid]
+
+        if not _samples_by_family_index[index]:
+            del _samples_by_family_index[index]
+
+    return _samples_by_family_index, _family_individual_affected_status
+
+
+def _by_location_filter(
+    self, genes=None, intervals=None, rs_ids=None, variant_ids=None, locus=None
+) -> Expression:
+    genome_version = locus and locus.get("genomeVersion")
+    variant_id_genome_versions = {
+        variant_id: genome_version for variant_id in variant_ids or []
+    }
+    if variant_id_genome_versions and genome_version:
+        lifted_genome_version = (
+            GENOME_VERSION_GRCh37
+            if genome_version == GENOME_VERSION_GRCh38
+            else GENOME_VERSION_GRCh38
+        )
+        liftover = (
+            _liftover_grch38_to_grch37()
+            if genome_version == GENOME_VERSION_GRCh38
+            else _liftover_grch37_to_grch38()
+        )
+        if liftover:
+            for variant_id in deepcopy(variant_ids):
+                chrom, pos, ref, alt = self.parse_variant_id(variant_id)
+                lifted_coord = liftover.convert_coordinate("chr{}".format(chrom), pos)
+                if lifted_coord and lifted_coord[0]:
+                    lifted_variant_id = "{chrom}-{pos}-{ref}-{alt}".format(
+                        chrom=lifted_coord[0][0].lstrip("chr"),
+                        pos=lifted_coord[0][1],
+                        ref=ref,
+                        alt=alt,
+                    )
+                    variant_id_genome_versions[
+                        lifted_variant_id
+                    ] = lifted_genome_version
+                    variant_ids.append(lifted_variant_id)
+
+    filter = _location_filter(genes, intervals, rs_ids, variant_ids, locus)
+    if (
+        not (genes or intervals or rs_ids)
+        and len(
+            {genome_version for genome_version in variant_id_genome_versions.values()}
+        )
+        > 1
+    ):
+        raise NotImplementedError(
+            'Side effect of querying by location "_filtered_variant_ids"'
+        )
+        # self._filtered_variant_ids = variant_id_genome_versions
+    return filter
+
+
+def _location_filter(genes, intervals, rs_ids, variant_ids, location_filter):
+    # TODO
+    raise NotImplementedError
+    q = None
+    if intervals:
+        for interval in intervals:
+            if interval.get("offset"):
+                offset_pos = int(
+                    (interval["end"] - interval["start"]) * interval["offset"]
+                )
+                interval_q = Q(
+                    "range",
+                    xpos=_pos_offset_range_filter(
+                        interval["chrom"], interval["start"], offset_pos
+                    ),
+                ) & Q(
+                    "range",
+                    xstop=_pos_offset_range_filter(
+                        interval["chrom"], interval["end"], offset_pos
+                    ),
+                )
+            else:
+                xstart = get_xpos(interval["chrom"], interval["start"])
+                xstop = get_xpos(interval["chrom"], interval["end"])
+                range_filters = [
+                    {
+                        key: {
+                            "gte": xstart,
+                            "lte": xstop,
+                        }
+                    }
+                    for key in ["xpos", "xstop"]
+                ]
+                interval_q = _build_or_filter("range", range_filters)
+                interval_q |= Q("range", xpos={"lte": xstart}) & Q(
+                    "range", xstop={"gte": xstop}
+                )
+
+            if q:
+                q |= interval_q
+            else:
+                q = interval_q
+
+    filters = [
+        {"geneIds": list((genes or {}).keys())},
+        {"rsid": rs_ids},
+        {"variantId": variant_ids},
+    ]
+    filters = [f for f in filters if next(iter(f.values()))]
+    if filters:
+        location_q = _build_or_filter("terms", filters)
+        if q:
+            q |= location_q
+        else:
+            q = location_q
+
+    if location_filter and location_filter.get("excludeLocations"):
+        return ~q
+    else:
+        return q
 
 
 def _by_annotations_filter(
@@ -229,7 +414,7 @@ def _by_genotype_filters(
     # other params
     inheritance_mode: str,
     inheritance_filter: Dict[str, str],
-    quality_filters_by_family: Dict,
+    quality_filters_by_family: Dict[str, Expression],
     secondary_dataset_type: any,
 ):
     # TODO:
@@ -495,9 +680,9 @@ def _pathogenicity_filter(pathogenicity: Dict[str, any]) -> Expression:
 
 def _quality_filters_by_family(
     quality_filter, samples_by_family_index, indices
-) -> Expression:
+) -> Dict[str, Expression]:
     quality_field_configs = {
-        "min_{}".format(field): {"field": field, "step": step}
+        f"min_{field}": {"field": field, "step": step}
         for field, step in QUALITY_FIELDS.items()
     }
     quality_filter = dict(
@@ -506,7 +691,7 @@ def _quality_filters_by_family(
     for field, config in quality_field_configs.items():
         if quality_filter[field] % config["step"] != 0:
             raise Exception(
-                "Invalid {} filter {}".format(config["field"], quality_filter[field])
+                f'Invalid {config["field"]} filter {quality_filter[field]}'
             )
 
     quality_filters_by_family = {}
@@ -521,25 +706,33 @@ def _quality_filters_by_family(
             family_filters = []
             for sample_id in sorted(sample_ids):
                 for field, config in sorted(quality_field_configs.items()):
-                    raise NotImplementedError
                     if quality_filter[field]:
-                        q = _build_or_filter(
-                            "term",
-                            [
-                                {
-                                    "samples_{}_{}_to_{}".format(
-                                        config["field"], i, i + config["step"]
-                                    ): sample_id
-                                }
+                        q = CallOr(
+                            *[
+                                CallEqual(
+                                    Field(
+                                        f'samples_{config["field"]}_{i}_to_{i + config["step"]}'
+                                    ),
+                                    sample_id,
+                                )
                                 for i in range(0, quality_filter[field], config["step"])
                             ],
                         )
                         if field == "min_ab":
-                            #  AB only relevant for hets
-                            quality_q &= ~Q(q) | ~Q("term", samples_num_alt_1=sample_id)
+                            # AB only relevant for hets
+                            # mfranklin: simplfied this from the original
+                            # !A | !B == A && B
+                            # quality_q &= ~Q(q) | ~Q('term', samples_num_alt_1=sample_id)
+
+                            family_filters.append(q)
+                            family_filters.append(
+                                CallEqual(Field("samples_num_alt_1"), sample_id)
+                            )
                         else:
-                            quality_q &= ~Q(q)
-            quality_filters_by_family[family_guid] = quality_q
+                            # quality_q &= ~Q(q)
+                            family_filters.append(q.negate())
+
+            quality_filters_by_family[family_guid] = CallAnd(*family_filters)
 
     return quality_filters_by_family
 
@@ -549,8 +742,12 @@ def _any_affected_sample_filter(sample_ids: List[str]) -> Expression:
     return CallOr(
         CallFieldIsOneOf(field=Field("samples_num_alt_1"), values=sample_ids),
         CallFieldIsOneOf(field=Field("samples_num_alt_2"), values=sample_ids),
+        CallFieldIsOneOf(field=Field('samples'), values=sample_ids)
     )
-    # return Q('terms', samples_num_alt_1=sample_ids) | Q('terms', samples_num_alt_2=sample_ids) | Q('terms', samples=sample_ids)
+    # return
+    #   Q('terms', samples_num_alt_1=sample_ids)
+    #   | Q('terms', samples_num_alt_2=sample_ids)
+    #   | Q('terms', samples=sample_ids)
 
 
 def _get_family_sample_query(
@@ -559,7 +756,7 @@ def _get_family_sample_query(
     # other params
     family_guid,
     family_samples_by_id,
-    quality_filters_by_family,
+    quality_filters_by_family: Dict[str, Expression],
     index_fields,
     inheritance_mode,
     inheritance_filter,
@@ -687,7 +884,7 @@ def _family_genotype_inheritance_filter(
 
 
 def _named_family_sample_q(
-    family_samples_q, family_guid, quality_filters_by_family
+    family_samples_q, family_guid, quality_filters_by_family: Dict[str, Expression]
 ) -> Expression:
     sample_queries = [family_samples_q]
     quality_q = quality_filters_by_family.get(family_guid)

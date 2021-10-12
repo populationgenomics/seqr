@@ -22,10 +22,12 @@ class TestPathogenicity(TestCase):
             samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
             indices=["na12878-trio"],
         )
+
+        print(expression.to_python())
         # SELECT * FROM variants WHERE (clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic"))
         print(expression.output_sql("variants"))
 
-        s = expression.output_protobuff(fields=[], arrow_urls=[])
+        s = expression.output_protobuf(fields=[], arrow_urls=[])
         self.assertEqual(
             """\
 filter_expression {
@@ -51,22 +53,22 @@ max_rows: 10000""",
         )
         print(json.dumps(es))
         expected = {
-                "bool": {
-                    "must": [
-                        {
-                            "terms": {
-                                "clinvar_clinical_significance": [
-                                    "Likely_pathogenic",
-                                    "Pathogenic",
-                                    "Pathogenic/Likely_pathogenic",
-                                ]
-                            }
+            "bool": {
+                "must": [
+                    {
+                        "terms": {
+                            "clinvar_clinical_significance": [
+                                "Likely_pathogenic",
+                                "Pathogenic",
+                                "Pathogenic/Likely_pathogenic",
+                            ]
                         }
-                    ]
-                }
+                    }
+                ]
             }
+        }
 
-        self.assertDictEqual(expected, es['query'])
+        self.assertDictEqual(expected, es["query"])
 
     def test_2(self):
         search_model_dict = {
@@ -95,7 +97,7 @@ max_rows: 10000""",
             },
         }
 
-        # families = Family.objects.filter(guid__in=['F000001_trio'])
+        # families = Famhttps://www.npmjs.com/package/fast-sort#benchmarkily.objects.filter(guid__in=['F000001_trio'])
         family_ids = ["F000001_trio"]
 
         search_model = SearchModel(**search_model_dict)
@@ -106,12 +108,14 @@ max_rows: 10000""",
             indices=["na12878-trio"],
         )
 
+        print(expression.to_python())
+
         # Expected: SELECT * FROM variants WHERE ((transcriptConsequenceTerms in ("BND", "CNV", "CPX", "CTX", "DEL", "DUP", "INS", "INV", "frameshift_variant", "inframe_deletion", "inframe_insertion", "initiator_codon_variant", "missense_variant", "protein_altering_variant", "splice_acceptor_variant", "splice_donor_variant", "start_lost", "stop_gained", "stop_lost") OR clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic")) AND (((samples_num_alt_2 = "NA12878") AND NOT (samples_no_call = "NA12891" OR samples_num_alt_2 = "NA12891"))))
         expr = expression.output_sql("variants")
         print(expr)
 
-        # protobuff = expression.output_protobuff(fields=[], arrow_urls=[])
-        # print(protobuff)
+        # protobuf = expression.output_protobuf(fields=[], arrow_urls=[])
+        # print(protobuf)
 
         es = expression.output_elasticsearch([], 0, 1000, source=["xpos", "variantId"])
         es_query_expected = {
@@ -295,12 +299,12 @@ max_rows: 10000""",
             indices=["na12878-trio"],
         )
 
-        sql = expression.output_sql('variants')
+        sql = expression.output_sql("variants")
         # SELECT * FROM variants WHERE (clinvar_clinical_significance in ("Likely_pathogenic", "Pathogenic", "Pathogenic/Likely_pathogenic") AND (((samples_num_alt_1 = "NA12878" OR samples_num_alt_2 = "NA12878") AND NOT (samples_no_call = "NA12891" OR samples_num_alt_1 = "NA12891" OR samples_num_alt_2 = "NA12891"))))
         print(sql)
 
-        protobuff = expression.output_protobuff(fields=[], arrow_urls=[])
-        print(protobuff)
+        protobuf = expression.output_protobuf(fields=[], arrow_urls=[])
+        print(protobuf)
 
         es = expression.output_elasticsearch([], 0, 1000, source=["xpos", "variantId"])
         es_expected = {
