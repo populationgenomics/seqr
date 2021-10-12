@@ -25,7 +25,11 @@ class Expression(ABC):
         self.type = _type
 
     @abstractmethod
-    def to_protobuff(self) -> str:
+    def to_python(self) -> str:
+        pass
+
+    @abstractmethod
+    def to_protobuf(self) -> str:
         pass
 
     @abstractmethod
@@ -55,7 +59,7 @@ class Expression(ABC):
             '_source': source
         }
 
-    def output_protobuff(
+    def output_protobuf(
         self, fields: List[str], arrow_urls: List[str], max_rows=10000
     ) -> str:
 
@@ -71,7 +75,7 @@ class Expression(ABC):
 {str_headers}
 
 filter_expression {{
-{indent(self.to_protobuff(), INDENT)}
+{indent(self.to_protobuf(), INDENT)}
 }}
 
 max_rows: {10000}
@@ -94,7 +98,7 @@ class Field(Expression):
         super().__init__(ExpressionType.FIELD)
         self.name = name
 
-    def to_protobuff(self) -> str:
+    def to_protobuf(self) -> str:
         return f'column: "{self.name}"'
 
     def to_elasticsearch(self) -> Dict[str, any]:
@@ -103,12 +107,22 @@ class Field(Expression):
     def to_sql(self):
         return self.name
 
+    def to_python(self):
+        return f'Field(name="{self.name}")'
+
 
 class Literal(Expression):
     def __init__(self, literal: any, literal_type: Optional[str]=None):
         super().__init__(ExpressionType.LITERAL)
         self.literal = literal
-        self.protobuff_type = literal_type or self.infer_protobuff_type(literal)
+        self.protobuf_type = literal_type or self.infer_protobuf_type(literal)
+
+    def to_python(self):
+        literal = self.literal
+        if isinstance(self.literal, str):
+            literal = quote_value(literal)
+
+        return f'Literal(literal={literal}, literal_type="{self.protobuf_type}")'
 
     def to_elasticsearch(self) -> any:
         return quote_value(self.literal) if isinstance(self.literal, str) else self.literal
@@ -116,19 +130,19 @@ class Literal(Expression):
     def to_sql(self):
         return quote_value(self.literal) if isinstance(self.literal, str) else self.literal
 
-    def to_protobuff(self) -> str:
+    def to_protobuf(self) -> str:
         literal_value = self.literal
-        if self.protobuff_type == "string_value":
+        if self.protobuf_type == "string_value":
             escaped = literal_value.replace('"', '\\"')
             literal_value = f'"{escaped}"'
 
         return f"""\
 literal {{
-{INDENT}{self.protobuff_type}: {literal_value}
+{INDENT}{self.protobuf_type}: {literal_value}
 }}"""
 
     @staticmethod
-    def infer_protobuff_type(literal: any):
+    def infer_protobuf_type(literal: any):
         if isinstance(literal, str):
             return "string_value"
         if isinstance(literal, int):
@@ -147,7 +161,7 @@ class Call(Expression, ABC):
     def __init__(
         self,
         *arguments,
-        protobuff_options: Dict[str, List[Tuple[str, any]]] = None,
+        protobuf_options: Dict[str, List[Tuple[str, any]]] = None,
         **kwargs,
     ):
         if any(a is None for a in arguments):
@@ -160,28 +174,39 @@ class Call(Expression, ABC):
             raise ValueError('Expected at least 1 argument')
 
         self.arguments = arguments
-        self.protobuff_options = protobuff_options
+        self.protobuf_options = protobuf_options
         self.kwargs = kwargs
 
+    def to_python(self):
+        args = []
+        if self.arguments:
+            args.extend(a.to_python() if isinstance(a, Expression) else a for a in self.arguments)
+        if self.protobuf_options:
+            args.append(f'protobuf_options={self.protobuf_options}')
+        if self.kwargs:
+            args.extend(f'{k}={v}' for k,v in self.kwargs)
+        sargs = ', '.join(args)
+        return f'{self.__class__.__name__}({sargs})'
+
     @abstractmethod
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         # should be a function_name declared in:
         # https://arrow.apache.org/docs/cpp/compute.html
         raise NotImplementedError
 
-    def to_protobuff(self) -> str:
+    def to_protobuf(self) -> str:
 
         _str_arguments = "\n".join(
             f"""\
 arguments {{
-{indent(a.to_protobuff(), INDENT)}
+{indent(a.to_protobuf(), INDENT)}
 }}"""
             for a in self.arguments
         )
 
-        internals = [f'function_name: "{self.protobuff_call_name()}"', _str_arguments]
+        internals = [f'function_name: "{self.protobuf_call_name()}"', _str_arguments]
 
-        options = self.protobuff_options
+        options = self.protobuf_options
         if options:
             # they need to be quoted
             for k, d in options.items():
@@ -208,15 +233,15 @@ class MaxTwoArgumentsCall(Call, ABC):
 
         return call
 
-    def to_protobuff(self) -> str:
+    def to_protobuf(self) -> str:
         if len(self.arguments) == 2:
-            return super().to_protobuff()
+            return super().to_protobuf()
         expr = self.split_into_calls_of_two(self.arguments)
-        return expr.to_protobuff()
+        return expr.to_protobuf()
 
 
 class CallAnd(MaxTwoArgumentsCall):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return 'and'
 
     def to_sql(self):
@@ -227,7 +252,7 @@ class CallAnd(MaxTwoArgumentsCall):
 
 
 class CallOr(MaxTwoArgumentsCall):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return 'or'
 
     def to_elasticsearch(self) -> Dict[str, any]:
@@ -241,7 +266,7 @@ class CallNegate(Call):
     def __init__(self, argument: Expression):
         super().__init__(argument)
 
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "invert"
 
     def to_sql(self):
@@ -255,7 +280,7 @@ class CallIsNotNull(Call):
     def __init__(self, argument: Expression):
         super().__init__(argument)
 
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "is_valid"
 
     def to_sql(self):
@@ -266,7 +291,7 @@ class CallExists(Call):
     def __init__(self, argument: Field):
         super().__init__(argument)
 
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return 'is_valid'
 
     def to_sql(self):
@@ -274,7 +299,7 @@ class CallExists(Call):
 
 
 class CallEqual(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "equal"
 
     def to_elasticsearch(self) -> Dict[str, any]:
@@ -295,7 +320,7 @@ class CallEqual(Call):
 
 
 class CallNotEqual(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "not_equal"
 
     def to_sql(self):
@@ -305,7 +330,7 @@ class CallNotEqual(Call):
 
 
 class CallLessThan(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "less"
 
     def to_sql(self):
@@ -315,7 +340,7 @@ class CallLessThan(Call):
 
 
 class CallGreaterThan(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "greater"
 
     def to_sql(self):
@@ -325,7 +350,7 @@ class CallGreaterThan(Call):
 
 
 class CallLessThanOrEqual(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "less_equal"
 
     def to_sql(self):
@@ -339,7 +364,7 @@ class CallLessThanOrEqual(Call):
 
 
 class CallGreaterEqual(Call):
-    def protobuff_call_name(self):
+    def protobuf_call_name(self):
         return "greater_equal"
 
     def to_sql(self):
@@ -353,12 +378,15 @@ class CallFieldIsOneOf(Call):
         prepped_values = [("values", quote_value(v)) for v in values]
 
         super().__init__(
-            field, protobuff_options={"set_lookup_options": prepped_values}
+            field, protobuf_options={"set_lookup_options": prepped_values}
         )
 
         self.values = values
 
-    def protobuff_call_name(self):
+    def to_python(self):
+        return f'{self.__class__.__name__}(field={self.arguments[0].to_python()}, values={self.values})'
+
+    def protobuf_call_name(self):
         return "is_in"
 
     def to_elasticsearch(self) -> Dict[str, any]:
@@ -375,12 +403,15 @@ class CallFieldListContains(Call):
     def __init__(self, field: Field, value: Union[str, int, float]):
         super().__init__(
             field,
-            protobuff_options={"set_lookup_options": [("values", quote_value(value))]},
+            protobuf_options={"set_lookup_options": [("values", quote_value(value))]},
         )
 
         self.values = value
 
-    def protobuff_call_name(self):
+    def to_python(self):
+        return f'{self.__class__.__name__}(field={self.arguments[0].to_python()}, values={self.values})'
+
+    def protobuf_call_name(self):
         return "string_list_contains_any"
 
     def to_elasticsearch(self) -> Dict[str, any]:
