@@ -47,22 +47,23 @@ def index(request):
         )
         seconds = (datetime.now() - start).total_seconds()
         if process.returncode == 0:
-            logger.info(f'Success: {mode} ({seconds}s)')
+            logger.info(f"Success: {mode} ({seconds}s)")
             return HttpResponse(
                 f"Completed ({seconds}s). STDERR: {process.stderr}. STDOUT: {process.stdout}",
                 status=500,
             )
 
-        logger.error(f'Failed {mode} ({seconds}s)')
+        logger.error(f"Failed {mode} ({seconds}s)")
         logger.warning(process.stdout)
         logger.error(process.stderr)
         return HttpResponse(
-            f"Failed ({seconds}s). STDERR: {process.stderr}. STDOUT: {process.stdout}", status=500
+            f"Failed ({seconds}s). STDERR: {process.stderr}. STDOUT: {process.stdout}",
+            status=500,
         )
     except Exception as e:
         seconds = (datetime.now() - start).total_seconds()
 
-        logger.error(f'Globally caught exception after {seconds}s: {type(e)}, {e}')
+        logger.error(f"Globally caught exception after {seconds}s: {type(e)}, {e}")
         return HttpResponse("Failed, " + str(e), status=500)
 
 
@@ -72,7 +73,7 @@ urlpatterns = (url(r"^$", index),)
 if __name__ == "__main__":
     from django.core.management import execute_from_command_line
 
-    port = os.getenv('PORT', '5000')
+    port = os.getenv("PORT", "5000")
     arguments = [
         "update_reference_server.py",
         "runserver",
