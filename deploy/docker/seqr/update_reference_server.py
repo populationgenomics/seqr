@@ -4,16 +4,22 @@ import logging
 import subprocess
 from datetime import datetime
 
+import google.cloud.logging
+
 from django.conf import settings
 from django.conf.urls import url
 from django.http import HttpResponse
 
+# configure logging
+client = google.cloud.logging.Client()
+client.get_default_handler()
+client.setup_logging()
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 settings.configure(
     DEBUG=False,
     ALLOWED_HOSTS="*",
-    # SECRET_KEY='thisisthesecretkey',
     ROOT_URLCONF=__name__,
     MIDDLEWARE_CLASSES=(
         "django.middleware.common.CommonMiddleware",
@@ -35,22 +41,17 @@ def index(request):
         mode = request.GET.get("mode")
         if mode not in MODES:
             return HttpResponse(f"Unrecognised mode: {mode}", status=400)
+
         logger.info(f'Running "{mode}"')
-        process = subprocess.run(
-            [
-                "python3",
-                "manage.py",
-                mode,
-                *MODES[mode],
-            ],
-            capture_output=True,
-        )
+        command = ["python", "manage.py", mode, *MODES[mode]]
+        process = subprocess.run(command, capture_output=True)
         seconds = (datetime.now() - start).total_seconds()
+
         if process.returncode == 0:
             logger.info(f"Success: {mode} ({seconds}s)")
             return HttpResponse(
                 f"Completed ({seconds}s). STDERR: {process.stderr}. STDOUT: {process.stdout}",
-                status=500,
+                status=200,
             )
 
         logger.error(f"Failed {mode} ({seconds}s)")
@@ -74,10 +75,5 @@ if __name__ == "__main__":
     from django.core.management import execute_from_command_line
 
     port = os.getenv("PORT", "5000")
-    arguments = [
-        "update_reference_server.py",
-        "runserver",
-        f"0.0.0.0:{port}",
-    ]
-
+    arguments = ["update_reference_server.py", "runserver", f"0.0.0.0:{port}"]
     execute_from_command_line(arguments)
