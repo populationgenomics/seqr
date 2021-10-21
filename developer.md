@@ -26,7 +26,7 @@ Install dependencies:
 1. Build seqr python environment
 
    ```shell
-   conda env create -n seqr python=3.7
+   conda create -n seqr python=3.7
    conda activate seqr
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
