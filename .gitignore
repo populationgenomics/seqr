@@ -18,3 +18,6 @@ pedigree_images/*
 seqr_settings
 
 django_key
+.envrc
+
+data/
