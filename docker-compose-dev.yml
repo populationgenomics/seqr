@@ -1,0 +1,19 @@
+version: '2.4'
+
+services:
+  postgres:
+    image: postgres:12.6
+    command: postgres -c listen_addresses='*'
+    environment:
+      - PGPORT=5433
+      - POSTGRES_DB=seqrdb
+      - POSTGRES_PASSWORD=a-very-secure-password
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5433"
+    healthcheck:
+      test: pg_isready -h postgres -U postgres
+      interval: 5s
+      timeout: 10s
+      retries: 100
