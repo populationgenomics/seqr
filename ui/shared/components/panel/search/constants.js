@@ -337,6 +337,12 @@ export const FREQUENCIES = [
     labelHelp: 'Filter by site frequency (AF) among gnomad SVs',
   },
   {
+    name: 'nagim',
+    label: 'NAGIM Prototype',
+    homHemi: false,
+    labelHelp: 'Filter by site frequency (AF) among the NAGIM prototype',
+  },
+  {
     name: THIS_CALLSET_FREQUENCY,
     label: 'This Callset',
     homHemi: false,
