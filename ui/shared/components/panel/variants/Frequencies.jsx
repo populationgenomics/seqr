@@ -180,6 +180,7 @@ const POPULATIONS = [
     urls: { [GENOME_VERSION_37]: 'gnomad.broadinstitute.org' },
     queryParams: { [GENOME_VERSION_37]: 'dataset=gnomad_sv_r2_1' },
   },
+  { field: 'nagim', fieldTitle: 'NAGIM' },
 ]
 
 const Frequencies = React.memo(({ variant }) => {
