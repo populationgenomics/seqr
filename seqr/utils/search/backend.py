@@ -2,8 +2,8 @@ from typing import List, Dict, Optional
 import abc
 
 from seqr.utils.elasticsearch.utils import InvalidIndexException
-from seqr.utils.search.query import Expression
-from seqr.utils.search.constructor import DatasetType
+from seqr.utils.search.expression import Expression
+from seqr.utils.search.models import DatasetType
 from seqr.utils.redis_utils import safe_redis_get_json, safe_redis_set_json
 
 

@@ -1,25 +1,46 @@
 import json
 import os
+from typing import Dict, Optional
+
 import django
 from django.test import TestCase
+
+from .expression import Expression
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 django.setup()
 
 from ...models import Sample, Family
-from .constructor import SearchModel, build_expression_from, get_samples_by_famiy_index
+from .backend import Backend
+from .models import SearchModel, DatasetType
+from .constructor import QueryConstructor, get_samples_by_family_index
+
+
+class TestBackend(Backend):
+    def search(self, expression: Expression):
+        raise NotImplementedError
+
+    def get_genome_version_for_index_name(self, index_name: str) -> Optional[DatasetType]:
+        return DatasetType.VARIANT_CALLS
+
+    def get_dataset_type_for_index_name(self, index_name: str) -> Optional[str]:
+        return ''
+
+    def get_field_metadata_for_index_name(self, index_name: str) -> Dict[str, str]:
+        return {}
 
 
 class TestPathogenicity(TestCase):
     def test_pathogenic(self):
         family_ids = ["F000001_trio"]
 
-        search_model = SearchModel(
-            **{"pathogenicity": {"clinvar": ["pathogenic", "likely_pathogenic"]}}
+        search_model = SearchModel.from_dict(
+            {"pathogenicity": {"clinvar": ["pathogenic", "likely_pathogenic"]}}
         )
-        expression = build_expression_from(
+        constructor = QueryConstructor(backend=TestBackend())
+        expression = constructor.build_expression_from(
             search_model,
-            samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
+            samples_by_family_index=get_samples_by_family_index(families=family_ids),
             indices=["na12878-trio"],
         )
 
@@ -100,11 +121,12 @@ max_rows: 10000""",
         # families = Famhttps://www.npmjs.com/package/fast-sort#benchmarkily.objects.filter(guid__in=['F000001_trio'])
         family_ids = ["F000001_trio"]
 
-        search_model = SearchModel(**search_model_dict)
+        search_model = SearchModel.from_dict(search_model_dict)
 
-        expression = build_expression_from(
+        constructor = QueryConstructor(backend=TestBackend())
+        expression = constructor.build_expression_from(
             search_model,
-            samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
+            samples_by_family_index=get_samples_by_family_index(families=family_ids),
             indices=["na12878-trio"],
         )
 
@@ -293,9 +315,10 @@ max_rows: 10000""",
 
         search_model = SearchModel(**search_model_dict)
 
-        expression = build_expression_from(
+        constructor = QueryConstructor(backend=TestBackend())
+        expression = constructor.build_expression_from(
             search_model,
-            samples_by_family_index=get_samples_by_famiy_index(families=family_ids),
+            samples_by_family_index=get_samples_by_family_index(families=family_ids),
             indices=["na12878-trio"],
         )
 
