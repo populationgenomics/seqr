@@ -2,55 +2,62 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
+import ReduxFormWrapper from 'shared/components/form/ReduxFormWrapper'
 import { Multiselect } from 'shared/components/form/Inputs'
-import OptionFieldView from 'shared/components/panel/view-fields/OptionFieldView'
+import Modal from 'shared/components/modal/Modal'
 
 import { updateProject } from 'redux/rootReducer'
 import { getProjectCategoriesByGuid } from 'redux/selectors'
 
-const FIELD_PROPS = {
-  component: Multiselect,
-  allowAdditions: true,
-  additionLabel: 'Category: ',
-  placeholder: 'Project categories',
-  color: 'blue',
-}
 
-const EditProjectCategoriesModal = React.memo(({ project, categories, trigger, triggerName, popup, onSubmit }) => (
-  <OptionFieldView
-    field="projectCategoryGuids"
-    idField="projectGuid"
-    tagOptions={categories}
-    formFieldProps={FIELD_PROPS}
-    initialValues={project}
-    isEditable
-    simplifiedValue
-    hideValue
-    modalTrigger={trigger}
-    modalPopup={popup}
-    modalTitle="Edit Project Categories"
-    modalId={triggerName}
-    onSubmit={onSubmit}
-  />
-))
+const EditProjectCategoriesModal = React.memo((props) => {
+  const categories = Object.values(props.projectCategoriesByGuid).map((projectCategory) => {
+    return { value: projectCategory.guid, text: projectCategory.name }
+  })
+  const formName = `editProjectCategories-${props.project.projectGuid}-${props.triggerName}`
+  const fields = [
+    {
+      name: 'categories',
+      options: categories,
+      component: Multiselect,
+      allowAdditions: true,
+      additionLabel: 'Category: ',
+      placeholder: 'Project categories',
+      color: 'blue',
+    },
+  ]
+  const initialValues = {
+    categories: props.project.projectCategoryGuids,
+    projectGuid: props.project.projectGuid,
+    projectField: 'categories',
+  }
+  return (
+    <Modal trigger={props.trigger} popup={props.popup} title="Edit Project Categories" modalName={formName}>
+      <ReduxFormWrapper
+        initialValues={initialValues}
+        onSubmit={props.updateProject}
+        form={formName}
+        fields={fields}
+      />
+    </Modal>
+  )
+})
 
 EditProjectCategoriesModal.propTypes = {
   trigger: PropTypes.node,
   project: PropTypes.object,
-  categories: PropTypes.arrayOf(PropTypes.object),
-  onSubmit: PropTypes.func,
+  projectCategoriesByGuid: PropTypes.object,
+  updateProject: PropTypes.func,
   popup: PropTypes.object,
   triggerName: PropTypes.string,
 }
 
 const mapStateToProps = state => ({
-  categories: Object.values(getProjectCategoriesByGuid(state)).map(
-    projectCategory => ({ value: projectCategory.guid, text: projectCategory.name }),
-  ),
+  projectCategoriesByGuid: getProjectCategoriesByGuid(state),
 })
 
 const mapDispatchToProps = {
-  onSubmit: values => updateProject({ ...values, projectField: 'categories' }),
+  updateProject,
 }
 
 export { EditProjectCategoriesModal as EditProjectCategoriesModalComponent }

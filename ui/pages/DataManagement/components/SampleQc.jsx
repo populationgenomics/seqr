@@ -8,6 +8,7 @@ import ReduxFormWrapper, { validators } from 'shared/components/form/ReduxFormWr
 import { getQcUploadStats } from '../selectors'
 import { uploadQcPipelineOutput } from '../reducers'
 
+
 const UPLOAD_FIELDS = [
   {
     name: 'file',
@@ -17,7 +18,7 @@ const UPLOAD_FIELDS = [
   },
 ]
 
-const SampleQcUpload = React.memo(({ qcUploadStats, onSubmit }) => (
+const SampleQcUpload = React.memo(({ qcUploadStats, onSubmit }) =>
   <Grid>
     <Grid.Row>
       <Grid.Column width={4} />
@@ -39,8 +40,8 @@ const SampleQcUpload = React.memo(({ qcUploadStats, onSubmit }) => (
       </Grid.Column>
       <Grid.Column width={4} />
     </Grid.Row>
-  </Grid>
-))
+  </Grid>,
+)
 
 SampleQcUpload.propTypes = {
   qcUploadStats: PropTypes.object,

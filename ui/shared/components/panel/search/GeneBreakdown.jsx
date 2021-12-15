@@ -24,19 +24,15 @@ const COLUMNS = [
     content: 'Gene',
     width: 4,
     noFormatExport: true,
-    format: row => (
-      <div>
-        <ShowGeneModal gene={row} size="large" />
-        <GeneDetails gene={row} margin="0.5em 0.5em 0 0" />
-      </div>
-    ),
+    format: row =>
+      <div><ShowGeneModal gene={row} size="large" /><GeneDetails gene={row} margin="0.5em 0.5em 0 0" /></div>,
   },
   {
     name: 'numVariants',
     content: '# Variants',
     width: 2,
     noFormatExport: true,
-    format: row => (
+    format: row =>
       <SearchResultsLink
         location={row.geneId}
         projectFamilies={Object.entries(row.families.reduce((acc, { family }) => {
@@ -49,8 +45,7 @@ const COLUMNS = [
         familyGuids={row.families.map(({ family }) => family.familyGuid)}
         buttonText={row.numVariants.toString()}
         initialSearch={row.search}
-      />
-    ),
+      />,
   },
   { name: 'numFamilies', content: '# Families', width: 2, noFormatExport: true },
   {
@@ -59,18 +54,16 @@ const COLUMNS = [
     width: 8,
     format: (row, isExport) => (
       isExport ? row.families.map(({ family, count }) => `${family.displayName} (${count})`).join(', ') :
-        row.families.map(({ family, count }, index) => (
+        row.families.map(({ family, count }, index) =>
           <span key={family.familyGuid}>
             {index > 0 && <span>,&nbsp;</span>}
-            <FamilyLink family={family} target="_blank" disableEdit />
-            {`(${count})`}
-          </span>
-        ))
+            <FamilyLink family={family} target="_blank" disableEdit /> ({count})
+          </span>)
     ),
   },
 ]
 
-const GeneBreakdown = React.memo(({ searchHash, geneBreakdown, loading, loadingErrorMessage, load }) => (
+const GeneBreakdown = React.memo(({ searchHash, geneBreakdown, loading, loadingErrorMessage, load }) =>
   <Modal
     modalName="geneBreakdown"
     size="large"
@@ -90,12 +83,12 @@ const GeneBreakdown = React.memo(({ searchHash, geneBreakdown, loading, loadingE
         downloadTableType="Gene Results"
       />
     </DataLoader>
-  </Modal>
-))
+  </Modal>,
+)
 
 GeneBreakdown.propTypes = {
   searchHash: PropTypes.string,
-  geneBreakdown: PropTypes.arrayOf(PropTypes.object),
+  geneBreakdown: PropTypes.array,
   loading: PropTypes.bool,
   loadingErrorMessage: PropTypes.string,
   load: PropTypes.func,

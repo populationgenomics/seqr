@@ -40,14 +40,16 @@ const BaseUpdateDatasetForm = React.memo(({ formType, formFields, initialValues,
 ))
 
 BaseUpdateDatasetForm.propTypes = {
-  formFields: PropTypes.arrayOf(PropTypes.object).isRequired,
+  formFields: PropTypes.array.isRequired,
   formType: PropTypes.string.isRequired,
   initialValues: PropTypes.object,
   onSubmit: PropTypes.func,
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  onSubmit: values => dispatch(SUBMIT_FUNCTIONS[ownProps.formType](values)),
+  onSubmit: (values) => {
+    return dispatch(SUBMIT_FUNCTIONS[ownProps.formType](values))
+  },
 })
 
 const UpdateDatasetForm = connect(null, mapDispatchToProps)(BaseUpdateDatasetForm)
@@ -84,7 +86,7 @@ const UPLOAD_CALLSET_FIELDS = [
   },
 ]
 
-const IGVFileUploadField = React.memo(({ projectGuid, ...props }) => (
+const IGVFileUploadField = React.memo(({ projectGuid, ...props }) =>
   <FileUploadField
     clearTimeOut={0}
     dropzoneLabel={
@@ -124,8 +126,8 @@ const IGVFileUploadField = React.memo(({ projectGuid, ...props }) => (
     required
     styles={UPLOADER_STYLES}
     {...props}
-  />
-))
+  />,
+)
 
 IGVFileUploadField.propTypes = {
   projectGuid: PropTypes.string,
@@ -159,21 +161,20 @@ const PANES = [
   },
 ].map(({ title, formType, formFields, initialValues }) => ({
   menuItem: title,
-  render: () => (
+  render: () =>
     <Tab.Pane key={formType}>
       <UpdateDatasetForm
         formType={formType}
         formFields={formFields}
         initialValues={initialValues}
       />
-    </Tab.Pane>
-  ),
+    </Tab.Pane>,
 }))
 
 const IGV_ONLY_PANES = [PANES[1]]
 
 const EditDatasetsButton = React.memo(({ user }) => (
-  (user.isDataManager || user.isPm) ? (
+  (user.isDataManager || user.isPm) ?
     <Modal
       modalName={MODAL_NAME}
       title="Datasets"
@@ -181,8 +182,7 @@ const EditDatasetsButton = React.memo(({ user }) => (
       trigger={<ButtonLink>Edit Datasets</ButtonLink>}
     >
       <Tab panes={user.isDataManager ? PANES : IGV_ONLY_PANES} />
-    </Modal>
-  ) : null
+    </Modal> : null
 ))
 
 EditDatasetsButton.propTypes = {

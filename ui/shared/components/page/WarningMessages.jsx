@@ -6,31 +6,33 @@ import { connect } from 'react-redux'
 
 import { getWarningMessages } from 'redux/selectors'
 
+
 class WarningMessages extends React.PureComponent {
 
   static propTypes = {
-    warningMessages: PropTypes.arrayOf(PropTypes.object),
+    warningMessages: PropTypes.array,
   }
 
-  state = { hiddenMessages: {} }
+  constructor(props) {
+    super(props)
+
+    this.state = {}
+  }
 
   hide = message => () => {
-    this.setState(prevState => ({ ...prevState.hiddenMessages, [message]: true }))
+    this.setState({ [message]: true })
   }
 
   render() {
-    const { warningMessages: allWarningMessages } = this.props
-    const { hiddenMessages } = this.state
-    const warningMessages = (allWarningMessages || []).filter(({ message }) => !hiddenMessages[message])
-    return warningMessages.length > 0 && warningMessages.map(({ header, message }) => (
+    const warningMessages = (this.props.warningMessages || []).filter(({ message }) => !this.state[message])
+    return warningMessages.length > 0 && warningMessages.map(({ header, message }) =>
       <Grid.Row>
         <Grid.Column textAlign="center">
           <Message key={message} header={header} content={message} warning compact onDismiss={this.hide(message)} />
         </Grid.Column>
-      </Grid.Row>
-    ))
+      </Grid.Row>,
+    )
   }
-
 }
 
 const mapStateToProps = state => ({

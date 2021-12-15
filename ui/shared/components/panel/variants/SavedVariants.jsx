@@ -13,17 +13,13 @@ import {
 import ExportTableButton from '../../buttons/ExportTableButton'
 import StateChangeForm from '../../form/StateChangeForm'
 import { HorizontalSpacer } from '../../Spacers'
-import { ButtonLink } from '../../StyledComponents'
 import DataLoader from '../../DataLoader'
 import Variants from './Variants'
-import {
-  getPairedSelectedSavedVariants, getPairedFilteredSavedVariants, getSavedVariantTableState,
+import { getPairedSelectedSavedVariants, getPairedFilteredSavedVariants, getSavedVariantTableState,
   getSavedVariantVisibleIndices, getSavedVariantTotalPages, getSavedVariantExportConfig,
-  getVisibleSortedSavedVariants,
-} from './selectors'
+  getVisibleSortedSavedVariants } from './selectors'
 
 const ALL_FILTER = 'ALL'
-const MAX_FILTERS = 4
 
 const ControlsRow = styled(Grid.Row)`
   font-size: 1.1em;
@@ -42,15 +38,15 @@ class SavedVariants extends React.PureComponent {
   static propTypes = {
     match: PropTypes.object,
     history: PropTypes.object,
-    tagOptions: PropTypes.arrayOf(PropTypes.object),
-    filters: PropTypes.arrayOf(PropTypes.object),
-    discoveryFilters: PropTypes.arrayOf(PropTypes.object),
+    tagOptions: PropTypes.array,
+    filters: PropTypes.array,
+    discoveryFilters: PropTypes.array,
     loading: PropTypes.bool,
     error: PropTypes.string,
-    variantsToDisplay: PropTypes.arrayOf(PropTypes.object),
+    variantsToDisplay: PropTypes.array,
     totalVariantsCount: PropTypes.number,
     filteredVariantsCount: PropTypes.number,
-    variantExportConfig: PropTypes.arrayOf(PropTypes.object),
+    variantExportConfig: PropTypes.array,
     tableState: PropTypes.object,
     firstRecordIndex: PropTypes.number,
     totalPages: PropTypes.number,
@@ -61,97 +57,82 @@ class SavedVariants extends React.PureComponent {
     tableSummaryComponent: PropTypes.elementType,
   }
 
-  state = { showAllFilters: false }
-
   navigateToTag = (e, data) => {
-    const { history, getUpdateTagUrl, match } = this.props
-    history.push(getUpdateTagUrl(data.value, match))
-  }
-
-  showAllFilters = () => {
-    this.setState({ showAllFilters: true })
+    this.props.history.push(this.props.getUpdateTagUrl(data.value))
   }
 
   render() {
-    const {
-      match, tableState, filters, discoveryFilters, totalPages, variantsToDisplay, totalVariantsCount, firstRecordIndex,
-      tableSummaryComponent, loading, filteredVariantsCount, tagOptions, additionalFilter, updateTableField,
-      variantExportConfig, loadVariants, error,
-    } = this.props
-    const { showAllFilters } = this.state
-    const { familyGuid, variantGuid, tag } = match.params
+    const { familyGuid, variantGuid, tag } = this.props.match.params
 
-    const appliedTagCategoryFilter = tag || (variantGuid ? null : (tableState.categoryFilter || ALL_FILTER))
+    const appliedTagCategoryFilter = tag || (variantGuid ? null : (this.props.tableState.categoryFilter || ALL_FILTER))
 
-    let shownFilters = (discoveryFilters && appliedTagCategoryFilter === DISCOVERY_CATEGORY_NAME) ?
-      discoveryFilters : filters
-    const hasHiddenFilters = !showAllFilters && shownFilters.length > MAX_FILTERS
-    if (hasHiddenFilters) {
-      shownFilters = shownFilters.slice(0, MAX_FILTERS)
+    let { filters } = this.props
+    if (this.props.discoveryFilters) {
+      if (appliedTagCategoryFilter === DISCOVERY_CATEGORY_NAME) {
+        filters = this.props.discoveryFilters
+      }
     }
-    if (totalPages > 1) {
-      shownFilters = shownFilters.concat({ ...VARIANT_PAGINATION_FIELD, totalPages })
+    if (this.props.totalPages > 1) {
+      filters = filters.concat({ ...VARIANT_PAGINATION_FIELD, totalPages: this.props.totalPages })
     }
 
-    const allShown = variantsToDisplay.length === totalVariantsCount
+    const allShown = this.props.variantsToDisplay.length === this.props.totalVariantsCount
     let shownSummary = ''
     if (!allShown) {
-      shownSummary = `${variantsToDisplay.length > 0 ? firstRecordIndex + 1 : 0}-${firstRecordIndex + variantsToDisplay.length} of`
+      shownSummary = `${this.props.variantsToDisplay.length > 0 ? this.props.firstRecordIndex + 1 : 0}-${this.props.firstRecordIndex + this.props.variantsToDisplay.length} of`
     }
 
     return (
       <Grid stackable>
-        {tableSummaryComponent && React.createElement(tableSummaryComponent, {
-          familyGuid: variantGuid ? ((variantsToDisplay[0] || {}).familyGuids || [])[0] : familyGuid,
-          ...tableState,
+        {this.props.tableSummaryComponent && React.createElement(this.props.tableSummaryComponent, {
+          familyGuid: variantGuid ? ((this.props.variantsToDisplay[0] || {}).familyGuids || [])[0] : familyGuid,
+          ...this.props.tableState,
         })}
-        {!loading && (
+        {!this.props.loading &&
           <ControlsRow>
             <Grid.Column width={4}>
-              {`Showing ${shownSummary} ${filteredVariantsCount}  `}
+              Showing {shownSummary} {this.props.filteredVariantsCount}
+              &nbsp;&nbsp;
               <Dropdown
                 inline
-                options={tagOptions}
+                options={this.props.tagOptions}
                 value={appliedTagCategoryFilter}
                 onChange={this.navigateToTag}
               />
-              {` variants ${allShown ? '' : `(${totalVariantsCount} total)`}`}
+              &nbsp;variants {!allShown && `(${this.props.totalVariantsCount} total)`}
 
             </Grid.Column>
             <Grid.Column width={12} floated="right" textAlign="right">
-              {additionalFilter}
-              {!variantGuid && (
+              {this.props.additionalFilter}
+              {!variantGuid &&
                 <StateChangeForm
-                  updateField={updateTableField}
-                  initialValues={tableState}
-                  fields={shownFilters}
+                  updateField={this.props.updateTableField}
+                  initialValues={this.props.tableState}
+                  fields={filters}
                 />
-              )}
+              }
               <HorizontalSpacer width={10} />
-              {hasHiddenFilters && <ButtonLink content="more" icon="sort amount down" onClick={this.showAllFilters} />}
-              {hasHiddenFilters && <HorizontalSpacer width={10} />}
-              <ExportTableButton downloads={variantExportConfig} />
+              <ExportTableButton downloads={this.props.variantExportConfig} />
             </Grid.Column>
           </ControlsRow>
-        )}
+        }
         <Grid.Row>
           <Grid.Column width={16}>
             <DataLoader
-              load={loadVariants}
-              contentId={match.params}
+              load={this.props.loadVariants}
+              contentId={this.props.match.params}
               reloadOnIdUpdate
-              loading={loading}
-              errorMessage={error && <Message error content={error} />}
-              content={variantsToDisplay}
+              loading={this.props.loading}
+              errorMessage={this.props.error && <Message error content={this.props.error} />}
+              content={this.props.variantsToDisplay}
             >
-              <Variants variants={variantsToDisplay} />
+              <Variants variants={this.props.variantsToDisplay} />
             </DataLoader>
           </Grid.Column>
         </Grid.Row>
       </Grid>
     )
   }
-
 }
 
 const mapStateToProps = (state, ownProps) => ({

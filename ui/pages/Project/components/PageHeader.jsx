@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import EditProjectButton from 'shared/components/buttons/EditProjectButton'
-import PageHeaderLayout from 'shared/components/page/PageHeaderLayout'
+import { PageHeaderLayout } from 'shared/components/page/PageHeader'
 import { HorizontalSpacer } from 'shared/components/Spacers'
 
 import {
@@ -15,9 +15,8 @@ import {
 } from '../selectors'
 import { UpdateAnalysisGroupButton, DeleteAnalysisGroupButton } from './AnalysisGroupButtons'
 
-const PageHeader = React.memo((
-  { project, family, analysisGroup, breadcrumb, match, breadcrumbIdSections, entityLinks },
-) => {
+const PageHeader = React.memo(({ project, family, analysisGroup, breadcrumb, match, breadcrumbIdSections, entityLinks }) => {
+
   if (!project) {
     return null
   }
@@ -31,17 +30,16 @@ const PageHeader = React.memo((
       description = ''
       button = <EditProjectButton project={project} />
     } else {
-      description = family.description
+      description = family.description //eslint-disable-line prefer-destructuring
     }
   } else if (match.params.breadcrumb === 'analysis_group') {
-    description = analysisGroup.description
-    button = (
+    description = analysisGroup.description //eslint-disable-line prefer-destructuring
+    button =
       <span>
         <UpdateAnalysisGroupButton analysisGroup={analysisGroup} />
         <HorizontalSpacer width={10} />
         <DeleteAnalysisGroupButton analysisGroup={analysisGroup} />
       </span>
-    )
   }
 
   const headerProps = breadcrumbIdSections ? { breadcrumbIdSections } : match.params
@@ -68,8 +66,8 @@ PageHeader.propTypes = {
   analysisGroup: PropTypes.object,
   match: PropTypes.object,
   breadcrumb: PropTypes.string,
-  breadcrumbIdSections: PropTypes.arrayOf(PropTypes.object),
-  entityLinks: PropTypes.arrayOf(PropTypes.object),
+  breadcrumbIdSections: PropTypes.array,
+  entityLinks: PropTypes.array,
 }
 
 const mapStateToProps = (state, ownProps) => ({

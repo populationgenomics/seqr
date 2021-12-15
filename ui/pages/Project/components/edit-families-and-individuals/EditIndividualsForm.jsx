@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/label-has-for */
+
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
@@ -8,7 +10,8 @@ import { INDIVIDUAL_FIELDS } from '../../constants'
 import { updateIndividuals } from '../../reducers'
 import { getProjectAnalysisGroupIndividualsByGuid } from '../../selectors'
 
-const EditIndividualsForm = React.memo(props => (
+
+const EditIndividualsForm = React.memo(props =>
   <EditRecordsForm
     formName="editIndividuals"
     idField="individualGuid"
@@ -17,8 +20,8 @@ const EditIndividualsForm = React.memo(props => (
     filterColumn={INDIVIDUAL_FIELD_ID}
     columns={INDIVIDUAL_FIELDS}
     {...props}
-  />
-))
+  />,
+)
 
 EditIndividualsForm.propTypes = {
   records: PropTypes.object.isRequired,

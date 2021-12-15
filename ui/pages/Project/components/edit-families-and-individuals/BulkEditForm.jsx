@@ -27,18 +27,17 @@ const ALL_UPLOAD_FORMATS = FILE_FORMATS.concat([
 const FAM_UPLOAD_FORMATS = [].concat(FILE_FORMATS)
 FAM_UPLOAD_FORMATS[1] = { ...FAM_UPLOAD_FORMATS[1], formatLinks: [...FAM_UPLOAD_FORMATS[1].formatLinks, { href: 'https://www.cog-genomics.org/plink2/formats#fam', linkExt: 'fam' }] }
 
+
 const mapStateToProps = (state, ownProps) => {
   const project = getCurrentProject(state)
   const fields = ownProps.requiredFields.concat(ownProps.optionalFields)
   return {
     project,
     exportConfig: {
-      getRawData: state2 => Object.values(
-        (ownProps.getRawData || getProjectAnalysisGroupIndividualsByGuid)(state2, ownProps),
-      ),
+      getRawData: state2 => Object.values((ownProps.getRawData || getProjectAnalysisGroupIndividualsByGuid)(state2, ownProps)),
       ...getEntityExportConfig({ project, fileName: ownProps.name, fields }),
     },
-    blankExportConfig: {
+    blankExportConfig: ownProps.blankDownload && {
       rawData: [],
       ...getEntityExportConfig({ project, fileName: 'template', fields }),
     },
@@ -47,13 +46,11 @@ const mapStateToProps = (state, ownProps) => {
 
 const BulkContent = connect(mapStateToProps)(BulkUploadForm)
 
-const submitForm = onSubmit => values => onSubmit(values[FILE_FIELD_NAME])
-
-const EditBulkForm = React.memo(({ name, modalName, onSubmit, ...props }) => (
+const EditBulkForm = React.memo(({ name, modalName, onSubmit, ...props }) =>
   <ReduxFormWrapper
     form={`bulkUpload_${name}`}
     modalName={modalName}
-    onSubmit={submitForm(onSubmit)}
+    onSubmit={values => onSubmit(values[FILE_FIELD_NAME])}
     confirmCloseIfNotSaved
     closeOnSuccess
     showErrorPanel
@@ -61,8 +58,8 @@ const EditBulkForm = React.memo(({ name, modalName, onSubmit, ...props }) => (
     size="small"
   >
     <BulkContent name={name} {...props} />
-  </ReduxFormWrapper>
-))
+  </ReduxFormWrapper>,
+)
 
 EditBulkForm.propTypes = {
   name: PropTypes.string.isRequired,
@@ -73,7 +70,7 @@ EditBulkForm.propTypes = {
 const FAMILY_ID_EXPORT_DATA = FAMILY_BULK_EDIT_EXPORT_DATA.slice(0, 1)
 const FAMILY_EXPORT_DATA = FAMILY_BULK_EDIT_EXPORT_DATA.slice(1)
 
-const FamiliesBulkForm = React.memo(props => (
+const FamiliesBulkForm = React.memo(props =>
   <EditBulkForm
     name="families"
     actionDescription="bulk-add or edit families"
@@ -81,19 +78,17 @@ const FamiliesBulkForm = React.memo(props => (
       <div>
         If the Family ID in the table matches those of an existing family in the project,
         the matching families&apos;s data will be updated with values from the table. Otherwise, a new family
-        will be created. To edit an existing families&apos;s ID include a &nbsp;
-        <b>Previous Family ID</b>
-        &nbsp; column.
+        will be created. To edit an existing families&apos;s ID include a <b>Previous Family ID</b> column.
       </div>
     }
     requiredFields={FAMILY_ID_EXPORT_DATA}
     optionalFields={FAMILY_EXPORT_DATA}
     uploadFormats={FILE_FORMATS}
+    blankDownload
     getRawData={getProjectAnalysisGroupFamiliesByGuid}
-    templateLinkContent="current families"
     {...props}
-  />
-))
+  />,
+)
 
 const mapFamiliesDispatchToProps = {
   onSubmit: updateFamilies,
@@ -101,7 +96,7 @@ const mapFamiliesDispatchToProps = {
 
 export const EditFamiliesBulkForm = connect(null, mapFamiliesDispatchToProps)(FamiliesBulkForm)
 
-const IndividualsBulkForm = React.memo(({ user, ...props }) => (
+const IndividualsBulkForm = React.memo(({ user, ...props }) =>
   <EditBulkForm
     name="individuals"
     actionDescription="bulk-add or edit individuals"
@@ -109,17 +104,16 @@ const IndividualsBulkForm = React.memo(({ user, ...props }) => (
       <div>
         If the Family ID and Individual ID in the table match those of an existing individual in the project,
         the matching individual&apos;s data will be updated with values from the table. Otherwise, a new individual
-        will be created. To edit an existing individual&apos;s ID include a &nbsp;
-        <b>Previous Individual ID</b>
-        &nbsp; column.
+        will be created. To edit an existing individual&apos;s ID include a <b>Previous Individual ID</b> column.
       </div>
     }
     requiredFields={INDIVIDUAL_ID_EXPORT_DATA}
     optionalFields={user.isAnalyst ? INDIVIDUAL_BULK_UPDATE_EXPORT_DATA : INDIVIDUAL_CORE_EXPORT_DATA}
     uploadFormats={FAM_UPLOAD_FORMATS}
+    blankDownload
     {...props}
-  />
-))
+  />,
+)
 
 IndividualsBulkForm.propTypes = {
   user: PropTypes.object,
@@ -133,11 +127,10 @@ const mapIndividualsDispatchToProps = {
   onSubmit: updateIndividuals,
 }
 
-export const EditIndividualsBulkForm = connect(
-  mapIndividualsStateToProps, mapIndividualsDispatchToProps,
-)(IndividualsBulkForm)
+export const EditIndividualsBulkForm = connect(mapIndividualsStateToProps, mapIndividualsDispatchToProps)(IndividualsBulkForm)
 
-const IndividualMetadataBulkForm = React.memo(props => (
+
+const IndividualMetadataBulkForm = React.memo(props =>
   <EditBulkForm
     name="individuals_metadata"
     actionDescription="edit individual's metadata"
@@ -146,13 +139,11 @@ const IndividualMetadataBulkForm = React.memo(props => (
     optionalFields={INDIVIDUAL_DETAIL_EXPORT_DATA}
     uploadFormats={ALL_UPLOAD_FORMATS}
     {...props}
-  />
-))
+  />,
+)
 
 const mapIndividualMetadataDispatchToProps = {
   onSubmit: updateIndividualsMetadata,
 }
 
-export const EditIndividualMetadataBulkForm = connect(
-  null, mapIndividualMetadataDispatchToProps,
-)(IndividualMetadataBulkForm)
+export const EditIndividualMetadataBulkForm = connect(null, mapIndividualMetadataDispatchToProps)(IndividualMetadataBulkForm)

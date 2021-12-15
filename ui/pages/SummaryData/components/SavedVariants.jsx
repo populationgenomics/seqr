@@ -1,9 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { Route, Switch, NavLink } from 'react-router-dom'
-
-import { Form, Button } from 'semantic-ui-react'
+import { Route, Switch } from 'react-router-dom'
+import { Form, Label } from 'semantic-ui-react'
 
 import { getGenesById } from 'redux/selectors'
 import {
@@ -65,16 +64,27 @@ TAG_OPTIONS.push({
   label: { empty: true, circular: true, style: { backgroundColor: 'white' } },
 })
 
-const PAGE_URL = '/summary_data/saved_variants'
-
-const getUpdateTagUrl =
-  (selectedTag, match) => `${PAGE_URL}/${selectedTag}${match.params.gene ? `/${match.params.gene}` : ''}`
-
-const getGeneHref = tag => selectedGene => `${PAGE_URL}/${tag || SHOW_ALL}/${selectedGene.key}`
-
-const BaseSavedVariants = React.memo(({ loadVariants, geneDetail, ...props }) => {
+const BaseSavedVariants = React.memo(({ loadAllProjectSavedVariants, geneDetail, ...props }) => {
   const { params } = props.match
   const { tag, gene } = params
+
+  const getUpdateTagUrl = selectedTag => `/summary_data/saved_variants/${selectedTag}${gene ? `/${gene}` : ''}`
+
+  const getGeneHref = selectedGene => `/summary_data/saved_variants/${tag || SHOW_ALL}/${selectedGene.key}`
+
+  const removeGene = () => props.history.push(`/summary_data/saved_variants/${tag || SHOW_ALL}`)
+
+  const loadVariants = (newParams) => {
+    const isInitialLoad = params === newParams
+    const hasUpdatedTagOrGene = tag !== newParams.tag || gene !== newParams.gene
+
+    if (hasUpdatedTagOrGene) {
+      props.updateTableField('page')(1)
+    }
+    if (isInitialLoad || hasUpdatedTagOrGene) {
+      loadAllProjectSavedVariants(newParams)
+    }
+  }
 
   return (
     <SavedVariants
@@ -90,21 +100,17 @@ const BaseSavedVariants = React.memo(({ loadVariants, geneDetail, ...props }) =>
             inputwidth="200px"
             label="Gene"
             placeholder="Search for a gene"
-            getResultHref={getGeneHref(tag)}
+            getResultHref={getGeneHref}
             inline
           />
           {gene && <HorizontalSpacer width={10} />}
-          {gene && (
-            <Button
-              as={NavLink}
-              content={(geneDetail || {}).geneSymbol || gene}
-              size="tiny"
-              color="grey"
-              icon="delete"
-              compact
-              to={(tag && tag !== SHOW_ALL) ? `${PAGE_URL}/${tag}` : PAGE_URL}
-            />
-          )}
+          {gene && <Form.Field
+            control={Label}
+            content={(geneDetail || {}).geneSymbol || gene}
+            inline
+            color="grey"
+            onRemove={removeGene}
+          />}
           <HorizontalSpacer width={10} />
         </StyledForm>
       }
@@ -117,22 +123,12 @@ const mapStateToProps = (state, ownProps) => ({
   geneDetail: getGenesById(state)[ownProps.match.params.gene],
 })
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = dispatch => ({
   updateTableField: field => (value) => {
     dispatch(updateAllProjectSavedVariantTable({ [field]: value }))
   },
-  loadVariants: (newParams) => {
-    const { params } = ownProps.match
-
-    const isInitialLoad = params === newParams
-    const hasUpdatedTagOrGene = params.tag !== newParams.tag || params.gene !== newParams.gene
-
-    if (hasUpdatedTagOrGene) {
-      dispatch(updateAllProjectSavedVariantTable({ page: 1 }))
-    }
-    if (isInitialLoad || hasUpdatedTagOrGene) {
-      dispatch(loadSavedVariants(newParams))
-    }
+  loadAllProjectSavedVariants: (data) => {
+    dispatch(loadSavedVariants(data))
   },
 })
 
@@ -141,13 +137,15 @@ BaseSavedVariants.propTypes = {
   history: PropTypes.object,
   geneDetail: PropTypes.object,
   updateTableField: PropTypes.func,
-  loadVariants: PropTypes.func,
+  loadAllProjectSavedVariants: PropTypes.func,
 }
 
 const ConnectedSavedVariants = connect(mapStateToProps, mapDispatchToProps)(BaseSavedVariants)
 
-const RoutedSavedVariants =
-  ({ match }) => <Switch><Route path={`${match.url}/:tag?/:gene?`} component={ConnectedSavedVariants} /></Switch>
+const RoutedSavedVariants = ({ match }) =>
+  <Switch>
+    <Route path={`${match.url}/:tag?/:gene?`} component={ConnectedSavedVariants} />
+  </Switch>
 
 RoutedSavedVariants.propTypes = {
   match: PropTypes.object,

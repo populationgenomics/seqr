@@ -2,7 +2,6 @@ import React from 'react'
 import { Tab } from 'semantic-ui-react'
 import styled from 'styled-components'
 import Modal from 'shared/components/modal/Modal'
-import { ButtonLink } from 'shared/components/StyledComponents'
 import { EditFamiliesBulkForm, EditIndividualsBulkForm, EditIndividualMetadataBulkForm } from './BulkEditForm'
 import EditIndividualsForm from './EditIndividualsForm'
 import EditFamiliesForm from './EditFamiliesForm'
@@ -44,9 +43,16 @@ export default React.memo(() => (
     modalName={MODAL_NAME}
     title="Edit Families & Individuals"
     size="large"
-    trigger={<ButtonLink>Edit Families & Individuals</ButtonLink>}
+    trigger={
+      <div style={{ display: 'inline-block' }}>
+        <a role="button" tabIndex="0" style={{ cursor: 'pointer' }}>
+          Edit Families & Individuals
+        </a>
+      </div>
+    }
   >
     <Tab panes={PANES} />
   </Modal>
 
 ))
+

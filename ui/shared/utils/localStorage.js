@@ -12,6 +12,7 @@ export const saveState = (label, state) => {
   }
 }
 
+
 /**
  * Uses the localStorage API to restored a previously-saved state object.
  * @param label {string}

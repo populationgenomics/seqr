@@ -17,36 +17,40 @@ const FilterContainer = styled.span`
   font-size: 12px;
 `
 
-const FilterSelector = React.memo(({ filter, options, onChange }) => (
-  <FilterContainer>
-    <Form.Select
-      fluid
-      name="filterSelector"
-      value={filter}
-      onChange={onChange}
-      options={options}
-    />
-  </FilterContainer>
-))
+const FilterSelector = React.memo((props) => {
+  const options = [
+    { value: SHOW_ALL, text: 'All', key: SHOW_ALL },
+    ...Object.values(props.projectCategoriesByGuid).map(projectCategory => ({ value: projectCategory.guid, text: projectCategory.name, key: projectCategory.guid })),
+  ]
+  return (
+    <FilterContainer>
+      <Form.Select
+        fluid
+        name="filterSelector"
+        value={props.filter}
+        onChange={(event, data) => {
+          props.onChange(data.value)
+        }}
+        options={options}
+      />
+    </FilterContainer>
+  )
+})
+
 
 export { FilterSelector as FilterSelectorComponent }
 
 FilterSelector.propTypes = {
   filter: PropTypes.string.isRequired,
-  options: PropTypes.arrayOf(PropTypes.obect),
+  projectCategoriesByGuid: PropTypes.object,
   onChange: PropTypes.func.isRequired,
 }
 
 const mapStateToProps = state => ({
   filter: getProjectFilter(state),
-  options: [
-    { value: SHOW_ALL, text: 'All', key: SHOW_ALL },
-    ...Object.values(getProjectCategoriesByGuid(state)).map(
-      projectCategory => ({ value: projectCategory.guid, text: projectCategory.name, key: projectCategory.guid }),
-    ),
-  ],
+  projectCategoriesByGuid: getProjectCategoriesByGuid(state),
 })
 
-const mapDispatchToProps = { onChange: (event, data) => updateFilter(data.value) }
+const mapDispatchToProps = { onChange: updateFilter }
 
 export default connect(mapStateToProps, mapDispatchToProps)(FilterSelector)

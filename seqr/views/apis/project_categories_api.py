@@ -44,7 +44,7 @@ def update_project_categories_handler(request, project_guid):
     request_json = json.loads(request.body)
 
     # project categories according to the UI
-    current_category_guids = set(request_json['projectCategoryGuids'])
+    current_category_guids = set(request_json['categories'])
 
     project_categories_by_guid = _update_project_categories(project, request.user, current_category_guids)
 

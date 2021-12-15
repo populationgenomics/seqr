@@ -21,13 +21,13 @@ const NoWrap = styled.div`
   white-space: nowrap;
 `
 
-const BaseFirstSample = React.memo(({ firstFamilySample, compact, hasActiveVariantSample }) => (
+const BaseFirstSample = React.memo(({ firstFamilySample, compact, hasActiveVariantSample }) =>
   <Sample
     loadedSample={firstFamilySample}
     hoverDetails={compact ? 'first loaded' : null}
     isOutdated={!hasActiveVariantSample}
-  />
-))
+  />,
+)
 
 BaseFirstSample.propTypes = {
   firstFamilySample: PropTypes.object,
@@ -42,25 +42,25 @@ const mapSampleDispatchToProps = (state, ownProps) => ({
 
 export const FirstSample = connect(mapSampleDispatchToProps)(BaseFirstSample)
 
-const BaseAnalystEmailDropdown = React.memo(({ load, loading, onChange, value, ...props }) => (
+const BaseAnalystEmailDropdown = React.memo(({ load, loading, onChange, value, ...props }) =>
   <DataLoader load={load} loading={false} content>
     <Select
       loading={loading}
       additionLabel="Assigned Analyst: "
-      onChange={onChange}
+      onChange={val => onChange(val)}
       value={value}
       placeholder="Unassigned"
       search
       {...props}
     />
-  </DataLoader>
-))
+  </DataLoader>,
+)
 
 BaseAnalystEmailDropdown.propTypes = {
   load: PropTypes.func,
   loading: PropTypes.bool,
   onChange: PropTypes.func,
-  value: PropTypes.object,
+  value: PropTypes.any,
 }
 
 const mapDropdownStateToProps = state => ({
@@ -72,13 +72,9 @@ const mapDropdownDispatchToProps = {
   load: loadAnalystOptions,
 }
 
-export const AnalystEmailDropdown = connect(
-  mapDropdownStateToProps, mapDropdownDispatchToProps,
-)(BaseAnalystEmailDropdown)
+export const AnalystEmailDropdown = connect(mapDropdownStateToProps, mapDropdownDispatchToProps)(BaseAnalystEmailDropdown)
 
-export const analysisStatusIcon = (
-  value, compact, { analysisStatusLastModifiedBy, analysisStatusLastModifiedDate },
-) => {
+export const analysisStatusIcon = (value, compact, { analysisStatusLastModifiedBy, analysisStatusLastModifiedDate }) => {
   const icon = <ColoredIcon name="stop" color={value.color} />
   if (!compact && !analysisStatusLastModifiedDate) {
     return icon
@@ -89,14 +85,11 @@ export const analysisStatusIcon = (
       content={
         <div>
           {compact && value.text}
-          {analysisStatusLastModifiedDate && (
+          {analysisStatusLastModifiedDate &&
             <i>
-              {compact && <br />}
-              {`Changed on ${new Date(analysisStatusLastModifiedDate).toLocaleDateString()}`}
-              <br />
-              {`by ${analysisStatusLastModifiedBy}`}
-            </i>
-          )}
+              {compact && <br />}Changed on {new Date(analysisStatusLastModifiedDate).toLocaleDateString()}
+              <br />by {analysisStatusLastModifiedBy}
+            </i>}
         </div>
       }
       position="top center"
@@ -104,9 +97,10 @@ export const analysisStatusIcon = (
   )
 }
 
-const formatAnalysedByList = analysedByList => analysedByList.map(
-  analysedBy => `${analysedBy.createdBy.displayName || analysedBy.createdBy.email} (${new Date(analysedBy.lastModifiedDate).toLocaleDateString()})`,
-).join(', ')
+const formatAnalysedByList = analysedByList =>
+  analysedByList.map(analysedBy =>
+    `${analysedBy.createdBy.displayName || analysedBy.createdBy.email} (${new Date(analysedBy.lastModifiedDate).toLocaleDateString()})`,
+  ).join(', ')
 
 export const AnalysedBy = React.memo(({ analysedByList, compact }) => {
   if (compact) {
@@ -119,22 +113,12 @@ export const AnalysedBy = React.memo(({ analysedByList, compact }) => {
   const analystUsers = analysedByList.filter(analysedBy => analysedBy.createdBy.isAnalyst)
   const externalUsers = analysedByList.filter(analysedBy => !analysedBy.createdBy.isAnalyst)
   return [
-    analystUsers.length > 0 ? (
-      <div key="analyst">
-        <b>CMG Analysts:</b>
-        {formatAnalysedByList(analystUsers)}
-      </div>
-    ) : null,
-    externalUsers.length > 0 ? (
-      <div key="ext">
-        <b>External Collaborators:</b>
-        {formatAnalysedByList(externalUsers)}
-      </div>
-    ) : null,
+    analystUsers.length > 0 ? <div key="analyst"><b>CMG Analysts:</b> {formatAnalysedByList(analystUsers)}</div> : null,
+    externalUsers.length > 0 ? <div key="ext"><b>External Collaborators:</b> {formatAnalysedByList(externalUsers)}</div> : null,
   ]
 })
 
 AnalysedBy.propTypes = {
-  analysedByList: PropTypes.arrayOf(PropTypes.object),
+  analysedByList: PropTypes.array,
   compact: PropTypes.bool,
 }

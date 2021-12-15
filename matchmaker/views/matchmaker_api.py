@@ -61,8 +61,11 @@ def search_individual_mme_matches(request, submission_guid):
     """
 
     submission = MatchmakerSubmission.objects.get(guid=submission_guid)
-    user = request.user
-    check_mme_permissions(submission, user)
+    check_mme_permissions(submission, request.user)
+    return _search_matches(submission, request.user)
+
+
+def _search_matches(submission, user):
     patient_data = get_submission_json_for_external_match(submission)
 
     nodes_to_query = [node for node in MME_NODES.values() if node.get('url')]
@@ -99,7 +102,7 @@ def search_individual_mme_matches(request, submission_guid):
             }, user)
             new_results.append(result)
         else:
-            update_model_from_json(saved_result, {'result_data': result, 'match_removed': False}, user)
+            update_model_from_json(saved_result, {'result_data': result}, user)
         saved_results[result['patient']['id']] = saved_result
 
     if new_results:
@@ -203,7 +206,7 @@ def update_mme_submission(request, submission_guid=None):
     phenotypes = submission_json.pop('phenotypes', [])
     gene_variants = submission_json.pop('geneVariants', [])
     if not phenotypes and not gene_variants:
-        return create_json_response({}, status=400, reason='Genotypes or phenotypes are required')
+        return create_json_response({}, status=400, reason='Genotypes or phentoypes are required')
 
     genomic_features = []
     for gene_variant in gene_variants:
@@ -252,17 +255,8 @@ def update_mme_submission(request, submission_guid=None):
 
     update_model_from_json(submission, submission_json, user=request.user, allow_unknown_keys=True)
 
-    submission_response = get_json_for_matchmaker_submission(submission)
-    submission_response.update({
-        'phenotypes': phenotypes,
-        'geneVariants': gene_variants,
-    })
-    response = {
-        'mmeSubmissionsByGuid': {submission.guid: submission_response},
-    }
-    if not submission_guid:
-        response['individualsByGuid'] = {submission.individual.guid: {'mmeSubmissionGuid': submission.guid}}
-    return create_json_response(response)
+    # search for new matches
+    return _search_matches(submission, request.user)
 
 
 @login_and_policies_required
@@ -405,7 +399,10 @@ def _parse_mme_results(submission, saved_results, user, additional_genes=None, r
     contact_notes = {note.institution: _get_json_for_model(note, user=user)
                      for note in MatchmakerContactNotes.objects.filter(institution__in=contact_institutions)}
 
-    submission_json = get_json_for_matchmaker_submission(submission)
+    submission_json = get_json_for_matchmaker_submission(
+        submission, individual_guid=submission.individual.guid,
+        additional_model_fields=['contact_name', 'contact_href', 'submission_id']
+    )
     submission_json.update({
         'mmeResultGuids': list(parsed_results_gy_guid.keys()),
         'phenotypes': parse_mme_features(submission.features, hpo_terms_by_id),

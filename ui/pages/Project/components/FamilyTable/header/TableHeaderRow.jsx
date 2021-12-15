@@ -25,6 +25,7 @@ const RegularFontHeaderCell = styled(Table.HeaderCell)`
   font-weight: normal !important;
 `
 
+
 // Allows dropdowns to be visible inside table cell
 const OverflowHeaderCell = styled(Table.HeaderCell)`
   overflow: visible !important;
@@ -71,76 +72,64 @@ const SORT_FILTER_FIELDS = [
   },
 ]
 const FILTER_FIELDS = [FAMILY_SEARCH, { ...FAMILY_FILTER, options: FAMILY_FILTER_OPTIONS }, ...SORT_FILTER_FIELDS]
-const CASE_REVEIW_FILTER_FIELDS = [
-  FAMILY_SEARCH, { ...FAMILY_FILTER, options: CASE_REVIEW_FAMILY_FILTER_OPTIONS }, ...SORT_FILTER_FIELDS,
-]
+const CASE_REVEIW_FILTER_FIELDS = [FAMILY_SEARCH, { ...FAMILY_FILTER, options: CASE_REVIEW_FAMILY_FILTER_OPTIONS }, ...SORT_FILTER_FIELDS]
 
-const familyFieldDisplay = field => FAMILY_FIELD_NAME_LOOKUP[field.id]
-
-export const TableHeaderDetail = React.memo(({ fields, offset, showVariantDetails }) => (
+export const TableHeaderDetail = React.memo(({ fields, offset, showVariantDetails }) =>
   <FamilyLayout
     compact
     offset={offset}
     fields={fields}
-    fieldDisplay={familyFieldDisplay}
+    fieldDisplay={field => FAMILY_FIELD_NAME_LOOKUP[field.id]}
     rightContent={showVariantDetails ? 'Saved Variants' : null}
-  />
-))
+  />,
+)
+
 
 TableHeaderDetail.propTypes = {
   offset: PropTypes.bool,
-  fields: PropTypes.arrayOf(PropTypes.object),
+  fields: PropTypes.array,
   showVariantDetails: PropTypes.bool,
 }
 
-const TableHeaderRow = React.memo(({
-  visibleFamiliesCount, totalFamiliesCount, fields, tableName, familiesTableState, updateFamiliesTableField,
-  showVariantDetails,
-}) => (
-  <Table.Header fullWidth>
-    <Table.Row>
-      <RegularFontHeaderCell width={5}>
-        Showing &nbsp;
-        {
-          visibleFamiliesCount !== totalFamiliesCount ? (
-            <span>
-              <b>{visibleFamiliesCount}</b>
-              out of
-              <b>{totalFamiliesCount}</b>
-            </span>
-          ) : (
-            <span>
-              all
-              <b>{totalFamiliesCount}</b>
-            </span>
-          )
-        }
-        &nbsp; families
-      </RegularFontHeaderCell>
-      <OverflowHeaderCell width={16} textAlign="right">
-        <StateChangeForm
-          initialValues={familiesTableState}
-          updateField={updateFamiliesTableField}
-          fields={(tableName === CASE_REVIEW_TABLE_NAME ? CASE_REVEIW_FILTER_FIELDS : FILTER_FIELDS)}
-        />
-      </OverflowHeaderCell>
-    </Table.Row>
-    {fields && (
+const TableHeaderRow = React.memo((
+  { visibleFamiliesCount, totalFamiliesCount, fields, tableName, familiesTableState,
+    updateFamiliesTableField, showVariantDetails,
+  }) =>
+    <Table.Header fullWidth>
       <Table.Row>
-        <Table.HeaderCell colSpan={2} textAlign="left">
-          <TableHeaderDetail fields={fields} showVariantDetails={showVariantDetails} offset />
-        </Table.HeaderCell>
+        <RegularFontHeaderCell width={5}>
+          Showing &nbsp;
+          {
+            visibleFamiliesCount !== totalFamiliesCount ?
+              <span><b>{visibleFamiliesCount}</b> out of <b>{totalFamiliesCount}</b></span>
+              : <span>all <b>{totalFamiliesCount}</b></span>
+          }
+          &nbsp; families
+        </RegularFontHeaderCell>
+        <OverflowHeaderCell width={16} textAlign="right">
+          <StateChangeForm
+            initialValues={familiesTableState}
+            updateField={updateFamiliesTableField}
+            fields={(tableName === CASE_REVIEW_TABLE_NAME ? CASE_REVEIW_FILTER_FIELDS : FILTER_FIELDS)}
+          />
+        </OverflowHeaderCell>
       </Table.Row>
-    )}
-  </Table.Header>
-))
+      {fields &&
+        <Table.Row>
+          <Table.HeaderCell colSpan={2} textAlign="left">
+            <TableHeaderDetail fields={fields} showVariantDetails={showVariantDetails} offset />
+          </Table.HeaderCell>
+        </Table.Row>
+      }
+    </Table.Header>,
+)
 
 TableHeaderRow.propTypes = {
   visibleFamiliesCount: PropTypes.number.isRequired,
   totalFamiliesCount: PropTypes.number.isRequired,
   familiesTableState: PropTypes.object.isRequired,
   updateFamiliesTableField: PropTypes.func.isRequired,
-  fields: PropTypes.arrayOf(PropTypes.object),
+  fields: PropTypes.array,
   tableName: PropTypes.string,
   showVariantDetails: PropTypes.bool,
 }
@@ -151,11 +140,13 @@ const mapStateToProps = (state, ownProps) => ({
   familiesTableState: getFamiliesTableState(state, ownProps),
 })
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-  updateFamiliesTableField: field => (value) => {
-    dispatch(updateFamiliesTable({ [field]: value }, ownProps.tableName))
-  },
-})
+const mapDispatchToProps = (dispatch, ownProps) => {
+  return {
+    updateFamiliesTableField: field => (value) => {
+      dispatch(updateFamiliesTable({ [field]: value }, ownProps.tableName))
+    },
+  }
+}
 
 export { TableHeaderRow as TableHeaderRowComponent }
 

@@ -7,7 +7,7 @@ import { connect } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 
 import { getUser } from 'redux/selectors'
-import { VerticalSpacer } from 'shared/components/Spacers'
+import { VerticalSpacer, HorizontalSpacer } from 'shared/components/Spacers'
 import HorizontalStackedBar from 'shared/components/graph/HorizontalStackedBar'
 import Modal from 'shared/components/modal/Modal'
 import DataTable from 'shared/components/table/DataTable'
@@ -30,6 +30,7 @@ import EditFamiliesAndIndividualsButton from './edit-families-and-individuals/Ed
 import EditIndividualMetadataButton from './edit-families-and-individuals/EditIndividualMetadataButton'
 import EditDatasetsButton from './EditDatasetsButton'
 
+
 const DetailContent = styled.div`
  padding: 5px 0px 0px 20px;
 `
@@ -45,18 +46,13 @@ const FAMILY_SIZE_LABELS = {
   5: plural => ` ${plural ? 'families' : 'family'} with 5+ individuals`,
 }
 
-const DetailSection = React.memo(({ title, content, button }) => (
+const DetailSection = React.memo(({ title, content, button }) =>
   <div>
     <b>{title}</b>
     <DetailContent>{content}</DetailContent>
-    {button && (
-      <div>
-        <VerticalSpacer height={15} />
-        {button}
-      </div>
-    )}
-  </div>
-))
+    {button && <div><VerticalSpacer height={15} />{button}</div>}
+  </div>,
+)
 
 DetailSection.propTypes = {
   title: PropTypes.string.isRequired,
@@ -69,11 +65,10 @@ const MME_COLUMNS = [
     name: 'href',
     content: '',
     width: 1,
-    format: row => (
+    format: row =>
       <NavLink to={`/project/${row.projectGuid}/family_page/${row.familyGuid}/matchmaker_exchange`} target="_blank">
         <Icon name="linkify" link />
-      </NavLink>
-    ),
+      </NavLink>,
   },
   { name: 'familyName', content: 'Family', width: 2 },
   { name: 'geneSymbols', content: 'Genes', width: 3, format: ({ geneSymbols }) => (geneSymbols || []).join(', ') },
@@ -82,19 +77,21 @@ const MME_COLUMNS = [
   { name: 'mmeNotes', content: 'Notes', width: 6, format: ({ mmeNotes }) => (mmeNotes || []).map(({ note }) => note).join('; ') },
 ]
 
-const BaseMatchmakerSubmissionOverview = React.memo(({ mmeSubmissions }) => (
-  <DataTable
-    basic="very"
-    fixed
-    data={Object.values(mmeSubmissions)}
-    idField="submissionGuid"
-    defaultSortColumn="familyName"
-    columns={MME_COLUMNS}
-  />
-))
+const BaseMatchmakerSubmissionOverview = React.memo(({ mmeSubmissions }) => {
+  return (
+    <DataTable
+      basic="very"
+      fixed
+      data={Object.values(mmeSubmissions)}
+      idField="submissionGuid"
+      defaultSortColumn="familyName"
+      columns={MME_COLUMNS}
+    />
+  )
+})
 
 BaseMatchmakerSubmissionOverview.propTypes = {
-  mmeSubmissions: PropTypes.arrayOf(PropTypes.object),
+  mmeSubmissions: PropTypes.array,
 }
 
 const mapMatchmakerSubmissionsStateToProps = (state, ownProps) => ({
@@ -121,9 +118,10 @@ const FamiliesIndividuals = React.memo(({ project, familiesByGuid, individualsCo
     <DetailSection
       title={`${Object.keys(familiesByGuid).length} Families, ${individualsCount} Individuals`}
       content={
-        sortBy(Object.keys(familySizeHistogram)).map(size => (
-          <div key={size}>{`${familySizeHistogram[size]} ${FAMILY_SIZE_LABELS[size](familySizeHistogram[size] > 1)}`}</div>
-        ))
+        sortBy(Object.keys(familySizeHistogram)).map(size =>
+          <div key={size}>
+            {familySizeHistogram[size]} {FAMILY_SIZE_LABELS[size](familySizeHistogram[size] > 1)}
+          </div>)
       }
       button={editIndividualsButton}
     />
@@ -152,9 +150,9 @@ const Matchmaker = React.memo(({ project, mmeSubmissions }) => {
   return (
     <DetailSection
       title="Matchmaker Submissions"
-      content={mmeSubmissionCount ? (
+      content={mmeSubmissionCount ?
         <div>
-          {`${mmeSubmissionCount - deletedSubmissionCount} submissions `}
+          {mmeSubmissionCount - deletedSubmissionCount} submissions <HorizontalSpacer width={5} />
           <Modal
             trigger={<ButtonLink icon="external" size="tiny" />}
             title={`Matchmaker Submissions for ${project.name}`}
@@ -163,16 +161,17 @@ const Matchmaker = React.memo(({ project, mmeSubmissions }) => {
           >
             <MatchmakerSubmissionOverview />
           </Modal>
-          {deletedSubmissionCount > 0 && <div>{`${deletedSubmissionCount} removed submissions`}</div>}
+          {deletedSubmissionCount > 0 && <div>{deletedSubmissionCount} removed submissions</div>}
         </div>
-      ) : 'No Submissions'}
+        : 'No Submissions'
+      }
     />
   )
 })
 
 Matchmaker.propTypes = {
   project: PropTypes.object.isRequired,
-  mmeSubmissions: PropTypes.arrayOf(PropTypes.object),
+  mmeSubmissions: PropTypes.array,
 }
 
 const mapMatchmakerStateToProps = (state, ownProps) => ({
@@ -181,50 +180,19 @@ const mapMatchmakerStateToProps = (state, ownProps) => ({
 
 const MatchmakerOverview = connect(mapMatchmakerStateToProps)(Matchmaker)
 
-class DatasetSection extends React.PureComponent {
-
-  static propTypes = {
-    loadedSampleCounts: PropTypes.object.isRequired,
-  }
-
-  state = { showAll: false }
-
-  show = () => {
-    this.setState({ showAll: true })
-  }
-
-  render() {
-    const { loadedSampleCounts } = this.props
-    const { showAll } = this.state
-    const allLoads = Object.keys(loadedSampleCounts).sort().map(loadedDate => (
-      <div key={loadedDate}>
-        {`${new Date(loadedDate).toLocaleDateString()} - ${loadedSampleCounts[loadedDate]} samples`}
-      </div>
-    ))
-
-    const total = allLoads.length
-    if (total < 6 || showAll) {
-      return allLoads
-    }
-
-    return [
-      ...allLoads.slice(0, 2),
-      <ButtonLink key="show" padding="5px 0" onClick={this.show}>{`Show ${total - 5} additional datasets`}</ButtonLink>,
-      ...allLoads.slice(total - 3),
-    ]
-  }
-
-}
-
 const Dataset = React.memo(({ project, samplesByType, user }) => {
+
   const datasetSections = Object.entries(samplesByType).map(([sampleTypeKey, loadedSampleCounts]) => {
     const [sampleType, datasetType] = sampleTypeKey.split('__')
     return {
       key: sampleTypeKey,
       title: `${SAMPLE_TYPE_LOOKUP[sampleType].text}${DATASET_TITLE_LOOKUP[datasetType] || ''} Datasets`,
-      content: <DatasetSection loadedSampleCounts={loadedSampleCounts} />,
-    }
-  }).sort((a, b) => a.title.localeCompare(b.title))
+      content: Object.keys(loadedSampleCounts).sort().map(loadedDate =>
+        <div key={loadedDate}>
+          { new Date(loadedDate).toLocaleDateString()} - {loadedSampleCounts[loadedDate]} samples
+        </div>,
+      ),
+    } }).sort((a, b) => a.title.localeCompare(b.title))
 
   if (!datasetSections.length) {
     datasetSections.push({
@@ -232,35 +200,32 @@ const Dataset = React.memo(({ project, samplesByType, user }) => {
       content: (
         <div>
           No Datasets Loaded
-          {project.workspaceName && (
+          {project.workspaceName &&
             <div>
-              <i>Where is my data? </i>
-              <Popup
+              <i>Where is my data?</i> <Popup
                 trigger={<HelpIcon />}
                 hoverable
                 content={
                   <div>
                     Loading data from AnVIL to seqr is a slow process, and generally takes a week.
                     If you have been waiting longer than this for your data, please reach
-                    out to &nbsp;
-                    <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>
+                    out to <a href="mailto:seqr@populationgenomics.org.au">seqr@populationgenomics.org.au</a>
                   </div>
                 }
               />
             </div>
-          )}
+          }
         </div>
       ),
-      key: 'blank',
-    })
+      key: 'blank' })
   }
 
-  return datasetSections.map((sectionProps, i) => (
+  return datasetSections.map((sectionProps, i) =>
     <DetailSection
       {...sectionProps}
       button={(datasetSections.length - 1 === i) ? <EditDatasetsButton user={user} /> : null}
-    />
-  ))
+    />,
+  )
 })
 
 Dataset.propTypes = {
@@ -278,13 +243,10 @@ const DatasetOverview = connect(mapDatasetStateToProps)(Dataset)
 
 const Anvil = React.memo(({ project, user }) => (
   project.workspaceName && user.isAnvil && (
-    <DetailSection
-      title="AnVIL Workspace"
-      content={
-        <a href={`${ANVIL_URL}/#workspaces/${project.workspaceNamespace}/${project.workspaceName}`} target="_blank" rel="noreferrer">
-          {project.workspaceName}
-        </a>
-      }
+    <DetailSection title="AnVIL Workspace" content={
+      <a href={`${ANVIL_URL}/#workspaces/${project.workspaceNamespace}/${project.workspaceName}`} target="_blank">
+        {project.workspaceName}
+      </a>}
     />
   )
 ))
@@ -300,15 +262,15 @@ const mapAnvilStateToProps = state => ({
 
 const AnvilOverview = connect(mapAnvilStateToProps)(Anvil)
 
-const AnalysisStatus = React.memo(({ analysisStatusCounts }) => (
+const AnalysisStatus = React.memo(({ analysisStatusCounts }) =>
   <DetailSection
     title="Analysis Status"
     content={<HorizontalStackedBar height={20} title="Analysis Statuses" data={analysisStatusCounts} />}
-  />
-))
+  />,
+)
 
 AnalysisStatus.propTypes = {
-  analysisStatusCounts: PropTypes.arrayOf(PropTypes.object).isRequired,
+  analysisStatusCounts: PropTypes.array.isRequired,
 }
 
 const mapAnalysisStatusStateToProps = (state, ownProps) => ({
@@ -317,7 +279,7 @@ const mapAnalysisStatusStateToProps = (state, ownProps) => ({
 
 const AnalysisStatusOverview = connect(mapAnalysisStatusStateToProps)(AnalysisStatus)
 
-const ProjectOverview = React.memo(props => (
+const ProjectOverview = React.memo(props =>
   <Grid>
     <Grid.Column width={5}>
       <FamiliesIndividualsOverview {...props} />
@@ -332,8 +294,8 @@ const ProjectOverview = React.memo(props => (
       <AnvilOverview {...props} />
       <AnalysisStatusOverview {...props} />
     </Grid.Column>
-  </Grid>
-))
+  </Grid>,
+)
 
 ProjectOverview.propTypes = {
   project: PropTypes.object.isRequired,

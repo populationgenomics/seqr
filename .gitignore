@@ -7,8 +7,6 @@ ui/node_modules
 ui/jest*
 ui/dist
 
-static
-
 *.pyc
 *.DS_Store
 .ipynb_checkpoints
@@ -20,5 +18,3 @@ pedigree_images/*
 seqr_settings
 
 django_key
-static/
-.coverage

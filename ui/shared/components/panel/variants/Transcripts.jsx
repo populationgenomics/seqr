@@ -9,7 +9,18 @@ import { updateVariantMainTranscript } from 'redux/rootReducer'
 import { VerticalSpacer } from '../../Spacers'
 import DispatchRequestButton from '../../buttons/DispatchRequestButton'
 import ShowGeneModal from '../../buttons/ShowGeneModal'
-import { ProteinSequence, TranscriptLink } from './VariantUtils'
+import { ProteinSequence } from './Annotations'
+import { GENOME_VERSION_37 } from '../../../utils/constants'
+
+
+export const TranscriptLink = styled.a.attrs(({ variant, transcript }) => ({
+  target: '_blank',
+  href: `http://${variant.genomeVersion === GENOME_VERSION_37 ? 'grch37' : 'useast'}.ensembl.org/Homo_sapiens/Transcript/Summary?t=${transcript.transcriptId}`,
+  children: transcript.transcriptId,
+}))`
+  font-size: 1.3em;
+  font-weight: normal;
+`
 
 const AnnotationSection = styled.div`
   display: inline-block;
@@ -22,10 +33,10 @@ const AnnotationLabel = styled.small`
   padding-right: 10px;
 `
 
-const Transcripts = React.memo(({ variant, genesById, updateMainTranscript }) => (
+const Transcripts = React.memo(({ variant, genesById, updateMainTranscript }) =>
   variant.transcripts && Object.entries(variant.transcripts).sort((transcriptsA, transcriptsB) => (
     Math.min(...transcriptsA[1].map(t => t.transcriptRank)) - Math.min(...transcriptsB[1].map(t => t.transcriptRank))
-  )).map(([geneId, geneTranscripts]) => (
+  )).map(([geneId, geneTranscripts]) =>
     <div key={geneId}>
       <Header
         size="huge"
@@ -36,44 +47,36 @@ const Transcripts = React.memo(({ variant, genesById, updateMainTranscript }) =>
       <Segment attached="bottom">
         <Table basic="very">
           <Table.Body>
-            {geneTranscripts.map(transcript => (
+            {geneTranscripts.map(transcript =>
               <Table.Row key={transcript.transcriptId}>
                 <Table.Cell width={3}>
                   <TranscriptLink variant={variant} transcript={transcript} />
                   <div>
-                    {
-                      transcript.transcriptRank === 0 && (
-                        <span>
-                          <VerticalSpacer height={5} />
-                          <Label content="seqr Chosen Transcript" color="blue" size="small" />
-                        </span>
-                      )
+                    {transcript.transcriptRank === 0 &&
+                      <span>
+                        <VerticalSpacer height={5} />
+                        <Label content="seqr Chosen Transcript" color="blue" size="small" />
+                      </span>
                     }
-                    {
-                      transcript.canonical && (
-                        <span>
-                          <VerticalSpacer height={5} />
-                          <Label content="Canonical Transcript" color="green" size="small" />
-                        </span>
-                      )
+                    {transcript.canonical &&
+                      <span>
+                        <VerticalSpacer height={5} />
+                        <Label content="Canonical Transcript" color="green" size="small" />
+                      </span>
                     }
-                    {
-                      variant.variantGuid && (
-                        <span>
-                          <VerticalSpacer height={5} />
-                          {
-                            transcript.transcriptId === variant.selectedMainTranscriptId ?
-                              <Label content="User Chosen Transcript" color="purple" size="small" /> : (
-                                <DispatchRequestButton
-                                  onSubmit={updateMainTranscript(transcript.transcriptId)}
-                                  confirmDialog="Are you sure want to update the main transcript for this variant?"
-                                >
-                                  <Label as="a" content="Use as Main Transcript" color="violet" basic size="small" />
-                                </DispatchRequestButton>
-                              )
-                          }
-                        </span>
-                      )
+                    {variant.variantGuid &&
+                      <span>
+                        <VerticalSpacer height={5} />
+                        {transcript.transcriptId === variant.selectedMainTranscriptId ?
+                          <Label content="User Chosen Transcript" color="purple" size="small" /> :
+                          <DispatchRequestButton
+                            onSubmit={updateMainTranscript(transcript.transcriptId)}
+                            confirmDialog="Are you sure want to update the main transcript for this variant?"
+                          >
+                            <Label as="a" content="Use as Main Transcript" color="violet" basic size="small" />
+                          </DispatchRequestButton>
+                        }
+                      </span>
                     }
                   </div>
                 </Table.Cell>
@@ -82,44 +85,32 @@ const Transcripts = React.memo(({ variant, genesById, updateMainTranscript }) =>
                 </Table.Cell>
                 <Table.Cell width={9}>
                   <AnnotationSection>
-                    <AnnotationLabel>Codons</AnnotationLabel>
-                    {transcript.codons}
-                    <br />
-                    <AnnotationLabel>Amino Acids</AnnotationLabel>
-                    {transcript.aminoAcids}
-                    <br />
+                    <AnnotationLabel>Codons</AnnotationLabel>{transcript.codons}<br />
+                    <AnnotationLabel>Amino Acids</AnnotationLabel>{transcript.aminoAcids}<br />
                   </AnnotationSection>
                   <AnnotationSection>
-                    <AnnotationLabel>Biotype</AnnotationLabel>
-                    {transcript.biotype}
-                    <br />
-                    <AnnotationLabel>cDNA Position</AnnotationLabel>
-                    {transcript.cdnaPosition}
-                    <br />
+                    <AnnotationLabel>Biotype</AnnotationLabel>{transcript.biotype}<br />
+                    <AnnotationLabel>cDNA Position</AnnotationLabel>{transcript.cdnaPosition}<br />
                   </AnnotationSection>
                   <AnnotationSection>
-                    <AnnotationLabel>HGVS.C</AnnotationLabel>
-                    {transcript.hgvsc && <ProteinSequence hgvs={transcript.hgvsc} />}
-                    <br />
-                    <AnnotationLabel>HGVS.P</AnnotationLabel>
-                    {transcript.hgvsp && <ProteinSequence hgvs={transcript.hgvsp} />}
-                    <br />
+                    <AnnotationLabel>HGVS.C</AnnotationLabel>{transcript.hgvsc && <ProteinSequence hgvs={transcript.hgvsc} />}<br />
+                    <AnnotationLabel>HGVS.P</AnnotationLabel>{transcript.hgvsp && <ProteinSequence hgvs={transcript.hgvsp} />}<br />
                   </AnnotationSection>
                 </Table.Cell>
-              </Table.Row>
-            ))}
+              </Table.Row>,
+            )}
           </Table.Body>
         </Table>
       </Segment>
       <VerticalSpacer height={10} />
-    </div>
-  ))
-))
+    </div>,
+  ),
+)
 
 Transcripts.propTypes = {
   variant: PropTypes.object.isRequired,
   genesById: PropTypes.object.isRequired,
-  updateMainTranscript: PropTypes.func.isRequired,
+  updateMainTranscript: PropTypes.func,
 }
 
 const mapStateToProps = state => ({
@@ -127,9 +118,10 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-  updateMainTranscript: transcriptId => () => (
-    dispatch(updateVariantMainTranscript(ownProps.variant.variantGuid, transcriptId))
-  ),
+  updateMainTranscript: transcriptId => () => {
+    return dispatch(updateVariantMainTranscript(ownProps.variant.variantGuid, transcriptId))
+  },
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Transcripts)
+

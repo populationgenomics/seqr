@@ -12,7 +12,7 @@ import HorizontalStackedBar from 'shared/components/graph/HorizontalStackedBar'
 import DataTable from 'shared/components/table/DataTable'
 import DataLoader from 'shared/components/DataLoader'
 import { HorizontalSpacer, VerticalSpacer } from 'shared/components/Spacers'
-import { InlineHeader, ColoredDiv } from 'shared/components/StyledComponents'
+import { InlineHeader } from 'shared/components/StyledComponents'
 import { FAMILY_ANALYSIS_STATUS_OPTIONS, SAMPLE_TYPE_EXOME, SAMPLE_TYPE_GENOME } from 'shared/utils/constants'
 
 import CreateProjectButton from './CreateProjectButton'
@@ -20,6 +20,7 @@ import FilterSelector from './FilterSelector'
 import CategoryIndicator from './CategoryIndicator'
 import ProjectEllipsisMenu from './ProjectEllipsisMenu'
 import { getVisibleProjects } from '../selectors'
+
 
 const ProjectTableContainer = styled.div`
   th {
@@ -110,8 +111,8 @@ const COLUMNS = [
         return null
       }
       if (isExport) {
-        return Object.entries(project.sampleTypeCounts).map(
-          ([sampleType, numSamples]) => `${sampleType}: ${numSamples}`,
+        return Object.entries(project.sampleTypeCounts).map(([sampleType, numSamples]) =>
+          `${sampleType}: ${numSamples}`,
         ).join(', ')
       }
       return Object.entries(project.sampleTypeCounts).map(
@@ -119,16 +120,10 @@ const COLUMNS = [
           const color = (sampleType === SAMPLE_TYPE_EXOME && '#73AB3D') || (sampleType === SAMPLE_TYPE_GENOME && '#4682b4') || 'black'
           return (
             <div key={sampleType}>
-              <ColoredDiv color={color}>
-                {numSamples}
-                &nbsp;
-                <b>{sampleType}</b>
-              </ColoredDiv>
+              <span style={{ color }}>{numSamples} <b>{sampleType}</b></span>
               {(i < project.sampleTypeCounts.length - 1) ? ', ' : null}
-            </div>
-          )
-        },
-      )
+            </div>)
+        })
     },
   },
   {
@@ -152,8 +147,7 @@ const COLUMNS = [
           project.analysisStatusCounts[d.value] ?
             [...acc, { ...d, count: project.analysisStatusCounts[d.value] }] :
             acc
-        ), [],
-      )
+        ), [])
       if (isExport) {
         return statusData.map(({ name, count }) => `${name}: ${count}`).join(', ')
       }
@@ -193,7 +187,7 @@ const getColumns = (googleLoginEnabled, isAnvil, isSuperuser) => {
   return isSuperuser ? SUPERUSER_COLUMNS_NO_ANVIL : COLUMNS_NO_ANVIL
 }
 
-const ProjectsTable = React.memo(({ visibleProjects, loading, load, user, googleLoginEnabled }) => (
+const ProjectsTable = React.memo(({ visibleProjects, loading, load, user, googleLoginEnabled }) =>
   <DataLoader content load={load} loading={false}>
     <ProjectTableContainer>
       <VerticalSpacer height={10} />
@@ -216,11 +210,11 @@ const ProjectsTable = React.memo(({ visibleProjects, loading, load, user, google
         downloadFileName="projects"
       />
     </ProjectTableContainer>
-  </DataLoader>
-))
+  </DataLoader>,
+)
 
 ProjectsTable.propTypes = {
-  visibleProjects: PropTypes.arrayOf(PropTypes.object).isRequired,
+  visibleProjects: PropTypes.array.isRequired,
   loading: PropTypes.bool.isRequired,
   user: PropTypes.object,
   load: PropTypes.func,

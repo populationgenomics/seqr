@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Grid, Header } from 'semantic-ui-react'
 
 import { getProjectsByGuid, getSamplesGroupedByProjectGuid, getProjectsIsLoading, getCurrentSearchParams } from 'redux/selectors'
-import { Select, InlineToggle, BaseSemanticInput } from 'shared/components/form/Inputs'
+import { Select, InlineToggle, JsonInput } from 'shared/components/form/Inputs'
 import { configuredField } from 'shared/components/form/ReduxFormWrapper'
 import VariantSearchFormContainer from 'shared/components/panel/search/VariantSearchFormContainer'
 import VariantSearchFormPanels, {
@@ -46,32 +46,10 @@ const INCLUDE_ALL_PROJECTS_FIELD = {
   fullHeight: true,
 }
 
-const getParsedJson = (value) => {
-  try {
-    return JSON.parse(value)
-  } catch (e) {
-    return value
-  }
-}
-
-const getJsonParseError = (value) => {
-  try {
-    JSON.parse(value)
-    return undefined
-  } catch (e) {
-    return e.toString()
-  }
-}
-
 const CUSTOM_QUERY_FIELD = {
   name: 'search.customQuery',
-  component: BaseSemanticInput,
-  inputType: 'TextArea',
-  rows: 10,
-  style: { fontFamily: 'monospace' },
-  format: val => (typeof val === 'object' ? JSON.stringify(val) : (val || '{}')),
-  normalize: getParsedJson,
-  validate: val => (typeof val === 'string' ? getJsonParseError(val) : undefined),
+  component: JsonInput,
+  format: val => val || {},
 }
 
 const INHERITANCE_PANEL = {
@@ -92,9 +70,7 @@ const PANELS = [
   INHERITANCE_PANEL, HGMD_PATHOGENICITY_PANEL, ANNOTATION_PANEL, FREQUENCY_PANEL, LOCATION_PANEL, QUALITY_PANEL,
 ]
 
-const CustomSearch = React.memo((
-  { match, history, includeAllProjects, loadContext, loading, searchParams, ...props },
-) => (
+const CustomSearch = React.memo(({ match, history, includeAllProjects, loadContext, loading, searchParams, ...props }) =>
   <Grid>
     <Grid.Row>
       <Grid.Column width={16}>
@@ -105,8 +81,7 @@ const CustomSearch = React.memo((
             form={CUSTOM_SEARCH_FORM_NAME}
             initialValues={searchParams}
           >
-            <InlineHeader content="Include All Projects: " />
-            {configuredField(INCLUDE_ALL_PROJECTS_FIELD)}
+            <InlineHeader content="Include All Projects:" /> {configuredField(INCLUDE_ALL_PROJECTS_FIELD)}
             {includeAllProjects ? null : configuredField(PROJECT_FAMILIES_FIELD)}
             <VariantSearchFormPanels panels={PANELS} />
             {configuredField(CUSTOM_QUERY_FIELD)}
@@ -115,9 +90,10 @@ const CustomSearch = React.memo((
       </Grid.Column>
     </Grid.Row>
     {match.params.searchHash &&
-      <VariantSearchResults match={match} history={history} contextLoading={loading} {...props} />}
-  </Grid>
-))
+      <VariantSearchResults match={match} history={history} contextLoading={loading} {...props} />
+    }
+  </Grid>,
+)
 
 CustomSearch.propTypes = {
   match: PropTypes.object,

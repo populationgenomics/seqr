@@ -9,6 +9,7 @@ import DataLoader from 'shared/components/DataLoader'
 import { getAllUsers, getAllUsersLoading } from '../selectors'
 import { loadAllUsers } from '../reducers'
 
+
 const CheckIcon = () => <Icon color="green" name="check circle" />
 const XIcon = () => <Icon color="red" name="times circle" />
 
@@ -34,18 +35,23 @@ const COLUMNS = [
   hasFieldColumn('isActive', 'Active?'),
 ]
 
-const hijakLogIn = (e, { value }) => fetch(
-  `/hijack/${value.id}/`, { method: 'POST', credentials: 'include' },
-).then((response) => { window.location.href = response.url })
-
 const HIJAK_COLUMNS = [
   ...COLUMNS,
-  { name: 'id', format: val => <Button content="Log In" value={val} onClick={hijakLogIn} /> },
+  {
+    name: 'id',
+    format: val =>
+      <Button
+        content="Log In"
+        onClick={() => fetch(
+          `/hijack/${val.id}/`, { method: 'POST', credentials: 'include' },
+        ).then((response) => { window.location.href = response.url })}
+      />,
+  },
 ]
 
 const getUserFilterVal = ({ email, displayName }) => `${email}-${displayName}`
 
-const Users = React.memo(({ users, loading, load, hijak }) => (
+const Users = React.memo(({ users, loading, load, hijak }) =>
   <DataLoader load={load} content loading={false}>
     <DataTable
       striped
@@ -58,15 +64,16 @@ const Users = React.memo(({ users, loading, load, hijak }) => (
       downloadFileName="users"
       downloadAlign="1em"
     />
-  </DataLoader>
-))
+  </DataLoader>,
+)
 
 Users.propTypes = {
-  users: PropTypes.arrayOf(PropTypes.object),
+  users: PropTypes.array,
   loading: PropTypes.bool,
   load: PropTypes.func,
   hijak: PropTypes.bool,
 }
+
 
 const mapStateToProps = state => ({
   users: getAllUsers(state),

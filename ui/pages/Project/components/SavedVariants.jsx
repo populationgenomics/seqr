@@ -15,16 +15,25 @@ import {
   VARIANT_PER_PAGE_FIELD,
 } from 'shared/utils/constants'
 import UpdateButton from 'shared/components/buttons/UpdateButton'
-import { LargeMultiselect, Dropdown } from 'shared/components/form/Inputs'
+import { LargeMultiselect } from 'shared/components/form/Inputs'
 import SavedVariants from 'shared/components/panel/variants/SavedVariants'
 
 import { TAG_FORM_FIELD } from '../constants'
 import { loadSavedVariants, updateSavedVariantTable } from '../reducers'
-import {
-  getCurrentProject, getProjectTagTypeOptions, getTaggedVariantsByFamily, getProjectVariantSavedByOptions,
-} from '../selectors'
+import { getCurrentProject, getProjectTagTypeOptions, getTaggedVariantsByFamily } from '../selectors'
 import VariantTagTypeBar, { getSavedVariantsLinkPath } from './VariantTagTypeBar'
 import SelectSavedVariantsTable, { TAG_COLUMN, VARIANT_POS_COLUMN, GENES_COLUMN } from './SelectSavedVariantsTable'
+
+const ALL_FILTER = 'ALL'
+
+const FILTER_FIELDS = [
+  VARIANT_SORT_FIELD,
+  VARIANT_HIDE_KNOWN_GENE_FOR_PHENOTYPE_FIELD,
+  VARIANT_HIDE_EXCLUDED_FIELD,
+  VARIANT_HIDE_REVIEW_FIELD,
+  VARIANT_PER_PAGE_FIELD,
+]
+const NON_DISCOVERY_FILTER_FIELDS = FILTER_FIELDS.filter(({ name }) => name !== 'hideKnownGeneForPhenotype')
 
 const LabelLink = styled(Link)`
   color: black;
@@ -33,30 +42,6 @@ const LabelLink = styled(Link)`
     color: black;
   }
 `
-
-const ALL_FILTER = 'ALL'
-
-const mapSavedByInputStateToProps = state => ({
-  options: getProjectVariantSavedByOptions(state),
-})
-
-const FILTER_FIELDS = [
-  VARIANT_SORT_FIELD,
-  VARIANT_HIDE_KNOWN_GENE_FOR_PHENOTYPE_FIELD,
-  VARIANT_HIDE_EXCLUDED_FIELD,
-  VARIANT_HIDE_REVIEW_FIELD,
-  VARIANT_PER_PAGE_FIELD,
-  {
-    name: 'savedBy',
-    component: connect(mapSavedByInputStateToProps)(Dropdown),
-    inline: true,
-    selection: false,
-    fluid: false,
-    label: 'Saved By:',
-    placeholder: 'Select a user',
-  },
-]
-const NON_DISCOVERY_FILTER_FIELDS = FILTER_FIELDS.filter(({ name }) => name !== 'hideKnownGeneForPhenotype')
 
 const BASE_FORM_ID = '-linkVariants'
 
@@ -92,7 +77,7 @@ const LINK_VARIANT_FIELDS = [
   },
 ]
 
-const BaseLinkSavedVariants = ({ familyGuid, onSubmit }) => (
+const BaseLinkSavedVariants = ({ familyGuid, onSubmit }) =>
   <UpdateButton
     modalTitle="Link Saved Variants"
     modalId={`${familyGuid}${BASE_FORM_ID}`}
@@ -103,71 +88,59 @@ const BaseLinkSavedVariants = ({ familyGuid, onSubmit }) => (
     onSubmit={onSubmit}
     showErrorPanel
   />
-)
 
 BaseLinkSavedVariants.propTypes = {
   familyGuid: PropTypes.string,
   onSubmit: PropTypes.func,
 }
 
-const mapVariantDispatchToProps = (dispatch, { familyGuid }) => ({
-  onSubmit: (values) => {
-    const variantGuids = Object.keys(values.variantGuids).filter(
-      variantGuid => values.variantGuids[variantGuid],
-    ).join(',')
-    dispatch(updateVariantTags({ ...values, familyGuid, variantGuids }))
-  },
-})
+const mapVariantDispatchToProps = (dispatch, { familyGuid }) => {
+  return {
+    onSubmit: (values) => {
+      const variantGuids = Object.keys(values.variantGuids).filter(
+        variantGuid => values.variantGuids[variantGuid]).join(',')
+      dispatch(updateVariantTags({ ...values, familyGuid, variantGuids }))
+    },
+  }
+}
 
 const LinkSavedVariants = connect(null, mapVariantDispatchToProps)(BaseLinkSavedVariants)
 
-class BaseProjectSavedVariants extends React.PureComponent {
+const BaseProjectSavedVariants = React.memo(({ project, analysisGroup, loadProjectSavedVariants, ...props }) => {
+  const { familyGuid, variantGuid, analysisGroupGuid } = props.match.params
 
-  static propTypes = {
-    match: PropTypes.object,
-    project: PropTypes.object,
-    analysisGroup: PropTypes.object,
-    updateTableField: PropTypes.func,
-    loadProjectSavedVariants: PropTypes.func,
-  }
+  const categoryOptions = [...new Set(
+    project.variantTagTypes.map(type => type.category).filter(category => category),
+  )]
 
-  getUpdateTagUrl = (newTag) => {
-    const { project, analysisGroup, match, updateTableField } = this.props
-    const categoryOptions = [...new Set(
-      project.variantTagTypes.map(type => type.category).filter(category => category),
-    )]
-
+  const getUpdateTagUrl = (newTag) => {
     const isCategory = categoryOptions.includes(newTag)
-    updateTableField('categoryFilter')(isCategory ? newTag : null)
+    props.updateTableField('categoryFilter')(isCategory ? newTag : null)
     return getSavedVariantsLinkPath({
       project,
       analysisGroup,
       tag: !isCategory && newTag !== ALL_FILTER && newTag,
-      familyGuid: match.params.familyGuid,
+      familyGuid,
     })
   }
 
-  loadVariants = (newParams) => {
-    const { analysisGroup, match, loadProjectSavedVariants, updateTableField } = this.props
-    const { familyGuid, variantGuid, analysisGroupGuid } = match.params
-
-    const isInitialLoad = match.params === newParams
+  const loadVariants = (newParams) => {
+    const isInitialLoad = props.match.params === newParams
     const hasUpdatedFamilies = newParams.familyGuid !== familyGuid ||
       newParams.analysisGroupGuid !== analysisGroupGuid ||
       newParams.variantGuid !== variantGuid
 
     const familyGuids = newParams.familyGuid ? [newParams.familyGuid] : (analysisGroup || {}).familyGuids
 
-    updateTableField('page')(1)
+    props.updateTableField('page')(1)
     if (isInitialLoad || hasUpdatedFamilies) {
       loadProjectSavedVariants({ familyGuids, ...newParams })
     }
   }
 
-  tagOptions = () => {
-    const { project, analysisGroup, match } = this.props
-    let currCategory = null
-    return project.variantTagTypes.reduce((acc, vtt) => {
+  let currCategory = null
+  const tagOptions =
+    project.variantTagTypes.reduce((acc, vtt) => {
       if (vtt.category !== currCategory) {
         currCategory = vtt.category
         if (vtt.category) {
@@ -189,51 +162,48 @@ class BaseProjectSavedVariants extends React.PureComponent {
       value: ALL_FILTER,
       text: 'All Saved',
       content: (
-        <LabelLink to={getSavedVariantsLinkPath({ project, analysisGroup, familyGuid: match.params.familyGuid })}>
+        <LabelLink
+          to={getSavedVariantsLinkPath({ project, analysisGroup, familyGuid })}
+        >
           All Saved
         </LabelLink>
       ),
       key: 'all',
     }])
-  }
 
-  tableSummary = (summaryProps) => {
-    const { project, analysisGroup } = this.props
-    return (
-      <Grid.Row>
-        <Grid.Column width={16}>
-          <VariantTagTypeBar
-            height={30}
-            project={project}
-            analysisGroup={analysisGroup}
-            {...summaryProps}
-          />
-        </Grid.Column>
-      </Grid.Row>
-    )
-  }
+  return (
+    <SavedVariants
+      tagOptions={tagOptions}
+      filters={NON_DISCOVERY_FILTER_FIELDS}
+      discoveryFilters={FILTER_FIELDS}
+      additionalFilter={(project.canEdit && familyGuid) ? <LinkSavedVariants familyGuid={familyGuid} {...props} /> : null}
+      getUpdateTagUrl={getUpdateTagUrl}
+      loadVariants={loadVariants}
+      project={project}
+      tableSummaryComponent={
+        summaryProps =>
+          <Grid.Row>
+            <Grid.Column width={16}>
+              <VariantTagTypeBar
+                height={30}
+                project={project}
+                analysisGroup={analysisGroup}
+                {...summaryProps}
+              />
+            </Grid.Column>
+          </Grid.Row>
+      }
+      {...props}
+    />
+  )
+})
 
-  render() {
-    const { project, analysisGroup, loadProjectSavedVariants, ...props } = this.props
-    const { familyGuid } = props.match.params
-
-    return (
-      <SavedVariants
-        tagOptions={this.tagOptions()}
-        filters={NON_DISCOVERY_FILTER_FIELDS}
-        discoveryFilters={FILTER_FIELDS}
-        additionalFilter={
-          (project.canEdit && familyGuid) ? <LinkSavedVariants familyGuid={familyGuid} {...props} /> : null
-        }
-        getUpdateTagUrl={this.getUpdateTagUrl}
-        loadVariants={this.loadVariants}
-        project={project}
-        tableSummaryComponent={this.tableSummary}
-        {...props}
-      />
-    )
-  }
-
+BaseProjectSavedVariants.propTypes = {
+  match: PropTypes.object,
+  project: PropTypes.object,
+  analysisGroup: PropTypes.object,
+  updateTableField: PropTypes.func,
+  loadProjectSavedVariants: PropTypes.func,
 }
 
 const mapStateToProps = (state, ownProps) => ({
@@ -252,14 +222,13 @@ const mapDispatchToProps = dispatch => ({
 
 const ProjectSavedVariants = connect(mapStateToProps, mapDispatchToProps)(BaseProjectSavedVariants)
 
-const RoutedSavedVariants = ({ match }) => (
+const RoutedSavedVariants = ({ match }) =>
   <Switch>
     <Route path={`${match.url}/variant/:variantGuid`} component={ProjectSavedVariants} />
     <Route path={`${match.url}/family/:familyGuid/:tag?`} component={ProjectSavedVariants} />
     <Route path={`${match.url}/analysis_group/:analysisGroupGuid/:tag?`} component={ProjectSavedVariants} />
     <Route path={`${match.url}/:tag?`} component={ProjectSavedVariants} />
   </Switch>
-)
 
 RoutedSavedVariants.propTypes = {
   match: PropTypes.object,

@@ -17,11 +17,6 @@ class PopupWithModal extends React.PureComponent {
     dispatch: PropTypes.func,
   }
 
-  static defaultProps = {
-    openModal: null,
-    dispatch: null,
-  }
-
   state = { isOpen: false }
 
   handleOpen = () => {
@@ -29,19 +24,17 @@ class PopupWithModal extends React.PureComponent {
   }
 
   handleClose = () => {
-    const { openModal } = this.props
-    if (!openModal) {
+    if (!this.props.openModal) {
       this.setState({ isOpen: false })
     }
   }
 
   render() {
     const { openModal, dispatch, ...popupProps } = this.props
-    const { isOpen } = this.state
     return (
       <BehindModalPopup
         {...popupProps}
-        open={isOpen}
+        open={this.state.isOpen}
         onClose={this.handleClose}
         onOpen={this.handleOpen}
       />

@@ -36,36 +36,31 @@ const FIELDS = [
   VARIANT_SEARCH_SORT_FIELD,
 ]
 
-export const DisplayVariants = React.memo(({ displayVariants, compoundHetToggle }) => (
+export const DisplayVariants = React.memo(({ displayVariants }) =>
   <Grid.Row>
     <Grid.Column width={16}>
-      <Variants variants={displayVariants} compoundHetToggle={compoundHetToggle} linkToSavedVariants />
+      <Variants variants={displayVariants} linkToSavedVariants />
     </Grid.Column>
-  </Grid.Row>
-))
+  </Grid.Row>,
+)
 
 DisplayVariants.propTypes = {
-  displayVariants: PropTypes.arrayOf(PropTypes.object),
-  compoundHetToggle: PropTypes.func,
+  displayVariants: PropTypes.array,
 }
 
-const BaseVariantSearchResultsContent = React.memo(({
-  match, variantSearchDisplay, searchedVariantExportConfig, onSubmit, totalVariantsCount, additionalDisplayEdit,
-  displayVariants, compoundHetToggle,
-}) => {
+const BaseVariantSearchResultsContent = React.memo((
+  { match, variantSearchDisplay, searchedVariantExportConfig, onSubmit, totalVariantsCount, additionalDisplayEdit, displayVariants }) => {
   const { searchHash } = match.params
   const { page = 1, recordsPerPage } = variantSearchDisplay
   const variantDisplayPageOffset = (page - 1) * recordsPerPage
-  const paginationFields = totalVariantsCount > recordsPerPage ?
-    [{ ...VARIANT_PAGINATION_FIELD, totalPages: Math.ceil(totalVariantsCount / recordsPerPage) }] : []
-  const fields = [...FIELDS, ...paginationFields] // eslint-disable-line react-perf/jsx-no-new-array-as-prop
+  const paginationFields = totalVariantsCount > recordsPerPage ? [{ ...VARIANT_PAGINATION_FIELD, totalPages: Math.ceil(totalVariantsCount / recordsPerPage) }] : []
+  const fields = [...FIELDS, ...paginationFields]
 
   return [
     <LargeRow key="resultsSummary">
       <Grid.Column width={5}>
         {totalVariantsCount === displayVariants.length ? 'Found ' : `Showing ${variantDisplayPageOffset + 1}-${variantDisplayPageOffset + displayVariants.length} of `}
-        <b>{totalVariantsCount}</b>
-        &nbsp; variants
+        <b>{totalVariantsCount}</b> variants
       </Grid.Column>
       <Grid.Column width={11} floated="right" textAlign="right">
         {additionalDisplayEdit}
@@ -84,7 +79,7 @@ const BaseVariantSearchResultsContent = React.memo(({
         <GeneBreakdown searchHash={searchHash} />
       </Grid.Column>
     </LargeRow>,
-    <DisplayVariants key="variants" displayVariants={displayVariants} compoundHetToggle={compoundHetToggle} />,
+    <DisplayVariants key="variants" displayVariants={displayVariants} />,
     <LargeRow key="bottomPagination">
       <Grid.Column width={11} floated="right" textAlign="right">
         <ReduxFormWrapper
@@ -108,11 +103,10 @@ BaseVariantSearchResultsContent.propTypes = {
   match: PropTypes.object,
   onSubmit: PropTypes.func,
   variantSearchDisplay: PropTypes.object,
-  searchedVariantExportConfig: PropTypes.arrayOf(PropTypes.object),
+  searchedVariantExportConfig: PropTypes.array,
   totalVariantsCount: PropTypes.number,
-  displayVariants: PropTypes.arrayOf(PropTypes.object),
+  displayVariants: PropTypes.array,
   additionalDisplayEdit: PropTypes.node,
-  compoundHetToggle: PropTypes.func,
 }
 
 const mapContentStateToProps = (state, ownProps) => ({
@@ -123,42 +117,42 @@ const mapContentStateToProps = (state, ownProps) => ({
   errorMessage: getSearchedVariantsErrorMessage(state),
 })
 
-const mapContentDispatchToProps = (dispatch, ownProps) => ({
-  onSubmit: (updates) => {
-    dispatch(loadSearchedVariants(ownProps.match.params, {
-      displayUpdates: updates,
-      ...ownProps,
-    }))
-  },
+const mapContentDispatchToProps = (dispatch, ownProps) => {
+  return {
+    onSubmit: (updates) => {
+      dispatch(loadSearchedVariants(ownProps.match.params, {
+        displayUpdates: updates,
+        ...ownProps,
+      }))
+    },
+  }
+}
+
+const VariantSearchResultsContent = connect(mapContentStateToProps, mapContentDispatchToProps)(BaseVariantSearchResultsContent)
+
+const BaseVariantSearchResults = React.memo((
+  { match, displayVariants, load, unload, initialLoad, variantsLoading, contextLoading, errorMessage, contentComponent, ...props }) => {
+  return (
+    <DataLoader
+      contentId={match.params}
+      content={displayVariants}
+      loading={variantsLoading || contextLoading}
+      load={load}
+      unload={unload}
+      initialLoad={initialLoad}
+      reloadOnIdUpdate
+      errorMessage={errorMessage &&
+        <Grid.Row>
+          <Grid.Column width={16}>
+            <Message error content={errorMessage} />
+          </Grid.Column>
+        </Grid.Row>
+      }
+    >
+      {React.createElement(contentComponent || VariantSearchResultsContent, { match, displayVariants, ...props })}
+    </DataLoader>
+  )
 })
-
-const VariantSearchResultsContent = connect(
-  mapContentStateToProps, mapContentDispatchToProps,
-)(BaseVariantSearchResultsContent)
-
-const BaseVariantSearchResults = React.memo(({
-  match, displayVariants, load, unload, initialLoad, variantsLoading, contextLoading, errorMessage, contentComponent,
-  ...props
-}) => (
-  <DataLoader
-    contentId={match.params}
-    content={displayVariants}
-    loading={variantsLoading || contextLoading}
-    load={load}
-    unload={unload}
-    initialLoad={initialLoad}
-    reloadOnIdUpdate
-    errorMessage={errorMessage && (
-      <Grid.Row>
-        <Grid.Column width={16}>
-          <Message error content={errorMessage} />
-        </Grid.Column>
-      </Grid.Row>
-    )}
-  >
-    {React.createElement(contentComponent || VariantSearchResultsContent, { match, displayVariants, ...props })}
-  </DataLoader>
-))
 
 BaseVariantSearchResults.propTypes = {
   match: PropTypes.object,
@@ -168,7 +162,7 @@ BaseVariantSearchResults.propTypes = {
   variantsLoading: PropTypes.bool,
   contextLoading: PropTypes.bool,
   errorMessage: PropTypes.string,
-  displayVariants: PropTypes.arrayOf(PropTypes.object),
+  displayVariants: PropTypes.array,
   contentComponent: PropTypes.elementType,
 }
 
@@ -178,33 +172,29 @@ const mapStateToProps = (state, ownProps) => ({
   displayVariants: getDisplayVariants(state, ownProps),
 })
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-  load: (params) => {
-    dispatch((ownProps.loadVariants || loadSearchedVariants)(params, ownProps))
-  },
-  unload: () => {
-    dispatch(unloadSearchResults())
-  },
-})
+const mapDispatchToProps = (dispatch, ownProps) => {
+  return {
+    load: (params) => {
+      dispatch((ownProps.loadVariants || loadSearchedVariants)(params, ownProps))
+    },
+    unload: () => {
+      dispatch(unloadSearchResults())
+    },
+  }
+}
 
 const VariantSearchResults = connect(mapStateToProps, mapDispatchToProps)(BaseVariantSearchResults)
 
-const LoadedVariantSearchResults = React.memo((
-  { contentComponent, flattenCompoundHet, compoundHetToggle, ...props },
-) => (
+const LoadedVariantSearchResults = React.memo(({ contentComponent, flattenCompoundHet, ...props }) => (
   <QueryParamsEditor {...props}>
-    <VariantSearchResults
-      contentComponent={contentComponent}
-      flattenCompoundHet={flattenCompoundHet}
-      compoundHetToggle={compoundHetToggle}
-    />
+    <VariantSearchResults contentComponent={contentComponent} flattenCompoundHet={flattenCompoundHet} />
   </QueryParamsEditor>
 ))
 
 LoadedVariantSearchResults.propTypes = {
   contentComponent: PropTypes.node,
   flattenCompoundHet: PropTypes.bool,
-  compoundHetToggle: PropTypes.func,
 }
 
 export default LoadedVariantSearchResults
+

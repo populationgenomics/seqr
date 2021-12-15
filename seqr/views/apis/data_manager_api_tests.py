@@ -92,12 +92,6 @@ ES_CAT_INDICES = [
         "store.size": "233.4mb",
         "creation.date.string": "2019-10-03T19:53:53.846Z",
     },
-    {
-        "index": "test_index_sv_wgs",
-        "docs.count": "672312",
-        "store.size": "233.4mb",
-        "creation.date.string": "2019-10-03T19:53:53.846Z"
-    },
 ]
 
 ES_CAT_ALIAS = [
@@ -161,17 +155,6 @@ ES_INDEX_MAPPING = {
                 "sampleType": "WES",
                 "datasetType": "SV",
                 "sourceFilePath": "test_sv_index_path",
-            },
-        }
-    },
-    "test_index_sv_wgs": {
-        "mappings": {
-            "_meta": {
-                "gencodeVersion": "29",
-                "genomeVersion": "38",
-                "sampleType": "WGS",
-                "datasetType": "SV",
-                "sourceFilePath": "test_sv_wgs_index_path"
             },
         }
     },
@@ -299,10 +282,12 @@ class DataManagerAPITest(AuthenticationTestCase):
             {"indices", "errors", "diskStats", "elasticsearchHost"},
         )
 
-        self.assertEqual(len(response_json['indices']), 6)
-        self.assertDictEqual(response_json['indices'][0], TEST_INDEX_EXPECTED_DICT)
-        self.assertDictEqual(response_json['indices'][3], TEST_INDEX_NO_PROJECT_EXPECTED_DICT)
-        self.assertDictEqual(response_json['indices'][4], TEST_SV_INDEX_EXPECTED_DICT)
+        self.assertEqual(len(response_json["indices"]), 5)
+        self.assertDictEqual(response_json["indices"][0], TEST_INDEX_EXPECTED_DICT)
+        self.assertDictEqual(
+            response_json["indices"][3], TEST_INDEX_NO_PROJECT_EXPECTED_DICT
+        )
+        self.assertDictEqual(response_json["indices"][4], TEST_SV_INDEX_EXPECTED_DICT)
 
         self.assertListEqual(response_json["errors"], EXPECTED_ERRORS)
 
@@ -346,11 +331,13 @@ class DataManagerAPITest(AuthenticationTestCase):
         )
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        self.assertSetEqual(set(response_json.keys()), {'indices'})
-        self.assertEqual(len(response_json['indices']), 6)
-        self.assertDictEqual(response_json['indices'][0], TEST_INDEX_EXPECTED_DICT)
-        self.assertDictEqual(response_json['indices'][3], TEST_INDEX_NO_PROJECT_EXPECTED_DICT)
-        self.assertDictEqual(response_json['indices'][4], TEST_SV_INDEX_EXPECTED_DICT)
+        self.assertSetEqual(set(response_json.keys()), {"indices"})
+        self.assertEqual(len(response_json["indices"]), 5)
+        self.assertDictEqual(response_json["indices"][0], TEST_INDEX_EXPECTED_DICT)
+        self.assertDictEqual(
+            response_json["indices"][3], TEST_INDEX_NO_PROJECT_EXPECTED_DICT
+        )
+        self.assertDictEqual(response_json["indices"][4], TEST_SV_INDEX_EXPECTED_DICT)
 
         self.assertEqual(urllib3_responses.calls[0].request.method, "DELETE")
 

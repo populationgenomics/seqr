@@ -5,15 +5,14 @@ import { ButtonLink } from '../StyledComponents'
 import ReduxFormWrapper from '../form/ReduxFormWrapper'
 import Modal from '../modal/Modal'
 
-const UpdateButton = React.memo(({
-  onSubmit, initialValues, formFields, modalTitle, modalId, buttonText, editIconName, size, modalSize, showErrorPanel,
-  disabled, confirmDialog, submitButtonText, buttonFloated, trigger, formContainer = <div />, modalPopup,
-}) => (
+const UpdateButton = React.memo((
+  { onSubmit, initialValues, formFields, modalTitle, modalId, buttonText, editIconName, size, modalSize, showErrorPanel,
+    disabled, confirmDialog, submitButtonText, buttonFloated, trigger, formContainer = <div /> },
+) =>
   <Modal
     title={modalTitle}
     modalName={modalId}
     size={modalSize}
-    popup={modalPopup}
     trigger={trigger || (
       <ButtonLink
         content={buttonText}
@@ -25,29 +24,27 @@ const UpdateButton = React.memo(({
       />
     )}
   >
-    {React.cloneElement(formContainer, {
-      children: (
-        <ReduxFormWrapper
-          onSubmit={onSubmit}
-          form={modalId}
-          initialValues={initialValues}
-          fields={formFields}
-          showErrorPanel={showErrorPanel}
-          confirmDialog={confirmDialog}
-          submitButtonText={submitButtonText}
-          confirmCloseIfNotSaved
-        />
-      ),
-    })}
-  </Modal>
-))
+    {React.cloneElement(formContainer, { children: (
+      <ReduxFormWrapper
+        onSubmit={onSubmit}
+        form={modalId}
+        initialValues={initialValues}
+        fields={formFields}
+        showErrorPanel={showErrorPanel}
+        confirmDialog={confirmDialog}
+        submitButtonText={submitButtonText}
+        confirmCloseIfNotSaved
+      />
+    ) }) }
+  </Modal>,
+)
+
 
 UpdateButton.propTypes = {
-  formFields: PropTypes.arrayOf(PropTypes.object),
+  formFields: PropTypes.array,
   onSubmit: PropTypes.func,
   modalTitle: PropTypes.string,
   modalId: PropTypes.string.isRequired,
-  modalPopup: PropTypes.object,
   initialValues: PropTypes.object,
   buttonText: PropTypes.string,
   buttonFloated: PropTypes.string,

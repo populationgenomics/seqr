@@ -4,11 +4,12 @@ import { Loader, Dimmer } from 'semantic-ui-react'
 
 import { Error404 } from 'shared/components/page/Errors'
 
-class DataLoader extends React.PureComponent {
 
+class DataLoader extends React.PureComponent
+{
   static propTypes = {
-    contentId: PropTypes.any, // eslint-disable-line react/forbid-prop-types
-    content: PropTypes.any, // eslint-disable-line react/forbid-prop-types
+    contentId: PropTypes.any,
+    content: PropTypes.any,
     loading: PropTypes.bool.isRequired,
     load: PropTypes.func,
     unload: PropTypes.func,
@@ -30,38 +31,35 @@ class DataLoader extends React.PureComponent {
     }
   }
 
-  componentDidUpdate(prevProps) {
-    const { reloadOnIdUpdate, load, contentId } = this.props
-    if (reloadOnIdUpdate && prevProps.contentId !== contentId) {
-      load(contentId)
-    }
-  }
-
-  componentWillUnmount() {
-    const { unload } = this.props
-    if (unload) {
-      unload()
-    }
-  }
-
   render() {
     const { loading, content, errorMessage, children, hideError } = this.props
     if (loading) {
       // Loader needs to be in an extra Dimmer to properly show up if it is in a modal (https://github.com/Semantic-Org/Semantic-UI-React/issues/879)
       return <Dimmer inverted active><Loader content="Loading" /></Dimmer>
     }
-    if (errorMessage) {
+    else if (errorMessage) {
       return errorMessage
     }
-    if (content) {
+    else if (content) {
       return children
     }
-    if (!hideError) {
+    else if (!hideError) {
       return <Error404 />
     }
     return null
   }
 
+  componentWillUpdate(nextProps) {
+    if (nextProps.reloadOnIdUpdate && nextProps.contentId !== this.props.contentId) {
+      nextProps.load(nextProps.contentId)
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.props.unload) {
+      this.props.unload()
+    }
+  }
 }
 
 export default DataLoader

@@ -3,9 +3,10 @@ import {
   DE_NOVO_FILTER, ANY_AFFECTED, INHERITANCE_FILTER_OPTIONS,
 } from 'shared/utils/constants'
 
-export const getSelectedAnalysisGroups = (analysisGroupsByGuid, familyGuids) => Object.values(
-  analysisGroupsByGuid,
-).filter(group => group.familyGuids.every(familyGuid => familyGuids.includes(familyGuid)))
+export const getSelectedAnalysisGroups = (analysisGroupsByGuid, familyGuids) =>
+  Object.values(analysisGroupsByGuid).filter(
+    group => group.familyGuids.every(familyGuid => familyGuids.includes(familyGuid)),
+  )
 
 export const SEARCH_FORM_NAME = 'variantSearch'
 
@@ -56,6 +57,7 @@ export const INHERITANCE_FILTER_LOOKUP = {
   [X_LINKED_RECESSIVE_FILTER]: {
     [AFFECTED]: ALT_ALT,
     [UNAFFECTED]: HAS_REF,
+    mother: REF_ALT,
     father: REF_REF,
   },
   [DE_NOVO_FILTER]: {
@@ -71,10 +73,10 @@ export const INHERITANCE_FILTER_LOOKUP = {
   },
 }
 
-export const INHERITANCE_MODE_LOOKUP = Object.entries(INHERITANCE_FILTER_LOOKUP).reduce(
-  (acc, [mode, filter]) => ({ ...acc, [JSON.stringify(filter)]: mode }), {},
+export const INHERITANCE_MODE_LOOKUP = Object.entries(INHERITANCE_FILTER_LOOKUP).reduce((acc, [mode, filter]) =>
+  ({ ...acc, [JSON.stringify(filter)]: mode }), {},
 )
 
 export const INHERITANCE_FILTER_JSON_OPTIONS = INHERITANCE_FILTER_OPTIONS.map(
-  opt => ({ ...opt, filter: INHERITANCE_FILTER_LOOKUP[opt.value] }),
-)
+  opt => ({ ...opt, filter: INHERITANCE_FILTER_LOOKUP[opt.value] }))
+

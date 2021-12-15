@@ -37,7 +37,9 @@
 /**
  * Reducer that can be used to manage any state that doesn't change after it's initialized.
  */
-export const zeroActionsReducer = (state = {}) => state
+export const zeroActionsReducer = (state = {}) => {
+  return state
+}
 
 /**
  * Factory function that creates a reducer for managing any state object that's treated as a single
@@ -65,7 +67,7 @@ export const zeroActionsReducer = (state = {}) => state
  * @param updateActionType (string) action.type that will later be used to replace the state with a
  * new state.
  */
-export const createSingleValueReducer = (updateActionType, initialState = {}, key = null) => {
+export const createSingleValueReducer = (updateActionType, initialState = {}, key = null, debug = false) => {
   const reducer = (state = initialState, action) => {
     if (!action) {
       return state
@@ -74,9 +76,11 @@ export const createSingleValueReducer = (updateActionType, initialState = {}, ke
     switch (action.type) {
       case updateActionType: {
         if (action.newValue === undefined) {
-          // eslint-disable-next-line no-console
           console.error(`Invalid ${updateActionType} action: action.newValue is undefined: `, action)
           return state
+        }
+        if (debug) {
+          console.log('singleValueReducer: applying action: ', action, 'State changing from ', state, ' to ', action.newValue)
         }
         let updates = action.newValue
         if (key) {
@@ -94,6 +98,7 @@ export const createSingleValueReducer = (updateActionType, initialState = {}, ke
 
   return reducer
 }
+
 
 /**
  * Factory function that creates a reducer for managing a state object with some fixed set of keys.
@@ -134,7 +139,7 @@ export const createSingleValueReducer = (updateActionType, initialState = {}, ke
  *
  * @param updateActionType (string) action.type that will later be used to update the state object.
  */
-export const createSingleObjectReducer = (updateActionType, initialState = {}) => {
+export const createSingleObjectReducer = (updateActionType, initialState = {}, debug = false) => {
   const reducer = (state = initialState, action) => {
     if (!action) {
       return state
@@ -143,12 +148,15 @@ export const createSingleObjectReducer = (updateActionType, initialState = {}) =
     switch (action.type) {
       case updateActionType: {
         if (action.updates === undefined) {
-          // eslint-disable-next-line no-console
           console.error(`Invalid ${updateActionType} action: action.updates is undefined: `, action)
           return state
         }
 
-        return { ...state, ...action.updates }
+        const newState = { ...state, ...action.updates }
+        if (debug) {
+          console.log('singleObjectReducer: applying action: ', action, 'State changing from ', state, ' to ', newState)
+        }
+        return newState
       }
       default:
         return state
@@ -202,7 +210,7 @@ export const createSingleObjectReducer = (updateActionType, initialState = {}) =
  *
  * @param updateStateActionId (string) action.type that will later be used to update the state object.
  */
-export const createObjectsByIdReducer = (updateActionType, key, initialState = {}) => {
+export const createObjectsByIdReducer = (updateActionType, key, initialState = {}, debug = false) => {
   const reducer = (state = initialState, action) => {
     if (!action) {
       return state
@@ -211,7 +219,6 @@ export const createObjectsByIdReducer = (updateActionType, key, initialState = {
     switch (action.type) {
       case updateActionType: {
         if (action.updatesById === undefined) {
-          // eslint-disable-next-line no-console
           console.error(`Invalid ${updateActionType} action. action.updatesById is undefined: `, action)
           return state
         }
@@ -234,6 +241,9 @@ export const createObjectsByIdReducer = (updateActionType, key, initialState = {
           }
         })
 
+        if (debug) {
+          console.log('objectsByIdReducer: applying action: ', action, 'State changing from: ', state, ' to ', shallowCopy)
+        }
         return shallowCopy
       }
       default:
@@ -243,6 +253,7 @@ export const createObjectsByIdReducer = (updateActionType, key, initialState = {
 
   return reducer
 }
+
 
 /**
  * Factory function that creates a reducer for managing a state object that looks like:
@@ -261,15 +272,24 @@ export const createObjectsByIdReducer = (updateActionType, key, initialState = {
  * @param requestActionType (string) action.type representing a "request" event
  * @param receiveActionType (string) action.type representing a "receive" event
  */
-export const loadingReducer = (
-  requestActionType, receiveActionType, initialState = { isLoading: false, errorMessage: null },
-) => {
+export const loadingReducer = (requestActionType, receiveActionType, initialState = { isLoading: false, errorMessage: null }, debug = false) => {
   const reducer = (state = initialState, action) => {
     switch (action.type) {
       case requestActionType:
-        return { ...state, isLoading: true }
+        if (debug) {
+          console.log(`fetchObjectsReducer: applying action: ${action.type}. State changing to loading`)
+        }
+        return Object.assign({}, state, {
+          isLoading: true,
+        })
       case receiveActionType:
-        return { ...state, isLoading: false, errorMessage: action.error }
+        if (debug) {
+          console.log(`fetchObjectsReducer: applying action: ${action.type}. State changing to received: ${action.byGuid}`)
+        }
+        return Object.assign({}, state, {
+          isLoading: false,
+          errorMessage: action.error,
+        })
       default:
         return state
     }
