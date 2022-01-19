@@ -13,6 +13,9 @@ from seqr.views.utils.file_utils import parse_file
 logger = SeqrLogger(__name__)
 
 SAMPLE_FIELDS_LIST = ['samples', 'samples_num_alt_1']
+VCF_FILE_EXTENSIONS = ('.vcf', '.vcf.gz', '.vcf.bgz')
+#  support .bgz instead of requiring .vcf.bgz due to issues with DSP delivery of large callsets
+DATASET_FILE_EXTENSIONS = VCF_FILE_EXTENSIONS[:-1] + ('.bgz', '.bed')
 
 
 def validate_index_metadata_and_get_elasticsearch_index_samples(elasticsearch_index, **kwargs):
@@ -63,9 +66,8 @@ def validate_index_metadata(index_metadata, elasticsearch_index, project=None, g
         ))
 
     dataset_path = index_metadata['sourceFilePath']
-    dataset_suffixes = ('.vds', '.vcf.gz', '.bgz', '.bed')
-    if not dataset_path.endswith(dataset_suffixes):
-        raise ValueError("Variant call dataset path must end with {}".format(' or '.join(dataset_suffixes)))
+    if not dataset_path.endswith(DATASET_FILE_EXTENSIONS):
+        raise ValueError("Variant call dataset path must end with {}".format(' or '.join(DATASET_FILE_EXTENSIONS)))
 
     if index_metadata.get('datasetType', Sample.DATASET_TYPE_VARIANT_CALLS) != dataset_type:
         raise ValueError('Index "{0}" has dataset type {1} but expects {2}'.format(
@@ -80,9 +82,11 @@ def load_mapping_file(mapping_file_path, user):
 
 def _load_mapping_file(file_content):
     id_mapping = {}
-    for line in file_content:
+    for i, line in enumerate(file_content):
+        if not line:
+            continue
         if len(line) != 2:
-            raise ValueError("Must contain 2 columns: " + ', '.join(line))
+            raise ValueError(f"Must contain 2 columns. Received {len(line)} columns on line #{i+1}: " + ', '.join(line))
         id_mapping[line[0]] = line[1]
     return id_mapping
 
