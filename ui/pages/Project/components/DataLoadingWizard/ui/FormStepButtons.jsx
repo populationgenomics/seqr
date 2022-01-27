@@ -27,7 +27,8 @@ const FormStepButtons = ({ isLastStep, onNext, onBack, onSubmit, enableNext, ena
         size={size}
         onClick={onBack}
         loading={loading}
-      >Back
+      >
+        Back
       </Button>
       <Button
         size={size}

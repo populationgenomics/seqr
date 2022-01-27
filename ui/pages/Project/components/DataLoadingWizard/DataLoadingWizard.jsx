@@ -1,10 +1,16 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop */
+/* eslint-disable no-console */
+/* eslint-disable no-alert */
+
 import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
+import { connect } from 'react-redux'
 import { Breadcrumb } from 'semantic-ui-react'
 
 import { Centered, FormSection, FormStepButtons } from './ui'
 import { Welcome, FamilyMetadataUpload } from './steps'
 import { Error404 } from '../../../../shared/components/page/Errors'
+import { getCurrentProject } from '../../selectors'
 
 const BREADCRUMBS = [
   { key: 0, content: 'Welcome', link: true, active: true },
@@ -14,20 +20,17 @@ const BREADCRUMBS = [
   { key: 4, content: 'Review', link: true, active: false },
 ]
 
-
-const DataLoadingWizardForm = ({ project }) => {
+const BaseMultistepForm = ({ project }) => {
   // ---- Debug ---- //
   console.group('Project Object')
   console.log(project)
   console.groupEnd()
 
   // ---- State ----- //
-  const [breadCrumbs, setBreadcrumbs] = useState(BREADCRUMBS.map((b) => { return { ...b } }))
+  const [breadCrumbs, setBreadcrumbs] = useState(BREADCRUMBS.map(b => ({ ...b })))
   const [activeFormStepIndex, setActiveFormStepIndex] = useState(0)
   const [formSteps, setFormSteps] = useState(BREADCRUMBS.map(
-    (_, index) => {
-      return { formData: {}, isComplete: (index === 0) }
-    },
+    (_, index) => ({ formData: {}, isComplete: (index === 0) }),
   ))
 
   // ---- Callbacks ----- //
@@ -40,13 +43,11 @@ const DataLoadingWizardForm = ({ project }) => {
         return { ...step }
       },
     ))
-  }, [])
-
-  const enableReview = useCallback(() => {
-    return formSteps
-      .slice(0, formSteps.length - 1)
-      .reduce((acc, step) => acc && step.isComplete, true)
   }, [formSteps])
+
+  const enableReview = useCallback(() => formSteps
+    .slice(0, formSteps.length - 1)
+    .reduce((acc, step) => acc && step.isComplete, true), [formSteps])
 
   const enableNext = useCallback(() => {
     if (activeFormStepIndex === (formSteps.length - 2)) {
@@ -61,10 +62,12 @@ const DataLoadingWizardForm = ({ project }) => {
       case 0:
         return <Welcome />
       case 1:
-        return <FamilyMetadataUpload
-          project={project}
-          onFormChange={({ formData, isComplete }) => updateFormStep(1, { formData, isComplete })}
-        />
+        return (
+          <FamilyMetadataUpload
+            project={project}
+            onFormChange={({ formData, isComplete }) => updateFormStep(1, { formData, isComplete })}
+          />
+        )
       case 2:
         return <div>{ breadCrumbs[activeFormStepIndex].content }</div>
       case 3:
@@ -78,12 +81,9 @@ const DataLoadingWizardForm = ({ project }) => {
     }
   }, [project, activeFormStepIndex, updateFormStep])
 
-
   // ---- Effects ---- //
   useEffect(() => {
-    setBreadcrumbs(breadCrumbs.map((b, index) => {
-      return { ...b, active: (index === activeFormStepIndex) }
-    }))
+    setBreadcrumbs(breadCrumbs.map((b, index) => ({ ...b, active: (index === activeFormStepIndex) })))
   }, [activeFormStepIndex])
 
   useEffect(() => {
@@ -147,8 +147,16 @@ const DataLoadingWizardForm = ({ project }) => {
   )
 }
 
-DataLoadingWizardForm.propTypes = {
-  project: PropTypes.object,
+BaseMultistepForm.propTypes = {
+  project: PropTypes.object.isRequired,
 }
 
-export default DataLoadingWizardForm
+const mapStateToProps = state => ({
+  project: getCurrentProject(state),
+})
+
+export const MultistepForm = connect(mapStateToProps)(BaseMultistepForm)
+
+const DataLoadingWizard = () => <MultistepForm />
+
+export default DataLoadingWizard
