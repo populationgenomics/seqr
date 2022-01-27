@@ -12,6 +12,7 @@ import CaseReview from './components/CaseReview'
 import FamilyPage from './components/FamilyPage'
 import Matchmaker from './components/Matchmaker'
 import SavedVariants from './components/SavedVariants'
+import DataLoadingWizard from './components/DataLoadingWizard/DataLoadingWizard'
 
 class Project extends React.PureComponent {
 
@@ -45,6 +46,7 @@ class Project extends React.PureComponent {
           <Route path={`${match.url}/family_page/:familyGuid/matchmaker_exchange`} component={Matchmaker} />
           <Route path={`${match.url}/family_page/:familyGuid`} component={FamilyPage} />
           <Route path={`${match.url}/saved_variants`} component={SavedVariants} />
+          <Route path={`${match.url}/wizard/`} component={DataLoadingWizard} />
           <Route component={Error404} />
         </Switch>
       )
