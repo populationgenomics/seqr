@@ -11,7 +11,7 @@ export const validateUnique = (collection, message = null) => {
 
   const errors = _.zip(collection, Object.values(counts)).map(([key, count]) => {
     if (count > 1) {
-      return message || `Value '${key}' is not unique. Counted ${count} times.`
+      return message || `'${key}' is not unique, and was counted ${count} times`
     }
     return null
   })
@@ -28,7 +28,7 @@ export const validateHpoTerm = (value, message = null) => {
   if (!value) return null
 
   if (!value.toString().toUpperCase().match(/HP:\d{7}/)) {
-    return message || `Value '${value} is not a valid HPO term.`
+    return message || `'${value}' is not a valid HPO term`
   }
   return null
 }
@@ -98,7 +98,7 @@ export const validateOmimTerm = (value, message = null) => {
   if (!value) return null
 
   if (!value.toString().toUpperCase().match(/^OMIM:\d+$/)) {
-    return message || `Value '${value} is not a valid OMIM term.`
+    return message || `'${value}' is not a valid OMIM term`
   }
   return null
 }
