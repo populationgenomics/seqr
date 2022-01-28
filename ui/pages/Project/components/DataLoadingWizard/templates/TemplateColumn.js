@@ -10,7 +10,7 @@ class TemplateColumn {
   }
 
   /**
-   * @param {[]|{}} row
+   * @param {*[]|{}} row
    * @returns {{value: *, valid: boolean, errors: string[]}}
    */
   parse(row) {
@@ -25,7 +25,9 @@ class TemplateColumn {
       )
     }
 
-    const validationErrors = this.validators.map(validator => validator(result)).filter(e => e != null)
+    // Some validators may return a list of errors if they validate a field which is parsed into an array, for example
+    // a comma-delimited list of string values. Use flatMap to flatten all validation errors into a single array.
+    const validationErrors = this.validators.flatMap(validator => validator(result)).filter(e => e != null)
 
     return {
       value: result,
