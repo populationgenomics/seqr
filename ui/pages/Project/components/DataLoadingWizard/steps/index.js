@@ -1,7 +1,7 @@
 import Welcome from './Welcome'
-import FamilyMetadataUpload from './FamilyMetadataUpload'
+import TemplateUpload from './TemplateUpload'
 
 export {
   Welcome,
-  FamilyMetadataUpload,
+  TemplateUpload,
 }
