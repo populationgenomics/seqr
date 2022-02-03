@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import { INHERITANCE_MODE_OPTIONS, ONSET_AGE_OPTIONS } from '../../../constants'
+import { INHERITANCE_MODE_OPTIONS, ONSET_AGE_OPTIONS } from '../../../../constants'
 
 /**
  * @param {*[]} collection
@@ -55,7 +55,7 @@ export const validateOnsetCategory = (value, message = null) => {
   const categories = ONSET_AGE_OPTIONS.map(o => o.text)
 
   if (!categories.map(c => c.toLowerCase()).includes(value.toLowerCase())) {
-    return message || `'${value}' must be one of ${categories.join(', ')}`
+    return message || `'${value}' is not one of ${categories.join(', ')}`
   }
 
   return null
@@ -72,7 +72,7 @@ export const validateModeOfInheritanceTerm = (value, message = null) => {
   const categories = INHERITANCE_MODE_OPTIONS.map(o => o.text)
 
   if (!categories.map(c => c.toLowerCase()).includes(value.toLowerCase())) {
-    return message || `'${value}' must be one of ${categories.join(', ')}`
+    return message || `'${value}' is not one of ${categories.join(', ')}`
   }
 
   return null
