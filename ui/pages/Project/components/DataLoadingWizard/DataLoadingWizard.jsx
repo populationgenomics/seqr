@@ -7,17 +7,24 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Breadcrumb } from 'semantic-ui-react'
 
-import { Centered, FormSection, FormStepButtons } from './ui'
-import { Welcome, FamilyMetadataUpload } from './steps'
 import { Error404 } from '../../../../shared/components/page/Errors'
 import { getCurrentProject } from '../../selectors'
 
+import { Centered, FormSection, FormStepButtons } from './ui'
+import { Welcome, TemplateUpload } from './steps'
+import PedigreeTemplateColumns from './templates/Pedigree'
+import IndividualTemplateColumns from './templates/Individual'
+import FamilyTemplateColumns from './templates/Family'
+import TemplateFile from './templates/File/TemplateFile'
+import TemplateHelp from './TemplateHelp'
+
 const BREADCRUMBS = [
   { key: 0, content: 'Welcome', link: true, active: true },
-  { key: 1, content: 'Family metadata', link: true, active: false },
+  { key: 1, content: 'Pedigree', link: true, active: false },
   { key: 2, content: 'Individual metadata', link: true, active: false },
-  { key: 3, content: 'Sample mapping', link: true, active: false },
-  { key: 4, content: 'Review', link: true, active: false },
+  { key: 3, content: 'Family metadata', link: true, active: false },
+  { key: 4, content: 'Sample mapping', link: true, active: false },
+  { key: 5, content: 'Review', link: true, active: false },
 ]
 
 const BaseMultistepForm = ({ project }) => {
@@ -58,20 +65,47 @@ const BaseMultistepForm = ({ project }) => {
   }, [formSteps, activeFormStepIndex, enableReview])
 
   const getFormStepComponent = useCallback(() => {
+    const onFormChange = ({ formData, isComplete }) => updateFormStep(activeFormStepIndex, { formData, isComplete })
+
     switch (activeFormStepIndex) {
       case 0:
         return <Welcome />
       case 1:
         return (
-          <FamilyMetadataUpload
+          <TemplateUpload
+            id="pedigree-upload"
+            key="pedigree-upload"
+            label="Pedigree"
+            template={new TemplateFile(PedigreeTemplateColumns())}
+            onFormChange={onFormChange}
+            information={<TemplateHelp />}
             project={project}
-            onFormChange={({ formData, isComplete }) => updateFormStep(1, { formData, isComplete })}
           />
         )
       case 2:
-        return <div>{ breadCrumbs[activeFormStepIndex].content }</div>
+        return (
+          <TemplateUpload
+            id="individual-metadata-upload"
+            key="individual-metadata-upload"
+            label="Individual Metadata"
+            template={new TemplateFile(IndividualTemplateColumns())}
+            onFormChange={onFormChange}
+            information={<TemplateHelp />}
+            project={project}
+          />
+        )
       case 3:
-        return <div>{ breadCrumbs[activeFormStepIndex].content }</div>
+        return (
+          <TemplateUpload
+            id="family-metadata-upload"
+            key="family-metadata-upload"
+            label="Family Metadata"
+            template={new TemplateFile(FamilyTemplateColumns())}
+            onFormChange={onFormChange}
+            information={<TemplateHelp />}
+            project={project}
+          />
+        )
       case 4:
         return <div>{ breadCrumbs[activeFormStepIndex].content }</div>
       case 5:
