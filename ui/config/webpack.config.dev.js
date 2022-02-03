@@ -10,6 +10,10 @@ const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const glob = require('glob');
 const paths = require('./paths');
 
+// HACK: OpenSSL 3 does not support md4 any more, but webpack hardcodes it all over the place: https://github.com/webpack/webpack/issues/13572
+const crypto = require('crypto');
+const cryptoOriginalCreateHash = crypto.createHash;
+crypto.createHash = algorithm => cryptoOriginalCreateHash(algorithm === 'md4' ? 'sha256' : algorithm);
 
 // This is the development configuration.
 

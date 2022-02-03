@@ -1,0 +1,26 @@
+# Database settings for Django
+export POSTGRES_SERVICE_HOSTNAME=localhost
+export POSTGRES_SERVICE_PORT=5433
+export POSTGRES_USERNAME=postgres
+export POSTGRES_PASSWORD=a-very-secure-password
+export POSTGRES_DATABASE=seqrdb
+
+# Leave blank for local env
+export DEPLOYMENT_TYPE=
+
+# Convenience commands for creating database
+export CREATE_REF_DB_CMD="psql -W -U ${POSTGRES_USERNAME} -h ${POSTGRES_SERVICE_HOSTNAME} -p ${POSTGRES_SERVICE_PORT} -c 'create database reference_data_db;'"
+export LIST_DBS_CMD="psql -W -U ${POSTGRES_USERNAME} -h ${POSTGRES_SERVICE_HOSTNAME} -p ${POSTGRES_SERVICE_PORT} -c '\list'"
+
+# ----------------------------------------------------------------------------
+# Apple Developers
+# ----------------------------------------------------------------------------
+# Install libpg for the Postgres client library without the server (brew install libpg)
+# Export these variables so that pip packages know where to find the appropriate binaries, libs and headers.
+# export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+# export LDFLAGS="-L/opt/homebrew/opt/libpq/lib $LDFLAGS"
+# export CPPFLAGS="-I/opt/homebrew/opt/libpq/include $CPPFLAGS"
+
+# Apple silicon (M1 chip etc) fix for grpcio
+# export GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
+# export GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1
