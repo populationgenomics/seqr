@@ -1,5 +1,5 @@
-import TemplateColumn from './TemplateColumn'
-import { parseString, parseStringArray } from './parsers'
+import TemplateColumn from './File/TemplateColumn'
+import { parseString, parseStringArray } from './utils/parsers'
 
 const FamilyTemplateColumns = () => ([
   new TemplateColumn({
