@@ -33,8 +33,10 @@ jobs:
         run: |
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             echo DEPLOYMENT_TYPE=prod >> $GITHUB_ENV
-          else
-            echo DEPLOYMENT_TYPE=dev >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == 'refs/heads/deploy' ]]; then
+            echo DEPLOYMENT_TYPE=staging >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == 'refs/heads/reanalysis-dev' ]]; then
+            echo DEPLOYMENT_TYPE=reanalysis-dev >> $GITHUB_ENV
           fi
 
       - name: build UI
