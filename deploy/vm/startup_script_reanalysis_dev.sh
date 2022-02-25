@@ -44,7 +44,7 @@ docker run --name seqr -p 80:8000 \
     -e SEQR_ES_PASSWORD=sm://seqr-308602/seqr-reanalysis-dev-es-password \
     -e REDIS_SERVICE_HOSTNAME=10.94.144.3 \
     -e GUNICORN_WORKER_THREADS=20 \
-    -e SOCIAL_AUTH_GOOGLE_OAUTH2_CLIENT_ID=1021400127367-40kj6v68nlps6unk6bgvh08r5o4djf6b.apps.googleusercontent.com \
+    -e SOCIAL_AUTH_GOOGLE_OAUTH2_CLIENT_ID=1021400127367-4vch8s8kc9opeg4v14b2n70se55jpao4.apps.googleusercontent.com \
     -e SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=sm://seqr-308602/social-auth-google-oauth2-secret-reanalysis-dev \
     -e DJANGO_KEY=sm://seqr-308602/django-key-reanalysis-dev \
     -e SENDGRID_API_KEY=sm://seqr-308602/sendgrid-api-key \
