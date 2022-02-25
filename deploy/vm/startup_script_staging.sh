@@ -30,7 +30,8 @@ docker run --name seqr -p 80:8000 \
     -e BASE_URL=https://seqr-staging.populationgenomics.org.au/ \
     -e POSTGRES_SERVICE_HOSTNAME=10.94.145.3 \
     -e POSTGRES_SERVICE_PORT=5432 \
-    -e POSTGRES_USERNAME=postgres-staging \
+    -e POSTGRES_DATABASE=seqrdb_staging \
+    -e POSTGRES_USERNAME=postgres_staging \
     -e POSTGRES_PASSWORD=sm://seqr-308602/postgres-staging-password \
     -e ANALYST_PROJECT_CATEGORY=analyst-projects \
     -e ANALYST_USER_GROUP=analysts \
