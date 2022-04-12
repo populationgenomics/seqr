@@ -59,7 +59,9 @@ class ProgrammaticAccess:
 
 def programmatic_access(wrapped_func=None):
     def decorator(_wrapped_func):
-        return ProgrammaticAccess(login_active_required(user_passes_test(_has_programmatic_access(_wrapped_func))))
+        return ProgrammaticAccess(login_active_required(
+            user_passes_test(_has_programmatic_access)(_wrapped_func)
+        ))
 
     if wrapped_func:
         return decorator(wrapped_func)

@@ -1,5 +1,6 @@
 from anymail.exceptions import AnymailError
 import requests
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.handlers.exception import get_exception_response
 from django.http import Http404
@@ -8,7 +9,6 @@ from django.utils.cache import add_never_cache_headers
 from django.utils.deprecation import MiddlewareMixin
 from django.urls import get_resolver, get_urlconf, resolve
 import elasticsearch.exceptions
-from django.utils.functional import SimpleLazyObject
 from requests import HTTPError
 from social_core.exceptions import AuthException
 import json
@@ -89,19 +89,6 @@ class DisableCSRFProgrammaticAccessMiddleware(MiddlewareMixin):
 
 class BearerAuth(MiddlewareMixin):
 
-    @staticmethod
-    def get_user(request, email):
-        if not request.bearer_cached_user:
-
-            from django.contrib.auth.models import User
-
-            users = User.objects.filter(email__iexact=email)
-            if users.count() != 1:
-                raise PermissionDenied(f'No user found with email {email}')
-            request.bearer_cached_user = users.first()
-
-        return request.bearer_cached_user
-
     def process_request(self, request):
 
         assert hasattr(request, 'programmatic_access'), (
@@ -132,9 +119,10 @@ class BearerAuth(MiddlewareMixin):
                 raise PermissionDenied('The email address on the Bearer claim is not verified')
 
             email = idinfo['email']
-
-            request.bearer_cached_user = None
-            request.user = SimpleLazyObject(lambda: BearerAuth.get_user(request, email))
+            users = User.objects.filter(email__iexact=email)
+            if users.count() != 1:
+                raise PermissionDenied(f'No user found with email {email}')
+            request.user = users.first()
 
 
 def _get_transport_error_type(error):
