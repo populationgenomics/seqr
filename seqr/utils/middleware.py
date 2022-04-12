@@ -19,10 +19,9 @@ from google.auth.transport import requests
 from seqr.utils.elasticsearch.utils import InvalidIndexException, InvalidSearchException
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.json_utils import create_json_response
-from seqr.views.utils.pedigree_info_utils import ErrorsWarningsException
 from seqr.views.utils.permissions_utils import ProgrammaticAccess
 from seqr.views.utils.terra_api_utils import TerraAPIException
-from settings import DEBUG, LOGIN_URL, BEARER_AUTH_CLIENT_ID
+from settings import DEBUG, LOGIN_URL, SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
 logger = SeqrLogger()
 
@@ -115,7 +114,7 @@ class BearerAuth(MiddlewareMixin):
 
         if request.programmatic_access:
 
-            assert BEARER_AUTH_CLIENT_ID
+            assert SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
             authorization_value = request.META.get("HTTP_AUTHORIZATION", "")
             if not authorization_value.startswith("Bearer"):
@@ -125,9 +124,10 @@ class BearerAuth(MiddlewareMixin):
 
             # Specify the CLIENT_ID of the app that accesses the backend:
             try:
-                idinfo = id_token.verify_oauth2_token(token, requests.Request(), BEARER_AUTH_CLIENT_ID)
+                idinfo = id_token.verify_oauth2_token(token, requests.Request(), SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
             except ValueError as e:
                 raise PermissionDenied(', '.join(e.args))
+
             if not idinfo.get('email_verified', False):
                 raise PermissionDenied('The email address on the Bearer claim is not verified')
 
