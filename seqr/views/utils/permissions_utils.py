@@ -26,22 +26,11 @@ def user_is_data_manager(user):
 def user_is_pm(user):
     return user.groups.filter(name=PM_USER_GROUP).exists() if PM_USER_GROUP else user.is_superuser
 
-def user_has_programmatic_access(wrapped_func):
+def user_has_programmatic_access(user):
+    return user.groups.filter(name=PROGRAMMATIC_ACCESS_GROUP).exists()
 
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(request, *args, **kwargs):
-            user = request.user
-            result = user.is_active
-            if PROGRAMMATIC_ACCESS_GROUP:
-                result = result and user.groups.filter(name=PROGRAMMATIC_ACCESS_GROUP).exists()
-            else:
-                result = result and user.is_superuser
-            if not result:
-                raise PermissionDenied(f'{user.username} does not have programmatic access enabled')
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return decorator(wrapped_func)
+def user_is_active_and_has_programmatic_access(user):
+    return user.is_active and user_has_programmatic_access(user)
 
 def _has_current_policies(user):
     if not hasattr(user, 'userpolicy'):
@@ -76,12 +65,23 @@ class ProgrammaticAccess:
 
 
 def programmatic_access(wrapped_func=None):
-
+    """
+    Decorator for checking function has programmatic access
+    """
     def decorator(_wrapped_func):
-        return ProgrammaticAccess(
-            user_has_programmatic_access(_wrapped_func)
-        )
 
+        def _check_user_func(request, *args, **kwargs):
+            # reimplement this here as user_passes_test, login_required will
+            # both redirect client to login page (which this shouldn't do)
+            if not user_is_active_and_has_programmatic_access(request.user):
+                raise PermissionDenied(
+                    f'{request.user.username} does not have programmatic access enabled'
+                )
+            return _wrapped_func(request, *args, **kwargs)
+
+        return ProgrammaticAccess(_check_user_func)
+
+    # doing it like this allows you to apply 'programmatic_access' directly
     if wrapped_func:
         return decorator(wrapped_func)
     return decorator
