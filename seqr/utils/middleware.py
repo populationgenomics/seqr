@@ -5,17 +5,20 @@ from django.http import Http404
 from django.http.request import RawPostDataException
 from django.utils.cache import add_never_cache_headers
 from django.utils.deprecation import MiddlewareMixin
-from django.urls import get_resolver, get_urlconf
+from django.urls import get_resolver, get_urlconf, resolve
 import elasticsearch.exceptions
+from django.utils.functional import SimpleLazyObject
 from requests import HTTPError
 from social_core.exceptions import AuthException
 import json
 import traceback
+from google.auth import jwt
 
 from seqr.utils.elasticsearch.utils import InvalidIndexException, InvalidSearchException
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.pedigree_info_utils import ErrorsWarningsException
+from seqr.views.utils.permissions_utils import ProgrammaticAccess
 from seqr.views.utils.terra_api_utils import TerraAPIException
 from settings import DEBUG, LOGIN_URL
 
@@ -48,6 +51,68 @@ EXCEPTION_MESSAGE_MAP = {
 }
 
 ERROR_LOG_EXCEPTIONS = {InvalidIndexException}
+
+
+class CheckProgrammaticAccessMiddleware(MiddlewareMixin):
+
+    def process_request(self, request):
+        func, _, _ = resolve(request.path)
+        request.programmatic_access = isinstance(func, ProgrammaticAccess)
+
+
+class DisableCSRFProgrammaticAccessMiddleware(MiddlewareMixin):
+
+    def process_view(self, request, callback, callback_args, callback_kwargs):
+        assert hasattr(request, 'programmatic_access'), (
+            "The seqr DisableCSRFProgrammaticAccess middleware requires "
+            "CheckProgrammaticAccessMiddleware middleware to be installed. "
+            "Edit your MIDDLEWARE setting to insert "
+            "'seqr.utils.middleware.CheckProgrammaticAccessMiddleware' before "
+            "'seqr.utils.middleware.DisableCSRFProgrammaticAccessMiddleware'."
+        )
+
+        if request.programmatic_access:
+            # only exempt CSRF if it's a programmatic access route
+            callback.csrf_exempt = True
+            # alternative
+            # request._dont_enforce_csrf_checks = True
+
+
+class BearerAuth(MiddlewareMixin):
+
+    @staticmethod
+    def get_user(request, email):
+        if not request.bearer_cached_user:
+
+            from django.contrib.auth.models import User
+
+            users = User.objects.filter(email__iexact=email)
+            if users.count() != 1:
+                raise Exception
+            request.bearer_cached_user = users.first()
+
+        return request.bearer_cached_user
+
+    def process_request(self, request):
+
+        assert hasattr(request, 'programmatic_access'), (
+            "The seqr BearerAuth middleware requires "
+            "CheckProgrammaticAccessMiddleware middleware to be installed. "
+            "Edit your MIDDLEWARE setting to insert "
+            "'seqr.utils.middleware.CheckProgrammaticAccessMiddleware' before "
+            "'seqr.utils.middleware.BearerAuth'."
+        )
+
+        if request.programmatic_access:
+            authorization_value = request.META.get("HTTP_AUTHORIZATION", "")
+            if not authorization_value.startswith("Bearer"):
+                raise PermissionDenied("Expected Bearer token authorization for programmatic route")
+
+            token = authorization_value.split(" ")[-1]
+            email = jwt.decode(token, verify=False)['email']
+            request.bearer_cached_user = None
+            request.user = SimpleLazyObject(lambda: BearerAuth.get_user(request, email))
+
 
 def _get_transport_error_type(error):
     error_type = 'no detail'

@@ -45,6 +45,27 @@ _active_required = user_passes_test(_require_permission(lambda user: user.is_act
 def _current_policies_required(view_func, policy_url=API_POLICY_REQUIRED_URL):
     return user_passes_test(_has_current_policies, login_url=policy_url)(view_func)
 
+def _has_programmatic_access(user):
+    return True
+
+class ProgrammaticAccess:
+    """Useful for checking if a route is annotated with Programmatic Access"""
+    def __init__(self, func):
+        assert func
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+
+def programmatic_access(wrapped_func=None):
+    def decorator(_wrapped_func):
+        return ProgrammaticAccess(login_active_required(user_passes_test(_has_programmatic_access(_wrapped_func))))
+
+    if wrapped_func:
+        return decorator(wrapped_func)
+    return decorator
+
 def login_active_required(wrapped_func=None, login_url=API_LOGIN_REQUIRED_URL):
     def decorator(view_func):
         return login_required(_active_required(view_func), login_url=login_url)
