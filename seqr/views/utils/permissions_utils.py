@@ -1,3 +1,5 @@
+from functools import wraps
+
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.functions import Concat
@@ -10,7 +12,8 @@ from seqr.views.utils.terra_api_utils import is_anvil_authenticated, user_get_wo
     anvil_enabled, user_get_workspace_access_level, WRITER_ACCESS_LEVEL, OWNER_ACCESS_LEVEL,\
     PROJECT_OWNER_ACCESS_LEVEL, CAN_SHARE_PERM
 from settings import API_LOGIN_REQUIRED_URL, ANALYST_USER_GROUP, PM_USER_GROUP, ANALYST_PROJECT_CATEGORY, \
-    TERRA_WORKSPACE_CACHE_EXPIRE_SECONDS, SEQR_PRIVACY_VERSION, SEQR_TOS_VERSION, API_POLICY_REQUIRED_URL
+    TERRA_WORKSPACE_CACHE_EXPIRE_SECONDS, SEQR_PRIVACY_VERSION, SEQR_TOS_VERSION, API_POLICY_REQUIRED_URL, \
+    PROGRAMMATIC_ACCESS_GROUP
 
 logger = SeqrLogger(__name__)
 
@@ -22,6 +25,23 @@ def user_is_data_manager(user):
 
 def user_is_pm(user):
     return user.groups.filter(name=PM_USER_GROUP).exists() if PM_USER_GROUP else user.is_superuser
+
+def user_has_programmatic_access(wrapped_func):
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            user = request.user
+            result = user.is_active
+            if PROGRAMMATIC_ACCESS_GROUP:
+                result = result and user.groups.filter(name=PROGRAMMATIC_ACCESS_GROUP).exists()
+            else:
+                result = result and user.is_superuser
+            if not result:
+                raise PermissionDenied(f'{user.username} does not have programmatic access enabled')
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator(wrapped_func)
 
 def _has_current_policies(user):
     if not hasattr(user, 'userpolicy'):
@@ -44,8 +64,6 @@ _active_required = user_passes_test(_require_permission(lambda user: user.is_act
 def _current_policies_required(view_func, policy_url=API_POLICY_REQUIRED_URL):
     return user_passes_test(_has_current_policies, login_url=policy_url)(view_func)
 
-def _has_programmatic_access(user):
-    return True
 
 class ProgrammaticAccess:
     """Useful for checking if a route is annotated with Programmatic Access"""
@@ -58,10 +76,11 @@ class ProgrammaticAccess:
 
 
 def programmatic_access(wrapped_func=None):
+
     def decorator(_wrapped_func):
-        return ProgrammaticAccess(login_active_required(
-            user_passes_test(_has_programmatic_access)(_wrapped_func)
-        ))
+        return ProgrammaticAccess(
+            user_has_programmatic_access(_wrapped_func)
+        )
 
     if wrapped_func:
         return decorator(wrapped_func)

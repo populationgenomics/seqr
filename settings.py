@@ -307,6 +307,7 @@ POLICY_REQUIRED_URL = '/accept_policies'
 ANALYST_PROJECT_CATEGORY = os.environ.get('ANALYST_PROJECT_CATEGORY')
 ANALYST_USER_GROUP = os.environ.get('ANALYST_USER_GROUP')
 PM_USER_GROUP = os.environ.get('PM_USER_GROUP')
+PROGRAMMATIC_ACCESS_GROUP = os.environ.get('PROGRAMMATIC_ACCESS_GROUP', 'programmatic_access')
 
 # External service settings
 ELASTICSEARCH_SERVICE_HOSTNAME = os.environ.get('ELASTICSEARCH_SERVICE_HOSTNAME', 'localhost')
