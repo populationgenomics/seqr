@@ -27,6 +27,14 @@ from settings import DEBUG, LOGIN_URL, BEARER_AUTH_CLIENT_ID
 logger = SeqrLogger()
 
 
+class ErrorsWarningsException(Exception):
+    def __init__(self, errors, warnings=None):
+        """Custom Exception to capture errors and warnings."""
+        Exception.__init__(self, str(errors))
+        self.errors = errors
+        self.warnings = warnings
+
+
 EXCEPTION_ERROR_MAP = {
     PermissionDenied: 403,
     ObjectDoesNotExist: 404,
@@ -176,6 +184,10 @@ class JsonErrorMiddleware(MiddlewareMixin):
         detail = getattr(exception, 'info', None)
         if isinstance(detail, dict):
             exception_json['detail'] = detail
+
+        if isinstance(exception, PermissionDenied):
+            logger.warning('PermissionDenied: {}'.format(exception_json['error']), request.user)
+            exception_json['error'] = 'Permission Denied'
 
         if request.path.startswith('/api'):
             return create_json_response(exception_json, status=status)
