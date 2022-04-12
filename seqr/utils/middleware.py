@@ -73,11 +73,11 @@ class DisableCSRFProgrammaticAccessMiddleware(MiddlewareMixin):
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
         assert hasattr(request, 'programmatic_access'), (
-            "The seqr DisableCSRFProgrammaticAccess middleware requires "
-            "CheckProgrammaticAccessMiddleware middleware to be installed. "
-            "Edit your MIDDLEWARE setting to insert "
-            "'seqr.utils.middleware.CheckProgrammaticAccessMiddleware' before "
-            "'seqr.utils.middleware.DisableCSRFProgrammaticAccessMiddleware'."
+            'The seqr DisableCSRFProgrammaticAccess middleware requires '
+            'CheckProgrammaticAccessMiddleware middleware to be installed. '
+            'Edit your MIDDLEWARE setting to insert '
+            '"seqr.utils.middleware.CheckProgrammaticAccessMiddleware" before '
+            '"seqr.utils.middleware.DisableCSRFProgrammaticAccessMiddleware".'
         )
 
         if request.programmatic_access:
@@ -92,20 +92,20 @@ class BearerAuth(MiddlewareMixin):
     def process_request(self, request):
 
         assert hasattr(request, 'programmatic_access'), (
-            "The seqr BearerAuth middleware requires "
-            "CheckProgrammaticAccessMiddleware middleware to be installed. "
-            "Edit your MIDDLEWARE setting to insert "
-            "'seqr.utils.middleware.CheckProgrammaticAccessMiddleware' before "
-            "'seqr.utils.middleware.BearerAuth'."
+            'The seqr BearerAuth middleware requires '
+            'CheckProgrammaticAccessMiddleware middleware to be installed. '
+            'Edit your MIDDLEWARE setting to insert '
+            '"seqr.utils.middleware.CheckProgrammaticAccessMiddleware" before '
+            '"seqr.utils.middleware.BearerAuth".'
         )
 
         if request.programmatic_access:
 
             assert SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
-            authorization_value = request.META.get("HTTP_AUTHORIZATION", "")
-            if not authorization_value.startswith("Bearer"):
-                raise PermissionDenied("Expected Bearer token authorization for programmatic route")
+            authorization_value = request.META.get('HTTP_AUTHORIZATION', '')
+            if not authorization_value.startswith('Bearer'):
+                raise PermissionDenied('Expected Bearer token authorization for programmatic route')
 
             token = authorization_value.split(' ', maxsplit=1)[-1]
 
