@@ -1,4 +1,5 @@
 from anymail.exceptions import AnymailError
+import requests
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.handlers.exception import get_exception_response
 from django.http import Http404
@@ -12,15 +13,16 @@ from requests import HTTPError
 from social_core.exceptions import AuthException
 import json
 import traceback
-from google.auth import jwt
 
+from google.oauth2 import id_token
+from google.auth.transport import requests
 from seqr.utils.elasticsearch.utils import InvalidIndexException, InvalidSearchException
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.pedigree_info_utils import ErrorsWarningsException
 from seqr.views.utils.permissions_utils import ProgrammaticAccess
 from seqr.views.utils.terra_api_utils import TerraAPIException
-from settings import DEBUG, LOGIN_URL
+from settings import DEBUG, LOGIN_URL, BEARER_AUTH_CLIENT_ID
 
 logger = SeqrLogger()
 
@@ -88,7 +90,7 @@ class BearerAuth(MiddlewareMixin):
 
             users = User.objects.filter(email__iexact=email)
             if users.count() != 1:
-                raise Exception
+                raise PermissionDenied(f'No user found with email {email}')
             request.bearer_cached_user = users.first()
 
         return request.bearer_cached_user
@@ -104,12 +106,25 @@ class BearerAuth(MiddlewareMixin):
         )
 
         if request.programmatic_access:
+
+            assert BEARER_AUTH_CLIENT_ID
+
             authorization_value = request.META.get("HTTP_AUTHORIZATION", "")
             if not authorization_value.startswith("Bearer"):
                 raise PermissionDenied("Expected Bearer token authorization for programmatic route")
 
             token = authorization_value.split(" ")[-1]
-            email = jwt.decode(token, verify=False)['email']
+
+            # Specify the CLIENT_ID of the app that accesses the backend:
+            try:
+                idinfo = id_token.verify_oauth2_token(token, requests.Request(), BEARER_AUTH_CLIENT_ID)
+            except ValueError as e:
+                raise PermissionDenied(', '.join(e.args))
+            if not idinfo.get('email_verified', False):
+                raise PermissionDenied('The email address on the Bearer claim is not verified')
+
+            email = idinfo['email']
+
             request.bearer_cached_user = None
             request.user = SimpleLazyObject(lambda: BearerAuth.get_user(request, email))
 
