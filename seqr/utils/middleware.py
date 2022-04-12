@@ -107,7 +107,7 @@ class BearerAuth(MiddlewareMixin):
             if not authorization_value.startswith("Bearer"):
                 raise PermissionDenied("Expected Bearer token authorization for programmatic route")
 
-            token = authorization_value.split(" ")[-1]
+            token = authorization_value.split(' ', maxsplit=1)[-1]
 
             # Specify the CLIENT_ID of the app that accesses the backend:
             try:
