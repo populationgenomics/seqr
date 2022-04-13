@@ -50,9 +50,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'seqr.utils.middleware.CheckProgrammaticAccessMiddleware',
+    'seqr.utils.middleware.CheckServiceAccountAccessMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'seqr.utils.middleware.DisableCSRFProgrammaticAccessMiddleware',
+    'seqr.utils.middleware.DisableCSRFServiceAccountAccessMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.common.CommonMiddleware',
     'csp.middleware.CSPMiddleware',
@@ -307,7 +307,7 @@ POLICY_REQUIRED_URL = '/accept_policies'
 ANALYST_PROJECT_CATEGORY = os.environ.get('ANALYST_PROJECT_CATEGORY')
 ANALYST_USER_GROUP = os.environ.get('ANALYST_USER_GROUP')
 PM_USER_GROUP = os.environ.get('PM_USER_GROUP')
-PROGRAMMATIC_ACCESS_GROUP = os.environ.get('PROGRAMMATIC_ACCESS_GROUP', 'programmatic_access')
+SERVICE_ACCOUNT_ACCESS_GROUP = os.environ.get('SERVICE_ACCOUNT_ACCESS_GROUP', 'service_account_access')
 
 # External service settings
 ELASTICSEARCH_SERVICE_HOSTNAME = os.environ.get('ELASTICSEARCH_SERVICE_HOSTNAME', 'localhost')
