@@ -57,7 +57,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'csp.middleware.CSPMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'seqr.utils.middleware.BearerAuth',
+    'seqr.utils.middleware.GoogleBearerAuth',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'seqr.utils.middleware.CacheControlMiddleware',

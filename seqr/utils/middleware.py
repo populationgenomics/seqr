@@ -1,3 +1,5 @@
+import abc
+
 from anymail.exceptions import AnymailError
 import requests
 from django.contrib.auth.models import User
@@ -83,46 +85,61 @@ class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
         if request.service_account_access:
             # only exempt CSRF if it's a service account access route
             callback.csrf_exempt = True
-            # alternative
-            # request._dont_enforce_csrf_checks = True
 
 
-class BearerAuth(MiddlewareMixin):
-
+class BearerAuth(MiddlewareMixin, abc.ABC):
     def process_request(self, request):
-
         assert hasattr(request, 'service_account_access'), (
-            'The seqr BearerAuth middleware requires '
+            'The seqr GoogleBearerAuth middleware requires '
             'CheckServiceAccountAccessMiddleware middleware to be installed. '
             'Edit your MIDDLEWARE setting to insert '
             '"seqr.utils.middleware.CheckServiceAccountAccessMiddleware" before '
-            '"seqr.utils.middleware.BearerAuth".'
+            '"seqr.utils.middleware.GoogleBearerAuth".'
         )
 
         if request.service_account_access:
-
-            assert SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
-
             authorization_value = request.META.get('HTTP_AUTHORIZATION', '')
             if not authorization_value.startswith('Bearer'):
                 raise PermissionDenied('Expected Bearer token authorization for service account route')
 
             token = authorization_value.split(' ', maxsplit=1)[-1]
-
-            # Specify the CLIENT_ID of the app that accesses the backend:
-            try:
-                idinfo = id_token.verify_oauth2_token(token, requests.Request(), SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
-            except ValueError as e:
-                raise PermissionDenied(', '.join(e.args))
-
-            if not idinfo.get('email_verified', False):
-                raise PermissionDenied('The email address on the Bearer claim is not verified')
-
-            email = idinfo['email']
+            email = self.validate_and_get_email_from_token(token)
             users = User.objects.filter(email__iexact=email)
             if users.count() != 1:
                 raise PermissionDenied(f'No user found with email {email}')
             request.user = users.first()
+
+    @abc.abstractmethod
+    def validate_and_get_email_from_token(self, token):
+        pass
+
+
+class GoogleBearerAuth(BearerAuth):
+
+    def validate_and_get_email_from_token(self, token):
+        """
+        From the "Authorization: Bearer {token}" header, validate
+        """
+        # assert here to allow non-service-account routes to still succeed
+        #   (this triggers a 500 error to the client)
+        assert SOCIAL_AUTH_GOOGLE_OAUTH2_KEY, (
+            'You must specify a "SOCIAL_AUTH_GOOGLE_OAUTH2_CLIENT_ID" to use '
+            'the "seqr.utils.middleware.GoogleBearerAuth" middleware'
+        )
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+            )
+        except ValueError as e:
+            raise PermissionDenied(', '.join(e.args))
+
+        if not idinfo.get('email_verified', False):
+            raise PermissionDenied('The email address on the Bearer claim is not verified')
+
+        email = idinfo['email']
+        return email
 
 
 def _get_transport_error_type(error):
