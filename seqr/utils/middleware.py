@@ -1,8 +1,4 @@
-import abc
-
 from anymail.exceptions import AnymailError
-import requests
-from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.handlers.exception import get_exception_response
 from django.http import Http404
@@ -16,14 +12,11 @@ from social_core.exceptions import AuthException
 import json
 import traceback
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from seqr.utils.elasticsearch.utils import InvalidIndexException, InvalidSearchException
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.json_utils import create_json_response
-from seqr.views.utils.permissions_utils import ServiceAccountAccess
 from seqr.views.utils.terra_api_utils import TerraAPIException
-from settings import DEBUG, LOGIN_URL, SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+from settings import DEBUG, LOGIN_URL
 
 logger = SeqrLogger()
 
@@ -62,84 +55,6 @@ EXCEPTION_MESSAGE_MAP = {
 }
 
 ERROR_LOG_EXCEPTIONS = {InvalidIndexException}
-
-
-class CheckServiceAccountAccessMiddleware(MiddlewareMixin):
-
-    def process_request(self, request):
-        func, _, _ = resolve(request.path)
-        request.service_account_access = isinstance(func, ServiceAccountAccess)
-
-
-class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
-
-    def process_view(self, request, callback, callback_args, callback_kwargs):
-        assert hasattr(request, 'service_account_access'), (
-            'The seqr DisableCSRFServiceAccountAccess middleware requires '
-            'CheckServiceAccountAccessMiddleware middleware to be installed. '
-            'Edit your MIDDLEWARE setting to insert '
-            '"seqr.utils.middleware.CheckServiceAccountAccessMiddleware" before '
-            '"seqr.utils.middleware.DisableCSRFServiceAccountAccessMiddleware".'
-        )
-
-        if request.service_account_access:
-            # only exempt CSRF if it's a service account access route
-            callback.csrf_exempt = True
-
-
-class BearerAuth(MiddlewareMixin, abc.ABC):
-    def process_request(self, request):
-        assert hasattr(request, 'service_account_access'), (
-            'The seqr GoogleBearerAuth middleware requires '
-            'CheckServiceAccountAccessMiddleware middleware to be installed. '
-            'Edit your MIDDLEWARE setting to insert '
-            '"seqr.utils.middleware.CheckServiceAccountAccessMiddleware" before '
-            '"seqr.utils.middleware.GoogleBearerAuth".'
-        )
-
-        if request.service_account_access:
-            authorization_value = request.META.get('HTTP_AUTHORIZATION', '')
-            if not authorization_value.startswith('Bearer'):
-                raise PermissionDenied('Expected Bearer token authorization for service account route')
-
-            token = authorization_value.split(' ', maxsplit=1)[-1]
-            email = self.validate_and_get_email_from_token(token)
-            users = User.objects.filter(email__iexact=email)
-            if users.count() != 1:
-                raise PermissionDenied(f'No user found with email {email}')
-            request.user = users.first()
-
-    @abc.abstractmethod
-    def validate_and_get_email_from_token(self, token):
-        pass
-
-
-class GoogleBearerAuth(BearerAuth):
-
-    def validate_and_get_email_from_token(self, token):
-        """
-        From the "Authorization: Bearer {token}" header, validate
-        """
-        # assert here to allow non-service-account routes to still succeed
-        #   (this triggers a 500 error to the client)
-        assert SOCIAL_AUTH_GOOGLE_OAUTH2_KEY, (
-            'You must specify a "SOCIAL_AUTH_GOOGLE_OAUTH2_CLIENT_ID" to use '
-            'the "seqr.utils.middleware.GoogleBearerAuth" middleware'
-        )
-        try:
-            idinfo = id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
-            )
-        except ValueError as e:
-            raise PermissionDenied(', '.join(e.args))
-
-        if not idinfo.get('email_verified', False):
-            raise PermissionDenied('The email address on the Bearer claim is not verified')
-
-        email = idinfo['email']
-        return email
 
 
 def _get_transport_error_type(error):
