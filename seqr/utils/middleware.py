@@ -5,7 +5,7 @@ from django.http import Http404
 from django.http.request import RawPostDataException
 from django.utils.cache import add_never_cache_headers
 from django.utils.deprecation import MiddlewareMixin
-from django.urls import get_resolver, get_urlconf, resolve
+from django.urls import get_resolver, get_urlconf
 import elasticsearch.exceptions
 from requests import HTTPError
 from social_core.exceptions import AuthException
@@ -55,7 +55,6 @@ EXCEPTION_MESSAGE_MAP = {
 }
 
 ERROR_LOG_EXCEPTIONS = {InvalidIndexException}
-
 
 def _get_transport_error_type(error):
     error_type = 'no detail'
