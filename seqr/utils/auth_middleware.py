@@ -38,12 +38,13 @@ class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
 
 class BearerAuth(MiddlewareMixin, abc.ABC):
     def process_request(self, request):
+        f'"seqr.utils.auth_middleware.{self.__class__.__name__}".'
         assert hasattr(request, 'service_account_access'), (
-            'The seqr GoogleBearerAuth middleware requires '
+            f'The seqr {self.__class__.__name__} middleware requires '
             'CheckServiceAccountAccessMiddleware middleware to be installed. '
             'Edit your MIDDLEWARE setting to insert '
             '"seqr.utils.auth_middleware.CheckServiceAccountAccessMiddleware" before '
-            '"seqr.utils.auth_middleware.GoogleBearerAuth".'
+            f'"seqr.utils.auth_middleware.{self.__class__.__name__}".'
         )
 
         if request.service_account_access:
