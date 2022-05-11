@@ -91,5 +91,7 @@ class GoogleBearerAuth(BearerAuth):
         if not idinfo.get('email_verified', False):
             raise PermissionDenied('The email address on the Bearer claim is not verified')
 
-        email = idinfo['email']
+        email = idinfo.get('email')
+        if not email:
+            raise PermissionDenied('No email address was found in the Bearer claim')
         return email
