@@ -48,10 +48,13 @@ class BearerAuth(MiddlewareMixin, abc.ABC):
 
         if request.service_account_access:
             authorization_value = request.META.get('HTTP_AUTHORIZATION', '')
-            if not authorization_value.startswith('Bearer'):
+            if not authorization_value.startswith('Bearer '):
                 raise PermissionDenied('Expected Bearer token authorization for service account route')
 
-            token = authorization_value.split(' ', maxsplit=1)[-1]
+            components = authorization_value.split(' ', maxsplit=1)
+            if len(components) != 2:
+                raise PermissionDenied('The Bearer token was not in the correct format')
+            token = components[-1]
             email = self.validate_and_get_email_from_token(token)
             users = User.objects.filter(email__iexact=email)
             if users.count() != 1:
