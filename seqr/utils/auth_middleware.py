@@ -49,7 +49,7 @@ class BearerAuth(MiddlewareMixin, abc.ABC):
 
         if request.service_account_access:
             authorization_value = request.META.get('HTTP_AUTHORIZATION', '')
-            if not authorization_value.startswith('Bearer '):
+            if not authorization_value.startswith('Bearer'):
                 raise PermissionDenied('Expected Bearer token authorization for service account route')
 
             components = authorization_value.split(' ', maxsplit=1)
