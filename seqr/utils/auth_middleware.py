@@ -17,6 +17,8 @@ class CheckServiceAccountAccessMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         try:
+            # do this before any other methods can throw an error
+            request.service_account_access = False
             func, _, _ = resolve(request.path)
             request.service_account_access = isinstance(func, ServiceAccountAccess)
         except Resolver404:
