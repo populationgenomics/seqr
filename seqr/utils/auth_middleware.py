@@ -8,7 +8,7 @@ from django.utils.deprecation import MiddlewareMixin
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from seqr.views.utils.permissions_utils import ServiceAccountAccess
+from seqr.views.utils.permissions_utils import ServiceAccountAccess, logger
 
 from settings import SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
@@ -23,10 +23,11 @@ class CheckServiceAccountAccessMiddleware(MiddlewareMixin):
             # Some URLs do not resolve, like /login/google-oauth2
             # We're not trying to block anything, so let's just pass along
             pass
-        except:
+        except Exception as e:
             # There should be no errors within this middleware,
-            # any uncaught errors will block access to the route anyway
-            pass
+            # logging and continuing, as it will block programmatic access
+            logger.error(f'There was an exception during {self.__class__.__name__}: {e}')
+
 
 
 class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
