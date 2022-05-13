@@ -2,7 +2,7 @@ import abc
 
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.urls import resolve
+from django.urls import resolve, Resolver404
 from django.utils.deprecation import MiddlewareMixin
 
 from google.oauth2 import id_token
@@ -16,8 +16,17 @@ from settings import SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 class CheckServiceAccountAccessMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
-        func, _, _ = resolve(request.path)
-        request.service_account_access = isinstance(func, ServiceAccountAccess)
+        try:
+            func, _, _ = resolve(request.path)
+            request.service_account_access = isinstance(func, ServiceAccountAccess)
+        except Resolver404:
+            # Some URLs do not resolve, like /login/google-oauth2
+            # We're not trying to block anything, so let's just pass along
+            pass
+        except:
+            # There should be no errors within this middleware,
+            # any uncaught errors will block access to the route anyway
+            pass
 
 
 class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
@@ -38,7 +47,6 @@ class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
 
 class BearerAuth(MiddlewareMixin, abc.ABC):
     def process_request(self, request):
-        f'"seqr.utils.auth_middleware.{self.__class__.__name__}".'
         assert hasattr(request, 'service_account_access'), (
             f'The seqr {self.__class__.__name__} middleware requires '
             'CheckServiceAccountAccessMiddleware middleware to be installed. '
