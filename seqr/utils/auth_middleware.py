@@ -8,7 +8,7 @@ from django.utils.deprecation import MiddlewareMixin
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from seqr.views.utils.permissions_utils import ServiceAccountAccess, logger
+from seqr.views.utils.permissions_utils import ServiceAccountAccess
 
 from settings import SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
 
