@@ -25,11 +25,6 @@ class CheckServiceAccountAccessMiddleware(MiddlewareMixin):
             # Some URLs do not resolve, like /login/google-oauth2
             # We're not trying to block anything, so let's just pass along
             pass
-        except Exception as e:
-            # There should be no errors within this middleware,
-            # logging and continuing, as it will block programmatic access
-            logger.error(f'There was an exception during {self.__class__.__name__}: {e}')
-
 
 
 class DisableCSRFServiceAccountAccessMiddleware(MiddlewareMixin):
