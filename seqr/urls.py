@@ -28,7 +28,8 @@ from seqr.views.apis.family_api import \
     family_page_data, \
     get_family_rna_seq_data, \
     family_variant_tag_summary, \
-    sa_receive_families_table, sa_edit_families
+    sa_edit_families, \
+    sa_receive_families_table
 
 from seqr.views.apis.individual_api import \
     get_individual_rna_seq_data, \
