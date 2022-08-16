@@ -6,6 +6,7 @@ on:
       - main
       - staging
       - reanalysis-dev
+      - seqr-staging-test
 
 jobs:
   docker:
