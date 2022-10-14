@@ -59,7 +59,7 @@ jobs:
       - name: push image
         run: docker push --all-tags $DOCKER_IMAGE
 
-      - name: Apply new schema
+      - name: Update cloudrun jobs
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
         run: |
           # cloud run jobs to update
@@ -80,8 +80,8 @@ jobs:
 
       - name: apply schema
         run: |
-          gcloud beta run jobs execute \
+          gcloud beta run jobs execute --wait \
             seqr-$DEPLOY_TARGET-schema-migrator
 
-          gcloud beta run jobs execute \
+          gcloud beta run jobs execute --wait \
             seqr-$DEPLOY_TARGET-reference-schema-migrator
