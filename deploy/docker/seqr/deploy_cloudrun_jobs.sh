@@ -81,7 +81,7 @@ gcloud beta run jobs create \
 
 
 # Add triggers
-
+# space these out time-wise so they don't update at the same time
 gcloud scheduler jobs create http --location australia-southeast1 \
    ${ENV_NAME}-reference-update-hpo-terms \
    --uri "https://australia-southeast1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/seqr-308602/jobs/${ENV_NAME}-reference-update-hpo-terms:run" \
