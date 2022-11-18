@@ -2,12 +2,12 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { Header, Message, Button } from 'semantic-ui-react'
+import { Header, Grid, Message, Button } from 'semantic-ui-react'
 
 import DispatchRequestButton from 'shared/components/buttons/DispatchRequestButton'
 import DataTable from 'shared/components/table/DataTable'
 import DataLoader from 'shared/components/DataLoader'
-import { InlineHeader } from 'shared/components/StyledComponents'
+import { DATASET_TYPE_VARIANT_CALLS } from 'shared/utils/constants'
 import { getElasticsearchStatusLoading, getElasticsearchStatusData } from '../selectors'
 import { loadElasticsearchStatus, deleteEsIndex } from '../reducers'
 
@@ -17,6 +17,11 @@ const DISK_STAT_COLUMNS = [
   { name: 'diskAvail', content: 'Disk available' },
   { name: 'diskUsed', content: 'Disk used' },
   { name: 'diskPercent', content: 'Disk %' },
+  { name: 'heapPercent', content: 'Heap %' },
+]
+
+const NODE_STAT_COLUMNS = [
+  { name: 'name', content: 'Node name' },
   { name: 'heapPercent', content: 'Heap %' },
 ]
 
@@ -31,7 +36,11 @@ const INDEX_COLUMNS = [
       </div>
     )) : <DeleteIndexButton index={row.index} />),
   },
-  { name: 'datasetType', content: 'Caller Type', format: row => (row.datasetType === 'SV' ? 'SV' : 'SNV') },
+  {
+    name: 'datasetType',
+    content: 'Caller Type',
+    format: row => (!row.datasetType || row.datasetType === DATASET_TYPE_VARIANT_CALLS ? 'SNV' : row.datasetType),
+  },
   { name: 'sampleType', content: 'Data Type' },
   { name: 'genomeVersion', content: 'Genome Version' },
   { name: 'creationDateString', content: 'Created Date', format: row => row.creationDateString.split('T')[0] },
@@ -59,19 +68,32 @@ const DeleteIndexButton = connect(null, mapDeleteIndexDispatchToProps)(BaseDelet
 
 const ElasticsearchStatus = React.memo(({ data, loading, load }) => (
   <DataLoader load={load} content={Object.keys(data).length} loading={loading}>
-    <InlineHeader size="small" content="Elasticsearch Host: " />
-    {data.elasticsearchHost}
-
-    <Header size="medium" content="Disk Status:" />
-    <DataTable
-      striped
-      collapsing
-      singleLine
-      idField="node"
-      defaultSortColumn="node"
-      data={data.diskStats}
-      columns={DISK_STAT_COLUMNS}
-    />
+    <Grid columns={2}>
+      <Grid.Column>
+        <Header size="medium" content="Disk Status:" />
+        <DataTable
+          striped
+          collapsing
+          singleLine
+          idField="node"
+          defaultSortColumn="node"
+          data={data.diskStats}
+          columns={DISK_STAT_COLUMNS}
+        />
+      </Grid.Column>
+      <Grid.Column>
+        <Header size="medium" content="Node Status:" />
+        <DataTable
+          striped
+          collapsing
+          singleLine
+          idField="name"
+          defaultSortColumn="name"
+          data={data.nodeStats}
+          columns={NODE_STAT_COLUMNS}
+        />
+      </Grid.Column>
+    </Grid>
 
     <Header size="medium" content="Loaded Indices:" />
     {data.errors && data.errors.length > 0 && <Message error list={data.errors} />}

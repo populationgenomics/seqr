@@ -7,8 +7,6 @@ export const getSelectedAnalysisGroups = (analysisGroupsByGuid, familyGuids) => 
   analysisGroupsByGuid,
 ).filter(group => group.familyGuids.every(familyGuid => familyGuids.includes(familyGuid)))
 
-export const SEARCH_FORM_NAME = 'variantSearch'
-
 const REF_REF = 'ref_ref'
 const HAS_REF = 'has_ref'
 const REF_ALT = 'ref_alt'
@@ -72,7 +70,7 @@ export const INHERITANCE_FILTER_LOOKUP = {
 }
 
 export const INHERITANCE_MODE_LOOKUP = Object.entries(INHERITANCE_FILTER_LOOKUP).reduce(
-  (acc, [mode, filter]) => ({ ...acc, [JSON.stringify(filter)]: mode }), {},
+  (acc, [mode, filter]) => ({ ...acc, [mode]: mode, [JSON.stringify(filter)]: mode }), {},
 )
 
 export const INHERITANCE_FILTER_JSON_OPTIONS = INHERITANCE_FILTER_OPTIONS.map(

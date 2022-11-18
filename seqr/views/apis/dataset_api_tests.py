@@ -6,8 +6,7 @@ from io import StringIO
 
 from seqr.models import Sample, Family
 from seqr.views.apis.dataset_api import add_variants_dataset_handler
-from seqr.views.utils.test_utils import urllib3_responses, AuthenticationTestCase, AnvilAuthenticationTestCase,\
-    MixAuthenticationTestCase
+from seqr.views.utils.test_utils import urllib3_responses, AuthenticationTestCase, AnvilAuthenticationTestCase
 
 PROJECT_GUID = 'R0001_1kg'
 NON_ANALYST_PROJECT_GUID = 'R0004_non_analyst_project'
@@ -65,6 +64,7 @@ class DatasetAPITest(object):
         self.assertEqual(existing_sample.elasticsearch_index, INDEX_NAME)
         self.assertFalse(existing_sample.is_active)
         existing_sample_guid = existing_sample.guid
+        existing_rna_seq_sample_guid = Sample.objects.get(sample_id='NA19675_D2', sample_type='RNA').guid
         self.assertEqual(Sample.objects.filter(sample_id='NA19678_1').count(), 0)
         self.assertEqual(Sample.objects.filter(sample_id='NA20878').count(), 0)
 
@@ -180,12 +180,12 @@ class DatasetAPITest(object):
         self.assertListEqual(list(response_json['individualsByGuid'].keys()), ['I000001_na19675'])
         self.assertListEqual(list(response_json['individualsByGuid']['I000001_na19675'].keys()), ['sampleGuids'])
         self.assertSetEqual(set(response_json['individualsByGuid']['I000001_na19675']['sampleGuids']),
-                            set([sv_sample_guid, existing_index_sample_guid]))
+                            {sv_sample_guid, existing_index_sample_guid, existing_rna_seq_sample_guid})
 
         # Regular variant sample should still be active
         sample_models = Sample.objects.filter(individual__guid='I000001_na19675')
-        self.assertEqual(len(sample_models), 2)
-        self.assertSetEqual({sv_sample_guid, existing_index_sample_guid}, {sample.guid for sample in sample_models})
+        self.assertEqual(len(sample_models), 3)
+        self.assertSetEqual({sv_sample_guid, existing_index_sample_guid, existing_rna_seq_sample_guid}, {sample.guid for sample in sample_models})
         self.assertSetEqual({True}, {sample.is_active for sample in sample_models})
 
         mock_send_email.assert_not_called()
@@ -230,7 +230,7 @@ class DatasetAPITest(object):
         self.assertListEqual(list(response_json['individualsByGuid'].keys()), ['I000001_na19675'])
         self.assertListEqual(list(response_json['individualsByGuid']['I000001_na19675'].keys()), ['sampleGuids'])
         self.assertSetEqual(set(response_json['individualsByGuid']['I000001_na19675']['sampleGuids']),
-                            set([sv_sample_guid, existing_index_sample_guid, new_sample_type_sample_guid]))
+                            {sv_sample_guid, existing_index_sample_guid, new_sample_type_sample_guid, existing_rna_seq_sample_guid})
 
         mock_send_email.assert_not_called()
         mock_send_slack.assert_called_with(
@@ -241,8 +241,10 @@ class DatasetAPITest(object):
 
         # Previous variant samples should still be active
         sample_models = Sample.objects.filter(individual__guid='I000001_na19675')
-        self.assertEqual(len(sample_models), 3)
-        self.assertSetEqual({sv_sample_guid, existing_index_sample_guid, new_sample_type_sample_guid}, {sample.guid for sample in sample_models})
+        self.assertEqual(len(sample_models), 4)
+        self.assertSetEqual(
+            {sv_sample_guid, existing_index_sample_guid, new_sample_type_sample_guid, existing_rna_seq_sample_guid},
+            {sample.guid for sample in sample_models})
         self.assertSetEqual({True}, {sample.is_active for sample in sample_models})
 
         # Test sending email for adding dataset to a non-analyst project
@@ -324,7 +326,7 @@ We have loaded 1 samples from the AnVIL workspace <a href=https://anvil.terra.bi
             }, "properties": MAPPING_PROPS_SAMPLES_NUM_ALT_1}}})
         response = self.client.post(url, content_type='application/json', data=ADD_DATASET_PAYLOAD)
         self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(response.json(), {'errors': ['Variant call dataset path must end with .vcf or .vcf.gz or .bgz or .bed']})
+        self.assertDictEqual(response.json(), {'errors': ['Variant call dataset path must end with .vcf or .vcf.gz or .bgz or .bed or .mt']})
 
         urllib3_responses.replace_json('/{}/_mapping'.format(INDEX_NAME), {
             INDEX_NAME: {'mappings': {'_meta': {
@@ -452,14 +454,4 @@ class AnvilDatasetAPITest(AnvilAuthenticationTestCase, DatasetAPITest):
 
     def test_add_variants_dataset(self, *args):
         super(AnvilDatasetAPITest, self).test_add_variants_dataset(*args)
-        assert_no_anvil_calls(self)
-
-
-# Test for permissions from AnVIL and local
-class MixDatasetAPITest(MixAuthenticationTestCase, DatasetAPITest):
-    fixtures = ['users', 'social_auth', '1kg_project']
-    ANVIL_DISABLED = False
-
-    def test_add_variants_dataset(self, *args):
-        super(MixDatasetAPITest, self).test_add_variants_dataset(*args)
         assert_no_anvil_calls(self)

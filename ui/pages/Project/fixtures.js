@@ -205,6 +205,7 @@ export const STATE_WITH_2_FAMILIES = {
       projectGuid: 'R0237_1000_genomes_demo',
       familyGuid: 'F011652_1',
       individualId: 'NA19678',
+      displayName: 'NA19678',
       affected: 'N',
       caseReviewStatus: 'A',
       caseReviewStatusLastModifiedBy: null,
@@ -260,6 +261,7 @@ export const STATE_WITH_2_FAMILIES = {
       projectGuid: 'R0237_1000_genomes_demo',
       familyGuid: 'F011652_1',
       individualId: 'NA19679',
+      displayName: 'NA19679_1',
       affected: 'N',
       caseReviewStatus: 'I',
       caseReviewStatusLastModifiedBy: null,
@@ -271,7 +273,9 @@ export const STATE_WITH_2_FAMILIES = {
     I021476_na19678_2: {
       projectGuid: 'R0237_1000_genomes_demo',
       familyGuid: 'F011652_2',
+      individualGuid: 'I021476_na19678_2',
       individualId: 'NA19678',
+      displayName: 'NA19678_2',
       affected: 'N',
       caseReviewStatus: 'A',
       caseReviewStatusLastModifiedBy: null,
@@ -311,6 +315,7 @@ export const STATE_WITH_2_FAMILIES = {
       datasetFilePath: "gs://seqr-datasets/GRCh37/cmg_sankaran_wes/CMG_MYOSEQ.vcf.gz",
       datasetName: null,
       datasetType: "VARIANTS",
+      familyGuid: 'F011652_2',
       individualGuid: "I021476_na19678_2",
       loadedDate: "2018-03-13T13:25:21.551Z",
       projectGuid: "R0237_1000_genomes_demo",
@@ -337,6 +342,7 @@ export const STATE_WITH_2_FAMILIES = {
       deprecatedLastAccessedDate: '2017-03-14T15:15:42.580Z',
       description: '',
       isMmeEnabled: true,
+      canEdit: true,
       lastModifiedDate: '2017-03-14T17:37:32.712Z',
       mmePrimaryDataOwner: 'PI',
       mmeContactInstitution: 'Broad',
@@ -344,6 +350,8 @@ export const STATE_WITH_2_FAMILIES = {
       name: '1000 Genomes Demo',
       projectCategoryGuids: [],
       projectGuid: 'R0237_1000_genomes_demo',
+      workspaceName: 'test-namespace',
+      workspaceNamespace: 'test-workspace',
       collaborators: [
         {
           dateJoined: '2019-02-20T18:01:36.677Z',
@@ -375,10 +383,15 @@ export const STATE_WITH_2_FAMILIES = {
     },
   },
   familyTableState: {
-    familiesFilter: 'ACCEPTED',
     familiesSortOrder: 'FAMILY_NAME',
     familiesSortDirection: -1,
     showDetails: true,
+  },
+  familyTableFilterState: {
+    analysisStatus: ['ACCEPTED'],
+  },
+  caseReviewTableState: {
+    familiesFilter: 'ACCEPTED',
   },
   user: {
     date_joined: '2015-02-19T20:22:50.633Z',
@@ -394,6 +407,7 @@ export const STATE_WITH_2_FAMILIES = {
   },
   savedVariantTableState: { hideExcluded: true, recordsPerPage: 1 },
   projectSavedVariantsLoading: {},
+  familyDetailsLoading: {},
   savedVariantsByGuid: {
     SV0000004_116042722_r0390_1000: {
       alt: "T",
@@ -1000,4 +1014,16 @@ export const STATE_WITH_2_FAMILIES = {
       username: 'test_user2',
     },
   },
+}
+
+export const DATA_MANAGER_USER = {
+  date_joined: '2015-02-19T20:22:50.633Z',
+  email: 'test@broadinstitute.org',
+  first_name: '',
+  id: 1,
+  isActive: true,
+  isDataManager: true,
+  last_login: '2017-03-14T17:44:53.403Z',
+  last_name: '',
+  username: 'test',
 }

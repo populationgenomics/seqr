@@ -1,5 +1,6 @@
+import gzip
 import os
-import subprocess
+import subprocess # nosec
 
 import google.cloud.storage
 
@@ -24,7 +25,7 @@ def run_command(command, user=None):
     logger.info('==> {}'.format(command), user)
     return subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
-    )
+    )   # nosec
 
 
 def _run_gsutil_command(command, gs_path, gunzip=False, user=None):
@@ -55,7 +56,11 @@ def get_google_project(gs_path):
 def does_file_exist(file_path, user=None):
     if is_google_bucket_file_path(file_path):
         process = _run_gsutil_command('ls', file_path, user=user)
-        return process.wait() == 0
+        success = process.wait() == 0
+        if not success:
+            errors = [line.decode('utf-8').strip() for line in process.stdout]
+            logger.info(' '.join(errors), user)
+        return success
     return os.path.isfile(file_path)
 
 
@@ -112,16 +117,37 @@ def file_iter(file_path, byte_range=None, raw_content=False, user=None):
             yield line
     else:
         mode = 'rb' if raw_content else 'r'
-        with open(file_path, mode) as f:
+        open_func = gzip.open if file_path.endswith("gz") else open
+        with open_func(file_path, mode) as f:
             for line in f:
                 yield line
 
 
 def mv_file_to_gs(local_path, gs_path, user=None):
+    command = 'mv {}'.format(local_path)
+    _run_gsutil_with_wait(command, gs_path, user)
+
+
+def get_gs_file_list(gs_path, user=None):
+    gs_path = gs_path.rstrip('/')
+    command = 'ls'
+
+    # If a bucket is empty gsutil throws an error when running ls with ** instead of returning an empty list
+    subfolders = _run_gsutil_with_wait(command, gs_path, user, get_stdout=True)
+    if not subfolders:
+        return []
+
+    all_lines = _run_gsutil_with_wait(command, f'{gs_path}/**', user, get_stdout=True)
+    return [line for line in all_lines if line.startswith(gs_path)]
+
+
+def _run_gsutil_with_wait(command, gs_path, user=None, get_stdout=False):
     if not is_google_bucket_file_path(gs_path):
         raise Exception('A Google Storage path is expected.')
-    command = 'mv {}'.format(local_path)
     process = _run_gsutil_command(command, gs_path, user=user)
     if process.wait() != 0:
         errors = [line.decode('utf-8').strip() for line in process.stdout]
         raise Exception('Run command failed: ' + ' '.join(errors))
+    if get_stdout:
+        return [line.decode('utf-8').rstrip('\n') for line in process.stdout]
+    return process

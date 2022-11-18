@@ -4,8 +4,7 @@ from django.urls.base import reverse
 
 from seqr.views.apis.dashboard_api import dashboard_page_data
 from seqr.views.utils.terra_api_utils import TerraAPIException
-from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, MixAuthenticationTestCase,\
-    PROJECT_FIELDS
+from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, PROJECT_FIELDS
 from seqr.models import Project
 
 DASHBOARD_PROJECT_FIELDS = {
@@ -73,6 +72,7 @@ class DashboardPageTest(object):
         project_json = response.json()['projectsByGuid']
         self.assertSetEqual(set(project_json.keys()), {'R0003_test'})
         self.assertFalse(project_json['R0003_test']['canEdit'])
+        self.assertFalse(project_json['R0003_test']['isMmeEnabled'])
 
         if hasattr(self, 'mock_list_workspaces'):
             self.mock_list_workspaces.side_effect = TerraAPIException('AnVIL Error', 400)
@@ -109,16 +109,6 @@ class AnvilDashboardPageTest(AnvilAuthenticationTestCase, DashboardPageTest):
     fixtures = ['users', 'social_auth', '1kg_project']
     NUM_COLLABORATOR_PROJECTS = 2
 
-    def test_dashboard_page_data(self):
-        super(AnvilDashboardPageTest, self).test_dashboard_page_data()
-        assert_has_anvil_calls(self)
-
-
-# Test for permissions from AnVIL and local
-class MixDashboardPageTest(MixAuthenticationTestCase, DashboardPageTest):
-    fixtures = ['users', 'social_auth', '1kg_project']
-    NUM_COLLABORATOR_PROJECTS = 3
-
-    def test_dashboard_page_data(self):
-        super(MixDashboardPageTest, self).test_dashboard_page_data()
+    def test_dashboard_page_data(self, *args):
+        super(AnvilDashboardPageTest, self).test_dashboard_page_data(*args)
         assert_has_anvil_calls(self)

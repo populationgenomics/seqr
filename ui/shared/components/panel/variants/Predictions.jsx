@@ -40,10 +40,10 @@ const predictionFieldValue = (
     return { value, color, infoValue, infoTitle, dangerThreshold, warningThreshold }
   }
 
-  return indicatorMap[value[0]]
+  return indicatorMap[value[0]] || indicatorMap[value]
 }
 
-const Prediction = ({ field, value, color, infoValue, infoTitle, warningThreshold, dangerThreshold }) => {
+const Prediction = ({ field, fieldTitle, value, color, infoValue, infoTitle, warningThreshold, dangerThreshold }) => {
   const indicator = infoValue ? (
     <Popup
       header={infoTitle}
@@ -51,14 +51,14 @@ const Prediction = ({ field, value, color, infoValue, infoTitle, warningThreshol
       trigger={<Icon name="question circle" size="small" color={color} />}
     />
   ) : <Icon name="circle" size="small" color={color} />
-  const fieldName = snakecaseToTitlecase(field)
+  const fieldName = fieldTitle || snakecaseToTitlecase(field)
   const fieldDisplay = dangerThreshold ? (
     <Popup
       header={`${fieldName} Color Ranges`}
       content={
         <div>
           <div>{`Red > ${dangerThreshold}`}</div>
-          <div>{`Yellow > ${warningThreshold}`}</div>
+          {warningThreshold < dangerThreshold && <div>{`Yellow > ${warningThreshold}`}</div>}
         </div>
       }
       trigger={<span>{fieldName}</span>}
@@ -79,6 +79,7 @@ Prediction.propTypes = {
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   infoValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   infoTitle: PropTypes.string,
+  fieldTitle: PropTypes.string,
   color: PropTypes.string,
   warningThreshold: PropTypes.number,
   dangerThreshold: PropTypes.number,
@@ -115,8 +116,9 @@ class Predictions extends React.PureComponent {
       }
     }
 
-    const predictorFields = PREDICTOR_FIELDS.map(predictorField => ({
+    const predictorFields = PREDICTOR_FIELDS.map(({ fieldTitle, ...predictorField }) => ({
       field: predictorField.field,
+      fieldTitle,
       ...predictionFieldValue(predictions, genePredictors[predictorField.field] || predictorField),
     })).filter(predictorField => predictorField.value !== null && predictorField.value !== undefined)
     return (

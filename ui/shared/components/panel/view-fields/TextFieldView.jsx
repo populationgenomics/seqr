@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Loader } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { validators } from '../../form/ReduxFormWrapper'
+import { validators } from '../../form/FormHelpers'
 import { HorizontalSpacer } from '../../Spacers'
 import BaseFieldView from './BaseFieldView'
 
@@ -12,8 +12,15 @@ const ReactMarkdown = React.lazy(() => import('react-markdown'))
 const RichTextEditor = React.lazy(() => import('../../form/RichTextEditor'))
 
 const MarkdownContainer = styled.div`
-  display: ${props => (props.inline ? 'inline-block' : 'block')}; 
-  white-space: pre-wrap;
+  display: ${props => (props.inline ? 'inline-block' : 'block')};
+  
+  h4 + ul {
+    list-style-type: none;
+    
+    ul {
+      list-style-type: none;
+    }
+  }  
 `
 
 const LazyRichTextEditor = props => <React.Suspense fallback={<Loader />}><RichTextEditor {...props} /></React.Suspense>

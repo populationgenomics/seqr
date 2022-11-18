@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 
 import { updateProject } from 'redux/rootReducer'
+import { getUser } from 'redux/selectors'
 import DeleteButton from 'shared/components/buttons/DeleteButton'
 import EditProjectButton from 'shared/components/buttons/EditProjectButton'
 import EditProjectCategoriesModal from './EditProjectCategoriesModal'
@@ -32,6 +33,7 @@ const ProjectEllipsisMenu = React.memo((props) => {
       key="edit"
       trigger={<Dropdown.Item>Edit Project</Dropdown.Item>}
       project={props.project}
+      user={props.user}
     />,
     <EditProjectCategoriesModal
       key="editCategories"
@@ -54,7 +56,7 @@ const ProjectEllipsisMenu = React.memo((props) => {
       <Dropdown.Divider key="divider1" />,
     )
   }
-  if (props.user.isDataManager) {
+  if (props.project.userIsCreator) {
     menuItems.push(
       <Dropdown.Divider key="divider2" />,
       <DeleteButton
@@ -81,12 +83,14 @@ const ProjectEllipsisMenu = React.memo((props) => {
 export { ProjectEllipsisMenu as ProjectEllipsisMenuComponent }
 
 ProjectEllipsisMenu.propTypes = {
-  user: PropTypes.object.isRequired,
   project: PropTypes.object.isRequired,
+  user: PropTypes.object.isRequired,
   updateProject: PropTypes.func.isRequired,
 }
 
-const mapStateToProps = state => ({ user: state.user })
+const mapStateToProps = state => ({
+  user: getUser(state),
+})
 
 const mapDispatchToProps = { updateProject }
 

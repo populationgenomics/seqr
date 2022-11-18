@@ -15,6 +15,7 @@ from guardian.shortcuts import assign_perm
 
 from seqr.utils.logging_utils import log_model_update, log_model_bulk_update, SeqrLogger
 from seqr.utils.xpos_utils import get_chrom_pos
+from seqr.views.utils.terra_api_utils import anvil_enabled
 from reference_data.models import GENOME_VERSION_GRCh37, GENOME_VERSION_CHOICES
 from settings import MME_DEFAULT_CONTACT_NAME, MME_DEFAULT_CONTACT_HREF, MME_DEFAULT_CONTACT_INSTITUTION
 
@@ -105,7 +106,7 @@ class ModelWithGUID(models.Model, metaclass=CustomModelBase):
             # do an initial save to generate the self.pk id which is then used when computing self._compute_guid()
             # Temporarily set guid to a randint to avoid a brief window when guid="". Otherwise guid uniqueness errors
             # can occur if 2 objects are being created simultaneously and both attempt to save without setting guid.
-            temp_guid = str(random.randint(10**10, 10**11))
+            temp_guid = str(random.randint(10**10, 10**11)) # nosec
             self.guid = kwargs.pop('guid', temp_guid)
             # allows for overriding created_date during save, but this should only be used for migrations
             self.created_date = kwargs.pop('created_date', current_time)
@@ -169,10 +170,13 @@ class Project(ModelWithGUID):
 
     # user groups that allow Project permissions to be extended to other objects as long as
     # the user remains is in one of these groups.
-    can_edit_group = models.ForeignKey(Group, related_name='+', on_delete=models.PROTECT)
-    can_view_group = models.ForeignKey(Group, related_name='+', on_delete=models.PROTECT)
+    can_edit_group = models.ForeignKey(Group, related_name='+', on_delete=models.PROTECT, null=True, blank=True)
+    can_view_group = models.ForeignKey(Group, related_name='+', on_delete=models.PROTECT, null=True, blank=True)
 
     genome_version = models.CharField(max_length=5, choices=GENOME_VERSION_CHOICES, default=GENOME_VERSION_GRCh37)
+    consent_code = models.CharField(max_length=1, null=True, blank=True, choices=[
+        (c[0], c) for c in ['HMB', 'GRU', 'Other']
+    ])
 
     is_mme_enabled = models.BooleanField(default=False)
     mme_primary_data_owner = models.TextField(null=True, blank=True, default=MME_DEFAULT_CONTACT_NAME)
@@ -182,6 +186,7 @@ class Project(ModelWithGUID):
     has_case_review = models.BooleanField(default=False)
     enable_hgmd = models.BooleanField(default=False)
     all_user_demo = models.BooleanField(default=False)
+    is_demo = models.BooleanField(default=False)
 
     last_accessed_date = models.DateTimeField(null=True, blank=True, db_index=True)
 
@@ -200,15 +205,17 @@ class Project(ModelWithGUID):
         This could be done with signals, but seems cleaner to do it this way.
         """
         being_created = not self.pk
+        should_create_user_groups = being_created and not anvil_enabled()
 
-        if being_created:
+        if should_create_user_groups:
             # create user groups
             self.can_edit_group = Group.objects.create(name="%s_%s_%s" % (_slugify(self.name.strip())[:30], 'can_edit', uuid.uuid4()))
             self.can_view_group = Group.objects.create(name="%s_%s_%s" % (_slugify(self.name.strip())[:30], 'can_view', uuid.uuid4()))
 
         super(Project, self).save(*args, **kwargs)
 
-        if being_created:
+        if should_create_user_groups:
+
             assign_perm(user_or_group=self.can_edit_group, perm=CAN_EDIT, obj=self)
             assign_perm(user_or_group=self.can_edit_group, perm=CAN_VIEW, obj=self)
 
@@ -223,20 +230,9 @@ class Project(ModelWithGUID):
 
         super(Project, self).delete(*args, **kwargs)
 
-        self.can_edit_group.delete()
-        self.can_view_group.delete()
-
-    def get_collaborators(self, permissions=None):
-        if not permissions:
-            permissions = {CAN_VIEW, CAN_EDIT}
-
-        collabs = set()
-        if CAN_VIEW in permissions:
-            collabs.update(self.can_view_group.user_set.all())
-        if CAN_EDIT in permissions:
-            collabs.update(self.can_edit_group.user_set.all())
-
-        return collabs
+        if self.can_edit_group:
+            self.can_edit_group.delete()
+            self.can_view_group.delete()
 
     class Meta:
         permissions = (
@@ -246,8 +242,8 @@ class Project(ModelWithGUID):
 
         json_fields = [
             'name', 'description', 'created_date', 'last_modified_date', 'genome_version', 'mme_contact_institution',
-            'last_accessed_date', 'is_mme_enabled', 'mme_primary_data_owner', 'mme_contact_url', 'guid',
-            'workspace_namespace', 'workspace_name', 'has_case_review', 'enable_hgmd'
+            'last_accessed_date', 'is_mme_enabled', 'mme_primary_data_owner', 'mme_contact_url', 'guid', 'consent_code',
+            'workspace_namespace', 'workspace_name', 'has_case_review', 'enable_hgmd', 'is_demo', 'all_user_demo',
         ]
 
 
@@ -280,6 +276,7 @@ class Family(ModelWithGUID):
         ('C', 'Closed, no longer under analysis'),
         ('I', 'Analysis in Progress'),
         ('Q', 'Waiting for data'),
+        ('N', 'No data expected'),
     )
 
     SUCCESS_STORY_TYPE_CHOICES = (
@@ -345,18 +342,26 @@ class Family(ModelWithGUID):
         audit_fields = {'analysis_status'}
 
 
-# TODO should be an ArrayField directly on family once family fields have audit trail (https://github.com/broadinstitute/seqr-private/issues/449)
 class FamilyAnalysedBy(ModelWithGUID):
-    family = models.ForeignKey(Family, on_delete=models.PROTECT)
+    DATA_TYPE_CHOICES = (
+        ('SNP', 'WES/WGS'),
+        ('SV', 'gCNV/SV'),
+        ('RNA', 'RNAseq'),
+        ('MT', 'Mitochondrial'),
+        ('STR', 'STR'),
+    )
+
+    family = models.ForeignKey(Family, on_delete=models.CASCADE)
+    data_type = models.CharField(max_length=3, choices=DATA_TYPE_CHOICES)
 
     def __unicode__(self):
-        return '{}_{}'.format(self.family.guid, self.created_by)
+        return '{}_{}_{}'.format(self.family.guid, self.created_by, self.data_type)
 
     def _compute_guid(self):
         return 'FAB%06d_%s' % (self.id, _slugify(str(self)))
 
     class Meta:
-        json_fields = ['last_modified_date', 'created_by']
+        json_fields = ['last_modified_date', 'created_by', 'data_type']
 
 
 class FamilyNote(ModelWithGUID):
@@ -590,21 +595,33 @@ class Sample(ModelWithGUID):
 
     DATASET_TYPE_VARIANT_CALLS = 'VARIANTS'
     DATASET_TYPE_SV_CALLS = 'SV'
+    DATASET_TYPE_MITO_CALLS = 'MITO'
     DATASET_TYPE_CHOICES = (
         (DATASET_TYPE_VARIANT_CALLS, 'Variant Calls'),
         (DATASET_TYPE_SV_CALLS, 'SV Calls'),
+        (DATASET_TYPE_MITO_CALLS, 'Mitochondria calls'),
     )
     DATASET_TYPE_LOOKUP = dict(DATASET_TYPE_CHOICES)
+
+    TISSUE_TYPE_CHOICES = (
+        ('WB', 'Whole Blood'),
+        ('F', 'Fibroblast'),
+        ('M', 'Muscle'),
+        ('L', 'Lymphocyte'),
+    )
 
     individual = models.ForeignKey('Individual', on_delete=models.PROTECT)
 
     sample_type = models.CharField(max_length=10, choices=SAMPLE_TYPE_CHOICES)
     dataset_type = models.CharField(max_length=10, choices=DATASET_TYPE_CHOICES)
 
+    tissue_type = models.CharField(max_length=2, choices=TISSUE_TYPE_CHOICES, null=True, blank=True)
+
     # The sample's id in the underlying dataset (eg. the VCF Id for variant callsets).
     sample_id = models.TextField(db_index=True)
 
-    elasticsearch_index = models.TextField(db_index=True)
+    elasticsearch_index = models.TextField(db_index=True, null=True)
+    data_source = models.TextField(null=True)
 
     # sample status
     is_active = models.BooleanField(default=False)
@@ -619,6 +636,7 @@ class Sample(ModelWithGUID):
     class Meta:
        json_fields = [
            'guid', 'created_date', 'sample_type', 'dataset_type', 'sample_id', 'is_active', 'loaded_date',
+           'elasticsearch_index',
        ]
 
 
@@ -815,6 +833,12 @@ class VariantFunctionalData(ModelWithGUID):
                 'color': '#D84315',
              })),
          )),
+        ('Additional Information', (
+            ('Incomplete Penetrance', json.dumps({
+                'description': 'Variant has been shown to be disease-causing (in literature, functional studies, etc.) but one or more individuals in this family with the variant do not present with clinical features of the disorder.',
+                'color': '#E985DC',
+            })),
+        )),
     )
 
     FUNCTIONAL_DATA_TAG_TYPES = [{
@@ -933,6 +957,7 @@ class AnalysisGroup(ModelWithGUID):
 
 class VariantSearch(ModelWithGUID):
     name = models.CharField(max_length=200, null=True)
+    order = models.FloatField(null=True, blank=True)
     search = JSONField()
 
     def __unicode__(self):
@@ -944,7 +969,7 @@ class VariantSearch(ModelWithGUID):
     class Meta:
         unique_together = ('created_by', 'name')
 
-        json_fields = ['guid', 'name', 'search', 'created_by_id']
+        json_fields = ['guid', 'name', 'order', 'search', 'created_by_id']
 
 
 class VariantSearchResults(ModelWithGUID):
@@ -957,3 +982,46 @@ class VariantSearchResults(ModelWithGUID):
 
     def _compute_guid(self):
         return 'VSR%07d_%s' % (self.id, _slugify(str(self)))
+
+class DeletableSampleMetadataModel(models.Model):
+
+    sample = models.ForeignKey('Sample', on_delete=models.CASCADE, db_index=True)
+    gene_id = models.CharField(max_length=20)  # ensembl ID
+
+    @classmethod
+    def bulk_delete(cls, user, queryset=None, **filter_kwargs):
+        """Helper bulk delete method that logs the deletion"""
+        if queryset is None:
+            queryset = cls.objects.filter(**filter_kwargs)
+        log_model_bulk_update(logger, queryset, user, 'delete')
+        return queryset.delete()
+
+    def __unicode__(self):
+        return "%s:%s" % (self.sample.sample_id, self.gene_id)
+
+    class Meta:
+        abstract = True
+
+
+class RnaSeqOutlier(DeletableSampleMetadataModel):
+    SIGNIFICANCE_THRESHOLD = 0.05
+
+    p_value = models.FloatField()
+    p_adjust = models.FloatField()
+    z_score = models.FloatField()
+
+    class Meta:
+        unique_together = ('sample', 'gene_id')
+
+        json_fields = ['gene_id', 'p_value', 'p_adjust', 'z_score']
+
+        indexes = [models.Index(fields=['gene_id']), models.Index(fields=['p_adjust'])]
+
+
+class RnaSeqTpm(DeletableSampleMetadataModel):
+    tpm = models.FloatField()
+
+    class Meta:
+        unique_together = ('sample', 'gene_id')
+
+        json_fields = ['gene_id', 'tpm']

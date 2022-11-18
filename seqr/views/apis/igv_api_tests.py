@@ -1,7 +1,7 @@
 import json
 import mock
 import responses
-import subprocess
+import subprocess # nosec
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls.base import reverse
@@ -32,12 +32,18 @@ class IgvAPITest(AuthenticationTestCase):
     fixtures = ['users', '1kg_project']
 
     @responses.activate
+    @mock.patch('seqr.utils.file_utils.logger')
     @mock.patch('seqr.utils.file_utils.subprocess.Popen')
     @mock.patch('seqr.views.apis.igv_api.safe_redis_get_json')
     @mock.patch('seqr.views.apis.igv_api.safe_redis_set_json')
-    def test_proxy_google_to_igv(self, mock_set_redis, mock_get_redis, mock_subprocess):
-        mock_subprocess.return_value.stdout = iter([b'token1\n', b'token2\n'])
-        mock_subprocess.return_value.wait.side_effect = [-1, 0, 0]
+    def test_proxy_google_to_igv(self, mock_set_redis, mock_get_redis, mock_subprocess, mock_file_logger):
+        mock_ls_subprocess = mock.MagicMock()
+        mock_access_token_subprocess = mock.MagicMock()
+        mock_subprocess.side_effect = [mock_ls_subprocess, mock_access_token_subprocess]
+        mock_ls_subprocess.stdout = iter([b'CommandException: One or more URLs matched no objects.'])
+        mock_ls_subprocess.wait.return_value = 1
+        mock_access_token_subprocess.stdout = iter([b'token1\n', b'token2\n'])
+        mock_access_token_subprocess.wait.return_value = 0
         mock_get_redis.return_value = None
 
         responses.add(responses.GET, 'https://storage.googleapis.com/fc-secure-project_A/sample_1.bai',
@@ -57,12 +63,13 @@ class IgvAPITest(AuthenticationTestCase):
         mock_get_redis.assert_called_with(GS_STORAGE_ACCESS_CACHE_KEY)
         mock_set_redis.assert_called_with(GS_STORAGE_ACCESS_CACHE_KEY, 'token1', expire=3594)
         mock_subprocess.assert_has_calls([
-            mock.call('gsutil -u anvil-datastorage ls gs://fc-secure-project_A/sample_1.bam.bai',
-                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True),
-            mock.call().wait(),
+            mock.call('gsutil -u anvil-datastorage ls gs://fc-secure-project_A/sample_1.bam.bai', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True),
             mock.call('gcloud auth print-access-token', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True),
-            mock.call().wait(),
         ])
+        mock_ls_subprocess.wait.assert_called_once()
+        mock_access_token_subprocess.wait.assert_called_once()
+        mock_file_logger.info.assert_any_call(
+            'CommandException: One or more URLs matched no objects.', self.collaborator_user)
 
         mock_get_redis.reset_mock()
         mock_get_redis.return_value = 'token3'
@@ -176,7 +183,7 @@ class IgvAPITest(AuthenticationTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(response.json(), {'igvSamplesByGuid': {'S000145_na19675': {
             'projectGuid': PROJECT_GUID, 'individualGuid': 'I000001_na19675', 'sampleGuid': 'S000145_na19675',
-            'filePath': '/readviz/NA19675.new.cram', 'sampleId': None, 'sampleType': 'alignment'}}})
+            'familyGuid': 'F000001_1', 'filePath': '/readviz/NA19675.new.cram', 'sampleId': None, 'sampleType': 'alignment'}}})
         mock_local_file_exists.assert_called_with('/readviz/NA19675.new.cram')
 
         response = self.client.post(url, content_type='application/json', data=json.dumps({
@@ -190,7 +197,7 @@ class IgvAPITest(AuthenticationTestCase):
         sample_guid = next(iter(response_json['igvSamplesByGuid']))
         self.assertDictEqual(response_json['igvSamplesByGuid'][sample_guid], {
             'projectGuid': PROJECT_GUID, 'individualGuid': 'I000001_na19675', 'sampleGuid': sample_guid,
-            'filePath': 'gs://readviz/batch_10.dcr.bed.gz', 'sampleId': 'NA19675', 'sampleType': 'gcnv'})
+            'familyGuid': 'F000001_1',  'filePath': 'gs://readviz/batch_10.dcr.bed.gz', 'sampleId': 'NA19675', 'sampleType': 'gcnv'})
         self.assertListEqual(list(response_json['individualsByGuid'].keys()), ['I000001_na19675'])
         self.assertSetEqual(
             set(response_json['individualsByGuid']['I000001_na19675']['igvSampleGuids']),
@@ -208,7 +215,8 @@ class IgvAPITest(AuthenticationTestCase):
         self.assertNotEqual(sample_guid, junctions_sample_guid)
         self.assertDictEqual(response_json['igvSamplesByGuid'][junctions_sample_guid], {
             'projectGuid': PROJECT_GUID, 'individualGuid': 'I000001_na19675', 'sampleGuid': junctions_sample_guid,
-            'filePath': 'gs://readviz/batch_10.junctions.bed.gz', 'sampleId': 'NA19675', 'sampleType': 'spliceJunctions'})
+            'familyGuid': 'F000001_1',  'filePath': 'gs://readviz/batch_10.junctions.bed.gz', 'sampleId': 'NA19675',
+            'sampleType': 'spliceJunctions'})
 
         # test data manager access
         self.login_data_manager_user()

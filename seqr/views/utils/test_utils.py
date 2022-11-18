@@ -12,16 +12,6 @@ from seqr.models import Project, CAN_VIEW, CAN_EDIT
 
 WINDOW_REGEX_TEMPLATE = 'window\.{key}=(?P<value>[^)<]+)'
 
-def _initialize_users(cls):
-    cls.super_user = User.objects.get(username='test_superuser')
-    cls.analyst_user = User.objects.get(username='test_user')
-    cls.pm_user = User.objects.get(username='test_pm_user')
-    cls.data_manager_user = User.objects.get(username='test_data_manager')
-    cls.manager_user = User.objects.get(username='test_user_manager')
-    cls.collaborator_user = User.objects.get(username='test_user_collaborator')
-    cls.no_access_user = User.objects.get(username='test_user_no_access')
-    cls.inactive_user = User.objects.get(username='test_user_inactive')
-    cls.no_policy_user = User.objects.get(username='test_user_no_policies')
 
 class AuthenticationTestCase(TestCase):
     databases = '__all__'
@@ -54,7 +44,15 @@ class AuthenticationTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        _initialize_users(cls)
+        cls.super_user = User.objects.get(username='test_superuser')
+        cls.analyst_user = User.objects.get(username='test_user')
+        cls.pm_user = User.objects.get(username='test_pm_user')
+        cls.data_manager_user = User.objects.get(username='test_data_manager')
+        cls.manager_user = User.objects.get(username='test_user_manager')
+        cls.collaborator_user = User.objects.get(username='test_user_collaborator')
+        cls.no_access_user = User.objects.get(username='test_user_no_access')
+        cls.inactive_user = User.objects.get(username='test_user_inactive')
+        cls.no_policy_user = User.objects.get(username='test_user_no_policies')
 
         edit_group = Group.objects.get(pk=2)
         view_group = Group.objects.get(pk=3)
@@ -210,7 +208,7 @@ ANVIL_WORKSPACES = [{
     'workspace_name': TEST_WORKSPACE_NAME,
     'public': False,
     'acl': {
-        'test_user_manager@test.com': {
+        'Test_User_Manager@test.com': {
             "accessLevel": "WRITER",
             "pending": False,
             "canShare": True,
@@ -258,7 +256,7 @@ ANVIL_WORKSPACES = [{
         'test_user_collaborator@test.com': {
             "accessLevel": "READER",
             "pending": False,
-            "canShare": True,
+            "canShare": False,
             "canCompute": False
         }
     },
@@ -284,6 +282,7 @@ ANVIL_WORKSPACES = [{
         }
     },
     'workspace': {
+        'authorizationDomain': [],
         'bucketName': 'test_bucket'
     },
 }, {
@@ -296,9 +295,16 @@ ANVIL_WORKSPACES = [{
             "pending": False,
             "canShare": True,
             "canCompute": True
-        }
+        },
+        'test_pm_user@test.com': {
+            "accessLevel": "WRITER",
+            "pending": False,
+            "canShare": False,
+            "canCompute": False
+        },
     },
     'workspace': {
+        'authorizationDomain': [{'membersGroupName': 'AUTH_restricted_group'}],
         'bucketName': 'test_bucket'
     },
 }
@@ -323,12 +329,17 @@ def get_ws_al_side_effect(user, workspace_namespace, workspace_name, meta_fields
     wss = filter(lambda x: x['workspace_namespace'] == workspace_namespace and x['workspace_name'] == workspace_name, ANVIL_WORKSPACES)
     wss = list(wss)
     acl = wss[0]['acl'] if wss else {}
+    user_acl = next((v for k, v in acl.items() if user.email.lower() == k.lower()), None)
     access_level = {
-        'accessLevel': acl[user.email]['accessLevel'],
-        'canShare': acl[user.email]['canShare'],
-    } if user.email in acl.keys() else {}
-    if meta_fields and 'workspace.bucketName' in meta_fields:
-        access_level['workspace'] = {'bucketName': wss[0]['workspace']['bucketName']}
+        'accessLevel': user_acl['accessLevel'],
+        'canShare': user_acl['canShare'],
+    } if user_acl else {}
+    if meta_fields:
+        access_level['workspace'] = {}
+        if 'workspace.bucketName' in meta_fields:
+            access_level['workspace']['bucketName'] = wss[0]['workspace']['bucketName']
+        if meta_fields and 'workspace.authorizationDomain' in meta_fields:
+            access_level['workspace']['authorizationDomain'] = wss[0]['workspace']['authorizationDomain']
     return access_level
 
 
@@ -340,14 +351,11 @@ def get_workspaces_side_effect(user):
                 'namespace': ws['workspace_namespace'],
                 'name': ws['workspace_name']
             }
-        } for ws in ANVIL_WORKSPACES if user.email in ws['acl'].keys()
+        } for ws in ANVIL_WORKSPACES if any(user.email.lower() == k.lower() for k in ws['acl'].keys())
     ]
 
 
 class AnvilAuthenticationTestCase(AuthenticationTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        _initialize_users(cls)
 
     # mock the terra apis
     def setUp(self):
@@ -376,19 +384,6 @@ class AnvilAuthenticationTestCase(AuthenticationTestCase):
         self.mock_get_ws_access_level.side_effect = get_ws_al_side_effect
         self.addCleanup(patcher.stop)
         super(AnvilAuthenticationTestCase, self).setUp()
-
-
-# inherit AnvilAuthenticationTestCase for the mocks of AnVIL permissions.
-class MixAuthenticationTestCase(AnvilAuthenticationTestCase):
-    LOCAL_USER = 'local_user'
-
-    # use the local permissions set-up by AuthenticationTestCase
-    @classmethod
-    def setUpTestData(cls):
-        AuthenticationTestCase.setUpTestData()
-        cls.local_user = User.objects.get(username = 'test_local_user')
-        view_group = Group.objects.get(pk=3)
-        view_group.user_set.add(cls.local_user)
 
 
 # The responses library for mocking requests does not work with urllib3 (which is used by elasticsearch)
@@ -420,8 +415,11 @@ USER_FIELDS = {
 PROJECT_FIELDS = {
     'projectGuid', 'projectCategoryGuids', 'canEdit', 'name', 'description', 'createdDate', 'lastModifiedDate',
     'lastAccessedDate',  'mmeContactUrl', 'genomeVersion', 'mmePrimaryDataOwner', 'mmeContactInstitution',
-    'isMmeEnabled', 'workspaceName', 'workspaceNamespace', 'hasCaseReview', 'enableHgmd',
+    'isMmeEnabled', 'workspaceName', 'workspaceNamespace', 'hasCaseReview', 'enableHgmd', 'isDemo', 'allUserDemo',
+    'userIsCreator', 'consentCode', 'isAnalystProject',
 }
+
+ANALYSIS_GROUP_FIELDS = {'analysisGroupGuid', 'description', 'name', 'projectGuid', 'familyGuids'}
 
 FAMILY_FIELDS = {
     'projectGuid', 'familyGuid', 'analysedBy', 'pedigreeImage', 'familyId', 'displayName', 'description',
@@ -457,12 +455,12 @@ INTERNAL_INDIVIDUAL_FIELDS = {
 INTERNAL_INDIVIDUAL_FIELDS.update(INDIVIDUAL_FIELDS)
 
 SAMPLE_FIELDS = {
-    'projectGuid', 'individualGuid', 'sampleGuid', 'createdDate', 'sampleType', 'sampleId', 'isActive',
-    'loadedDate', 'datasetType',
+    'projectGuid', 'familyGuid', 'individualGuid', 'sampleGuid', 'createdDate', 'sampleType', 'sampleId', 'isActive',
+    'loadedDate', 'datasetType', 'elasticsearchIndex',
 }
 
 IGV_SAMPLE_FIELDS = {
-    'projectGuid', 'individualGuid', 'sampleGuid', 'filePath', 'sampleId', 'sampleType',
+    'projectGuid', 'familyGuid', 'individualGuid', 'sampleGuid', 'filePath', 'sampleId', 'sampleType',
 }
 
 SAVED_VARIANT_FIELDS = {'variantGuid', 'variantId', 'familyGuids', 'xpos', 'ref', 'alt', 'selectedMainTranscriptId', 'acmgClassification'}
@@ -477,24 +475,36 @@ FUNCTIONAL_FIELDS = {
     'tagGuid', 'name', 'color', 'metadata', 'metadataTitle', 'lastModifiedDate', 'createdBy', 'variantGuids',
 }
 
-SAVED_SEARCH_FIELDS = {'savedSearchGuid', 'name', 'search', 'createdById'}
+SAVED_SEARCH_FIELDS = {'savedSearchGuid', 'name', 'order', 'search', 'createdById'}
 
 LOCUS_LIST_FIELDS = {
     'locusListGuid', 'description', 'lastModifiedDate', 'numEntries', 'isPublic', 'createdBy', 'createdDate', 'canEdit',
     'name',
 }
+PA_LOCUS_LIST_FIELDS = {'paLocusList'}
 LOCUS_LIST_DETAIL_FIELDS = {'items', 'intervalGenomeVersion'}
 LOCUS_LIST_DETAIL_FIELDS.update(LOCUS_LIST_FIELDS)
+
+MATCHMAKER_SUBMISSION_FIELDS = {
+    'submissionGuid', 'individualGuid', 'createdDate', 'lastModifiedDate', 'deletedDate',
+}
+
+TAG_TYPE_FIELDS = {
+    'variantTagTypeGuid', 'name', 'category', 'description', 'color', 'order', 'metadataTitle',
+}
 
 GENE_FIELDS = {
     'chromGrch37', 'chromGrch38', 'codingRegionSizeGrch37', 'codingRegionSizeGrch38',  'endGrch37', 'endGrch38',
     'gencodeGeneType', 'geneId', 'geneSymbol', 'startGrch37', 'startGrch38',
 }
-GENE_VARIANT_FIELDS = {
-    'constraints', 'diseaseDesc', 'functionDesc', 'omimPhenotypes', 'mimNumber', 'geneNames', 'primateAi',
-    'cnSensitivity',
+GENE_VARIANT_DISPLAY_FIELDS = {
+    'constraints', 'omimPhenotypes', 'mimNumber', 'cnSensitivity', 'genCc', 'clinGen',
 }
-GENE_VARIANT_FIELDS.update(GENE_FIELDS)
+GENE_VARIANT_DISPLAY_FIELDS.update(GENE_FIELDS)
+GENE_VARIANT_FIELDS = {
+    'diseaseDesc', 'functionDesc', 'geneNames', 'primateAi',
+}
+GENE_VARIANT_FIELDS.update(GENE_VARIANT_DISPLAY_FIELDS)
 
 GENE_DETAIL_FIELDS = {'notes', 'mgiMarkerId'}
 GENE_DETAIL_FIELDS.update(GENE_VARIANT_FIELDS)
@@ -719,7 +729,11 @@ PARSED_VARIANTS = [
     {
         'alt': 'T',
         'chrom': '1',
-        'clinvar': {'clinicalSignificance': None, 'alleleId': None, 'variationId': None, 'goldStars': None},
+        'bothsidesSupport': None,
+        'clinvar': {'clinicalSignificance': 'Pathogenic/Likely_pathogenic', 'alleleId': None, 'variationId': None, 'goldStars': None},
+        'commonLowHeteroplasmy': None,
+        'highConstraintRegion': None,
+        'mitomapPathogenic': None,
         'familyGuids': ['F000003_3'],
         'cpxIntervals': None,
         'algorithms': None,
@@ -731,24 +745,26 @@ PARSED_VARIANTS = [
         },
         'genomeVersion': '37',
         'genotypeFilters': '',
-        'hgmd': {'accession': None, 'class': None},
-        'liftedOverChrom': None,
-        'liftedOverGenomeVersion': None,
-        'liftedOverPos': None,
+        'hgmd': {'accession': None, 'class': 'DM'},
         'mainTranscriptId': TRANSCRIPT_3['transcriptId'],
+        'selectedMainTranscriptId': None,
         'originalAltAlleles': ['T'],
         'populations': {
-            'callset': {'an': 32, 'ac': 2, 'hom': None, 'af': 0.063, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-            'g1k': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0, 'id': None},
-            'gnomad_genomes': {'an': 30946, 'ac': 4, 'hom': 0, 'af': 0.00012925741614425127, 'hemi': 0, 'filter_af': 0.0004590314436538903, 'het': 0, 'id': None},
-            'exac': {'an': 121308, 'ac': 8, 'hom': 0, 'af': 0.00006589, 'hemi': 0, 'filter_af': 0.0006726888333653661, 'het': 0, 'id': None},
-            'gnomad_exomes': {'an': 245930, 'ac': 16, 'hom': 0, 'af': 0.00006505916317651364, 'hemi': 0, 'filter_af': 0.0009151523074911753, 'het': 0, 'id': None},
-            'topmed': {'an': 125568, 'ac': 21, 'hom': 0, 'af': 0.00016724, 'hemi': 0, 'filter_af': None, 'het': None, 'id': None},
-            'sv_callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-            'gnomad_svs': {'ac': None, 'af': None, 'an': None, 'filter_af': None, 'hemi': None, 'hom': None, 'het': None, 'id': None},
+            'callset': {'an': 32, 'ac': 2, 'hom': None, 'af': 0.063, 'hemi': None, 'filter_af': None, 'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'g1k': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_genomes': {'an': 30946, 'ac': 4, 'hom': 0, 'af': 0.00012925741614425127, 'hemi': 0, 'filter_af': 0.0004590314436538903, 'het': 0, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'exac': {'an': 121308, 'ac': 8, 'hom': 0, 'af': 0.00006589, 'hemi': 0, 'filter_af': 0.0006726888333653661, 'het': 0, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_exomes': {'an': 245930, 'ac': 16, 'hom': 0, 'af': 0.00006505916317651364, 'hemi': 0, 'filter_af': 0.0009151523074911753, 'het': 0, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'topmed': {'an': 125568, 'ac': 21, 'hom': 0, 'af': 0.00016724, 'hemi': 0, 'filter_af': None, 'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'sv_callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_svs': {'ac': None, 'af': None, 'an': None, 'filter_af': None, 'hemi': None, 'hom': None, 'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_mito': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None, 'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+            'helix': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                            'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
         },
         'pos': 248367227,
-        'predictions': {'splice_ai': None, 'eigen': None, 'revel': None, 'mut_taster': None, 'fathmm': None,
+        'predictions': {'splice_ai': 0.75, 'eigen': None, 'revel': None, 'mut_taster': None, 'fathmm': None,
+                        'hmtvar': None, 'apogee': None, 'haplogroup_defining': None, 'mitotip': None,
                         'polyphen': None, 'dann': None, 'sift': None, 'cadd': '25.9', 'metasvm': None, 'primate_ai': None,
                         'gerp_rs': None, 'mpc': None, 'phastcons_100_vert': None, 'strvctvre': None,
                         'splice_ai_consequence': None},
@@ -764,26 +780,31 @@ PARSED_VARIANTS = [
         'svType': None,
         'svTypeDetail': None,
         'numExon': None,
+        'rg37LocusEnd': None,
         '_sort': [1248367227],
     },
     {
         'alt': 'G',
         'chrom': '2',
+        'bothsidesSupport': None,
         'clinvar': {'clinicalSignificance': None, 'alleleId': None, 'variationId': None, 'goldStars': None},
+        'commonLowHeteroplasmy': None,
+        'highConstraintRegion': None,
+        'mitomapPathogenic': None,
         'familyGuids': ['F000002_2', 'F000003_3'],
         'cpxIntervals': None,
         'algorithms': None,
         'genotypes': {
             'I000004_hg00731': {
-                'ab': 0, 'ad': None, 'gq': 99, 'sampleId': 'HG00731', 'numAlt': 0, 'dp': 67, 'pl': None,
+                'ab': 0, 'ad': None, 'gq': 99, 'sampleId': 'HG00731', 'numAlt': 2, 'dp': 67, 'pl': None,
                 'sampleType': 'WES',
             },
             'I000005_hg00732': {
-                'ab': 0, 'ad': None, 'gq': 96, 'sampleId': 'HG00732', 'numAlt': 2, 'dp': 42, 'pl': None,
+                'ab': 0, 'ad': None, 'gq': 96, 'sampleId': 'HG00732', 'numAlt': 1, 'dp': 42, 'pl': None,
                 'sampleType': 'WES',
             },
             'I000006_hg00733': {
-                'ab': 0, 'ad': None, 'gq': 96, 'sampleId': 'HG00733', 'numAlt': 1, 'dp': 42, 'pl': None,
+                'ab': 0, 'ad': None, 'gq': 96, 'sampleId': 'HG00733', 'numAlt': 0, 'dp': 42, 'pl': None,
                 'sampleType': 'WES',
             },
             'I000007_na20870': {
@@ -794,23 +815,35 @@ PARSED_VARIANTS = [
         'genotypeFilters': '',
         'genomeVersion': '37',
         'hgmd': {'accession': None, 'class': None},
-        'liftedOverGenomeVersion': None,
-        'liftedOverChrom': None,
-        'liftedOverPos': None,
         'mainTranscriptId': TRANSCRIPT_1['transcriptId'],
+        'selectedMainTranscriptId': TRANSCRIPT_2['transcriptId'],
         'originalAltAlleles': ['G'],
         'populations': {
-            'callset': {'an': 32, 'ac': 1, 'hom': None, 'af': 0.031, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-            'g1k': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0, 'id': None},
-            'gnomad_genomes': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0, 'id': None},
-            'exac': {'an': 121336, 'ac': 6, 'hom': 0, 'af': 0.00004942, 'hemi': 0, 'filter_af': 0.000242306760358614, 'het': 0, 'id': None},
-            'gnomad_exomes': {'an': 245714, 'ac': 6, 'hom': 0, 'af': 0.000024418633044922146, 'hemi': 0, 'filter_af': 0.00016269686320447742, 'het': 0, 'id': None},
-            'topmed': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': None, 'id': None},
-            'sv_callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-            'gnomad_svs': {'ac': None, 'af': None, 'an': None, 'filter_af': None, 'hemi': None, 'hom': None, 'het': None, 'id': None},
+            'callset': {'an': 32, 'ac': 1, 'hom': None, 'af': 0.031, 'hemi': None, 'filter_af': None, 'het': None,
+                        'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'g1k': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0, 'id': None,
+                    'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_genomes': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': 0,
+                               'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'exac': {'an': 121336, 'ac': 6, 'hom': 0, 'af': 0.00004942, 'hemi': 0, 'filter_af': 0.000242306760358614,
+                     'het': 0, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_exomes': {'an': 245714, 'ac': 6, 'hom': 0, 'af': 0.000024418633044922146, 'hemi': 0,
+                              'filter_af': 0.00016269686320447742, 'het': 0, 'id': None, 'ac_het': None, 'af_het': None,
+                              'max_hl': None},
+            'topmed': {'an': 0, 'ac': 0, 'hom': 0, 'af': 0.0, 'hemi': 0, 'filter_af': None, 'het': None, 'id': None,
+                       'ac_het': None, 'af_het': None, 'max_hl': None},
+            'sv_callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None,
+                           'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_svs': {'ac': None, 'af': None, 'an': None, 'filter_af': None, 'hemi': None, 'hom': None,
+                           'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+            'gnomad_mito': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                            'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+            'helix': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                      'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
         },
         'pos': 103343353,
         'predictions': {
+            'hmtvar': None, 'apogee': None, 'haplogroup_defining': None, 'mitotip': None,
             'splice_ai': None, 'eigen': None, 'revel': None, 'mut_taster': None, 'fathmm': None, 'polyphen': None,
             'dann': None, 'sift': None, 'cadd': None, 'metasvm': None, 'primate_ai': 1, 'gerp_rs': None,
             'mpc': None, 'phastcons_100_vert': None, 'strvctvre': None, 'splice_ai_consequence': None,
@@ -827,6 +860,7 @@ PARSED_VARIANTS = [
         'svType': None,
         'svTypeDetail': None,
         'numExon': None,
+        'rg37LocusEnd': None,
         '_sort': [2103343353],
     },
 ]
@@ -834,44 +868,62 @@ PARSED_VARIANTS = [
 PARSED_SV_VARIANT = {
     'alt': None,
     'chrom': '1',
+    'bothsidesSupport': True,
     'familyGuids': ['F000002_2'],
     'cpxIntervals': None,
     'algorithms': None,
+    'commonLowHeteroplasmy': None,
+    'highConstraintRegion': None,
+    'mitomapPathogenic': None,
     'genotypes': {
         'I000004_hg00731': {
             'sampleId': 'HG00731', 'sampleType': 'WES', 'numAlt': -1, 'geneIds': ['ENSG00000228198'],
             'cn': 1, 'end': None, 'start': None, 'numExon': None, 'defragged': False, 'qs': 33, 'gq': None,
+            'prevCall': False, 'prevOverlap': False, 'newCall': True,
         },
         'I000005_hg00732': {
             'sampleId': 'HG00732', 'numAlt': -1, 'sampleType': None,  'geneIds': None, 'gq': None,
             'cn': 2, 'end': None, 'start': None, 'numExon': None, 'defragged': None, 'qs': None, 'isRef': True,
+            'prevCall': None, 'prevOverlap': None, 'newCall': None,
         },
         'I000006_hg00733': {
             'sampleId': 'HG00733', 'sampleType': 'WES', 'numAlt': -1,  'geneIds': None, 'gq': None,
             'cn': 2, 'end': 49045890, 'start': 49045987, 'numExon': 1, 'defragged': False, 'qs': 80,
+            'prevCall': False, 'prevOverlap': True, 'newCall': False,
         },
     },
     'clinvar': {'clinicalSignificance': None, 'alleleId': None, 'variationId': None, 'goldStars': None},
     'hgmd': {'accession': None, 'class': None},
     'genomeVersion': '37',
     'genotypeFilters': '',
-    'liftedOverChrom': None,
-    'liftedOverGenomeVersion': None,
-    'liftedOverPos': None,
     'mainTranscriptId': None,
+    'selectedMainTranscriptId': None,
     'originalAltAlleles': [],
     'populations': {
-        'callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'g1k': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_genomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'exac': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_exomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'topmed': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'sv_callset': {'an': 10088, 'ac': 7, 'hom': None, 'af': 0.000693825, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_svs': {'ac': 0, 'af': 0, 'an': 0, 'filter_af': None, 'hemi': 0, 'hom': 0, 'het': 0, 'id': None},
+        'callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                    'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'g1k': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_genomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None,
+                           'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'exac': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_exomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                          'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'topmed': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                   'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'sv_callset': {'an': 10088, 'ac': 7, 'hom': None, 'af': 0.000693825, 'hemi': None, 'filter_af': None,
+                       'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_svs': {'ac': 0, 'af': 0, 'an': 0, 'filter_af': None, 'hemi': 0, 'hom': 0, 'het': 0, 'id': None,
+                       'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_mito': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                        'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+        'helix': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                  'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
     },
     'pos': 49045487,
     'predictions': {'splice_ai': None, 'eigen': None, 'revel': None, 'mut_taster': None, 'fathmm': None,
+                    'hmtvar': None, 'apogee': None, 'haplogroup_defining': None, 'mitotip': None,
                     'polyphen': None, 'dann': None, 'sift': None, 'cadd': None, 'metasvm': None, 'primate_ai': None,
                     'gerp_rs': None, 'mpc': None, 'phastcons_100_vert': None, 'strvctvre': 0.374,
                     'splice_ai_consequence': None},
@@ -892,46 +944,67 @@ PARSED_SV_VARIANT = {
     'variantId': 'prefix_19107_DEL',
     'xpos': 1049045487,
     'end': 49045899,
-    'svType': 'DEL',
+    'svType': 'INS',
     'svTypeDetail': None,
+    'svSourceDetail': {'chrom': '9'},
     'numExon': 2,
+    'rg37LocusEnd': None,
     '_sort': [1049045387],
 }
 
 PARSED_SV_WGS_VARIANT = {
     'alt': None,
     'chrom': '2',
+    'bothsidesSupport': None,
     'familyGuids': ['F000014_14'],
     'cpxIntervals': [{'chrom': '2', 'end': 3000, 'start': 1000, 'type': 'DUP'},
                      {'chrom': '20', 'end': 13000, 'start': 11000, 'type': 'INV'}],
     'algorithms': 'wham, manta',
+    'commonLowHeteroplasmy': None,
+    'highConstraintRegion': None,
+    'mitomapPathogenic': None,
     'genotypes': {
         'I000018_na21234': {
             'gq': 33, 'sampleId': 'NA21234', 'numAlt': 1, 'geneIds': None,
-            'cn': 1, 'end': None, 'start': None, 'numExon': None, 'defragged': None, 'qs': None, 'sampleType': 'WGS',
+            'cn': -1, 'end': None, 'start': None, 'numExon': None, 'defragged': None, 'qs': None, 'sampleType': 'WGS',
+            'prevCall': None, 'prevOverlap': None, 'newCall': None,
         },
     },
     'clinvar': {'clinicalSignificance': None, 'alleleId': None, 'variationId': None, 'goldStars': None},
     'hgmd': {'accession': None, 'class': None},
-    'genomeVersion': '37',
+    'genomeVersion': '38',
     'genotypeFilters': '',
-    'liftedOverChrom': None,
-    'liftedOverGenomeVersion': None,
-    'liftedOverPos': None,
+    'liftedOverChrom': '2',
+    'liftedOverGenomeVersion': '37',
+    'liftedOverPos': 49272526,
     'mainTranscriptId': None,
+    'selectedMainTranscriptId': None,
     'originalAltAlleles': [],
     'populations': {
-        'callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'g1k': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_genomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'exac': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_exomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'topmed': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'sv_callset': {'an': 10088, 'ac': 7, 'hom': None, 'af': 0.000693825, 'hemi': None, 'filter_af': None, 'het': None, 'id': None},
-        'gnomad_svs': {'ac': 0, 'af': 0.00679, 'an': 0, 'filter_af': None, 'hemi': 0, 'hom': 0, 'het': 0, 'id': 'gnomAD-SV_v2.1_BND_1_1'},
+        'callset': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                    'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'g1k': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_genomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None,
+                           'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'exac': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_exomes': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                          'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'topmed': {'an': None, 'ac': None, 'hom': None, 'af': None, 'hemi': None, 'filter_af': None, 'het': None,
+                   'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'sv_callset': {'an': 10088, 'ac': 7, 'hom': None, 'af': 0.000693825, 'hemi': None, 'filter_af': None,
+                       'het': None, 'id': None, 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_svs': {'ac': 0, 'af': 0.00679, 'an': 0, 'filter_af': None, 'hemi': 0, 'hom': 0, 'het': 0,
+                       'id': 'gnomAD-SV_v2.1_BND_1_1', 'ac_het': None, 'af_het': None, 'max_hl': None},
+        'gnomad_mito': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                        'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+        'helix': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                  'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
     },
     'pos': 49045387,
     'predictions': {'splice_ai': None, 'eigen': None, 'revel': None, 'mut_taster': None, 'fathmm': None,
+                    'hmtvar': None, 'apogee': None, 'haplogroup_defining': None, 'mitotip': None,
                     'polyphen': None, 'dann': None, 'sift': None, 'cadd': None, 'metasvm': None, 'primate_ai': None,
                     'gerp_rs': None, 'mpc': None, 'phastcons_100_vert': None, 'strvctvre': None,
                     'splice_ai_consequence': None},
@@ -948,11 +1021,83 @@ PARSED_SV_WGS_VARIANT = {
     },
     'variantId': 'prefix_19107_CPX',
     'xpos': 2049045387,
-    'end': 49045898,
+    'end': 12345678,
+    'endChrom': '20',
     'svType': 'CPX',
     'svTypeDetail': 'dupINV',
     'numExon': None,
+    'rg37LocusEnd': {'contig': '20', 'position': 12326326},
     '_sort': [2049045387],
+}
+
+PARSED_MITO_VARIANT = {
+    '_sort': [25000010195],
+    'algorithms': None,
+    'alt': 'A',
+    'bothsidesSupport': None,
+    'chrom': 'M',
+    'clinvar': {'alleleId': None, 'clinicalSignificance': ['Likely_pathogenic'], 'goldStars': None, 'variationId': None},
+    'commonLowHeteroplasmy': False,
+    'cpxIntervals': None,
+    'end': 10195,
+    'familyGuids': ['F000002_2'],
+    'genomeVersion': '37',
+    'genotypeFilters': '',
+    'genotypes':
+        {'I000006_hg00733':
+             {'contamination': 0.0, 'dp': 5139.0, 'gq': 60.0, 'hl': 1.0, 'mitoCn': 319.03225806451616, 'numAlt': 2,
+              'sampleId': 'HG00733', 'sampleType': 'WGS'}},
+    'hgmd': {'accession': None, 'class': None},
+    'highConstraintRegion': True,
+    'mainTranscriptId': 'ENST00000361227',
+    'mitomapPathogenic': True,
+    'numExon': None,
+    'originalAltAlleles': [],
+    'populations':
+        {'callset': {'ac': 0, 'ac_het': 1, 'af': 0.0, 'af_het': 0.0003968253968253968, 'an': 2520, 'filter_af': None, 'hemi': None,
+              'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'exac': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None, 'hemi': None,
+              'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'g1k': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None, 'hemi': None,
+                 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'gnomad_exomes': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                           'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'gnomad_genomes': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                            'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'gnomad_mito': {'ac': 1368, 'ac_het': 3, 'af': 0.024246292, 'af_het': 5.317169e-05, 'an': 56421, 'filter_af': None, 'hemi': None,
+                         'het': None, 'hom': None, 'id': None,'max_hl': 1.0},
+         'gnomad_svs': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                        'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'helix': {'ac': 1312, 'ac_het': 5, 'af': 0.0033268193, 'af_het': 4.081987e-05, 'an': None, 'filter_af': None, 'hemi': None, 'het': None,
+                   'hom': None, 'id': None, 'max_hl': 0.90441},
+         'sv_callset': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None,
+                        'hemi': None, 'het': None, 'hom': None, 'id': None, 'max_hl': None},
+         'topmed': {'ac': None, 'ac_het': None, 'af': None, 'af_het': None, 'an': None, 'filter_af': None, 'hemi': None,
+                    'het': None, 'hom': None, 'id': None, 'max_hl': None}},
+    'pos': 10195,
+    'predictions': {'hmtvar': 0.71, 'apogee': 0.42, 'cadd': None, 'dann': None, 'eigen': None, 'fathmm': 'T',
+                    'gerp_rs': '5.07', 'haplogroup_defining': None, 'metasvm': None, 'mitotip': None,
+                    'mpc': None, 'mut_taster': 'N', 'phastcons_100_vert': '0.958000', 'polyphen': None,
+                    'primate_ai': None, 'revel': None, 'sift': 'D', 'splice_ai': None, 'splice_ai_consequence': None,
+                    'strvctvre': None},
+    'ref': 'C',
+    'rg37LocusEnd': None,
+    'rsid': None,
+    'selectedMainTranscriptId': None,
+    'svType': None,
+    'svTypeDetail': None,
+    'transcripts': {'ENSG00000198840': [
+        {'aminoAcids': 'P/H', 'biotype': 'protein_coding', 'canonical': 1, 'category': 'missense', 'cdnaEnd': 137,
+         'cdnaStart': 137, 'codons': 'cCc/cAc', 'consequenceTerms': [
+            'missense_variant'],
+         'domains': ['Gene3D:1', 'ENSP_mappings:5xtc', 'ENSP_mappings:5xtd', 'Pfam:PF00507', 'PANTHER:PTHR11058',
+                     'PANTHER:PTHR11058'], 'geneId': 'ENSG00000198840', 'geneSymbol': 'MT-ND3', 'hgvs': 'p.Pro46His',
+         'hgvsc': 'ENST00000361227.2:c.137C>A', 'hgvsp': 'ENSP00000355206.2:p.Pro46His',
+         'majorConsequence': 'missense_variant', 'majorConsequenceRank': 11,
+         'polyphenPrediction': 'probably_damaging', 'proteinId': 'ENSP00000355206', 'proteinStart': 46,
+         'siftPrediction': 'deleterious_low_confidence', 'transcriptId': 'ENST00000361227', 'transcriptRank': 0}]},
+    'variantId': 'M-10195-C-A',
+    'xpos': 25000010195
 }
 
 GOOGLE_API_TOKEN_URL = 'https://oauth2.googleapis.com/token'

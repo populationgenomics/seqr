@@ -2,12 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { connect } from 'react-redux'
-import { Popup, Icon, Header, Divider } from 'semantic-ui-react'
+import { Popup, Icon, Header, Divider, Label } from 'semantic-ui-react'
 
 import { getSortedIndividualsByFamily, getGenesById } from 'redux/selectors'
 import PedigreeIcon from '../../icons/PedigreeIcon'
 import { VerticalSpacer } from '../../Spacers'
 import HpoPanel from '../HpoPanel'
+import { ColoredDiv } from '../../StyledComponents'
 
 const IndividualsContainer = styled.div`
   display: inline-block;
@@ -45,6 +46,7 @@ const IndividualCell = styled.div`
   
   .ui.header {
     padding-top: 3px;
+    margin-bottom: 3px;
   }
 `
 
@@ -84,6 +86,24 @@ const missingParentVariant = variant => (parentGuid) => {
 const isHemiUPDVariant = (numAlt, variant, individual) => (
   numAlt === 2 && [individual.maternalGuid, individual.paternalGuid].some(missingParentVariant(variant)))
 
+const isCalled = val => Number.isInteger(val) && val >= 0
+
+const getGentoypeCnWarning = (genotype, svType, isHemiX) => {
+  const refCn = isHemiX ? 1 : 2
+  const hasGentotype = isCalled(genotype.numAlt)
+
+  if ((svType === 'DUP' && genotype.cn < refCn) || (svType === 'DEL' && genotype.cn > refCn)) {
+    return `Copy Number does not match Call Type. Copy number calling may be unreliable for small events${hasGentotype ? ', however genotype call is likely accurate' : ''}`
+  }
+
+  if (hasGentotype && (
+    (genotype.numAlt === 0 && genotype.cn !== refCn) || (genotype.numAlt > 0 && genotype.cn === refCn))) {
+    return 'Copy number does not match genotype. Copy number calling may be unreliable for small events, however genotype call is likely accurate'
+  }
+
+  return null
+}
+
 const Allele = styled.div.attrs(({ isAlt, variant }) => ({ children: isAlt ? variant.alt : variant.ref }))`
   display: inline-block;
   max-width: 50px;
@@ -102,28 +122,23 @@ Allele.propTypes = {
   variant: PropTypes.object,
 }
 
+const copyNumberGenotype = (cn, newline, isHemiX) => (isCalled(cn) && (
+  <span>
+    {newline && <br />}
+    CN: &nbsp;
+    {cn !== (isHemiX ? 1 : 2) ? <b><i>{cn}</i></b> : cn}
+  </span>
+))
+
 const svGenotype = (genotype, isHemiX) => {
-  const hasGenotype = Number.isInteger(genotype.numAlt) && genotype.numAlt >= 0
-  const isAltCn = Number.isInteger(genotype.cn) && genotype.cn !== (isHemiX ? 1 : 2)
-  if (!hasGenotype) {
-    return (
-      <span>
-        CN: &nbsp;
-        {isAltCn ? <b><i>{genotype.cn}</i></b> : genotype.cn}
-      </span>
-    )
+  if (!isCalled(genotype.numAlt)) {
+    return copyNumberGenotype(genotype.cn, false, isHemiX)
   }
   return (
     <span>
       {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
       {isHemiX || genotype.numAlt < 2 ? 'ref' : <b><i>alt</i></b>}/{genotype.numAlt > 0 ? <b><i>alt</i></b> : 'ref'}
-      {isAltCn && (
-        <span>
-          <br />
-          CN: &nbsp;
-          <b><i>{genotype.cn}</i></b>
-        </span>
-      )}
+      {copyNumberGenotype(genotype.cn, true, isHemiX)}
     </span>
   )
 }
@@ -132,7 +147,7 @@ export const Alleles = React.memo(({ genotype, variant, isHemiX, warning }) => (
   <AlleleContainer>
     {warning && (
       <Popup
-        flowing
+        wide
         trigger={<Icon name="warning sign" color="yellow" />}
         content={
           <div>
@@ -151,6 +166,7 @@ export const Alleles = React.memo(({ genotype, variant, isHemiX, warning }) => (
         <Allele isAlt={genotype.numAlt > (isHemiX ? 0 : 1)} variant={variant} textAlign="right" />
         /
         {isHemiX ? '-' : <Allele isAlt={genotype.numAlt > 0} variant={variant} textAlign="left" />}
+        {genotype.mitoCn && (copyNumberGenotype(genotype.mitoCn, true))}
       </Header.Content>
     )}
   </AlleleContainer>
@@ -178,6 +194,14 @@ const GENOTYPE_DETAILS = [
   { title: 'Filter', variantField: 'genotypeFilters', shouldHide: val => (val || []).length < 1 },
   { title: 'Phred Likelihoods', field: 'pl' },
   { title: 'Quality Score', field: 'qs' },
+  {
+    title: 'Mitochondrial Copy Number',
+    field: 'mitoCn',
+    format: val => val && val.toFixed(0),
+    comment: 'CN = (2*mean mtDNA coverage)/(median nuclear coverage). Median for blood samples ≈ 250. CN is typically higher in other tissues. Low values may indicate mtDNA depletion.',
+  },
+  { title: 'Heteroplasmy Level', field: 'hl', format: val => val && val.toPrecision(2) },
+  { title: 'Contamination', field: 'contamination' },
 ]
 
 const SV_GENOTYPE_DETAILS = [
@@ -192,12 +216,13 @@ const SV_GENOTYPE_DETAILS = [
 ]
 
 const formattedGenotypeDetails = (details, genotype, variant, genesById) => details.map(
-  ({ shouldHide, title, field, variantField, format }) => {
+  ({ shouldHide, title, field, variantField, format, comment }) => {
     const value = field ? genotype[field] : variant[variantField]
     return value && !(shouldHide && shouldHide(value, variant)) ? (
       <div key={title}>
         {`${title}:  `}
         <b>{format ? format(value, genesById) : value}</b>
+        {comment && <ColoredDiv color="grey">{comment}</ColoredDiv> }
       </div>
     ) : null
   },
@@ -226,30 +251,53 @@ const Genotype = React.memo(({ variant, individual, isCompoundHet, genesById }) 
     return null
   }
 
-  const isNoCall = variant.svType ?
-    (!Number.isInteger(genotype.cn) && (!Number.isInteger(genotype.numAlt) || genotype.numAlt < 0)) :
-    genotype.numAlt < 0
-  if (isNoCall) {
+  const hasCnCall = isCalled(genotype.cn)
+  if (!hasCnCall && !isCalled(genotype.numAlt)) {
     return <b>NO CALL</b>
   }
 
   const isHemiX = isHemiXVariant(variant, individual)
 
-  let warning
+  const warnings = []
   if (genotype.defragged) {
-    warning = 'Defragged'
+    warnings.push('Defragged')
   } else if (!isHemiX && isHemiUPDVariant(genotype.numAlt, variant, individual)) {
-    warning = 'Potential UPD/ Hemizygosity'
+    warnings.push('Potential UPD/ Hemizygosity')
   } else if (isCompoundHet && [individual.maternalGuid, individual.paternalGuid].every(missingParentVariant(variant))) {
-    warning = 'Variant absent in parents'
+    warnings.push('Variant absent in parents')
   }
 
-  if ((variant.svType === 'DUP' && genotype.cn < 2) || (variant.svType === 'DEL' && genotype.cn > 2)) {
-    warning = [warning, 'Copy Number does not match Call Type.'].join(warning ? '. ' : '')
+  if (hasCnCall) {
+    const cnWarning = getGentoypeCnWarning(genotype, variant.svType, isHemiX)
+    if (cnWarning) {
+      warnings.push(cnWarning)
+    }
+  }
+
+  if (genotype.contamination) {
+    warnings.push(`Contamination (${genotype.contamination}) > 0`)
+  }
+
+  if (variant.commonLowHeteroplasmy && genotype.hl > 0) {
+    warnings.push('Common low heteroplasmy')
+  }
+
+  const warning = warnings.join('. ')
+
+  let previousCall
+  if (genotype.newCall) {
+    previousCall = { content: 'New Call', hover: 'No overlap in previous callset', color: 'green' }
+  } else if (genotype.prevCall) {
+    previousCall = { content: 'Identical Call', hover: 'Identical call in previous callset', color: 'blue' }
+  } else if (genotype.prevOverlap) {
+    previousCall = { content: 'Overlapping Call', hover: 'Overlapping call in previous callset', color: 'teal' }
   }
 
   const hasConflictingNumAlt = genotype.otherSample && genotype.otherSample.numAlt !== genotype.numAlt
   const details = genotypeDetails(genotype, variant, genesById)
+
+  const showSecondaryQuality = !variant.svType && genotype.numAlt >= 0
+  const secondaryQuality = genotype.ab || genotype.hl
 
   const content = (
     <span>
@@ -272,8 +320,14 @@ const Genotype = React.memo(({ variant, individual, isCompoundHet, genesById }) 
         />
       )}
       <Alleles genotype={genotype} variant={variant} isHemiX={isHemiX} warning={warning} />
-      <VerticalSpacer height={2} />
-      {`${genotype.gq || genotype.qs || '-'}${variant.svType ? '' : genotype.numAlt >= 0 && `, ${genotype.ab ? genotype.ab.toPrecision(2) : '-'}`}`}
+      {previousCall && (
+        <Popup
+          content={previousCall.hover}
+          trigger={<Label horizontal size="mini" content={previousCall.content} color={previousCall.color} />}
+        />
+      )}
+      {genotype.gq || genotype.qs || '-'}
+      {showSecondaryQuality && `, ${secondaryQuality ? secondaryQuality.toPrecision(2) : '-'}`}
       {variant.genotypeFilters && (
         <small>
           <br />

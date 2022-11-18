@@ -10,17 +10,12 @@ from django.contrib.auth.models import User
 from settings import PM_USER_GROUP
 from seqr.utils.communication_utils import send_html_email
 from seqr.utils.logging_utils import SeqrLogger
+from seqr.utils.middleware import ErrorsWarningsException
 from seqr.views.utils.permissions_utils import user_is_pm
 from seqr.models import Individual
 
 logger = SeqrLogger(__name__)
 
-class ErrorsWarningsException(Exception):
-    def __init__(self, errors, warnings=None):
-        """Custom Exception to capture errors and warnings."""
-        Exception.__init__(self, str(errors))
-        self.errors = errors
-        self.warnings = warnings
 
 RELATIONSHIP_REVERSE_LOOKUP = {v.lower(): k for k, v in Individual.RELATIONSHIP_LOOKUP.items()}
 
@@ -144,40 +139,7 @@ def _convert_fam_file_rows_to_json(rows):
     json_results = []
     for i, row_dict in enumerate(rows):
 
-        json_record = {}
-
-        # parse
-        for key, value in row_dict.items():
-            full_key = key
-            key = key.lower()
-            value = (value or '').strip()
-            if key == JsonConstants.FAMILY_NOTES_COLUMN.lower():
-                json_record[JsonConstants.FAMILY_NOTES_COLUMN] = value
-            elif "family" in key:
-                json_record[JsonConstants.FAMILY_ID_COLUMN] = value
-            elif "indiv" in key:
-                if "previous" in key:
-                    json_record[JsonConstants.PREVIOUS_INDIVIDUAL_ID_COLUMN] = value
-                else:
-                    json_record[JsonConstants.INDIVIDUAL_ID_COLUMN] = value
-            elif full_key in {
-                JsonConstants.MATERNAL_ETHNICITY, JsonConstants.PATERNAL_ETHNICITY, JsonConstants.BIRTH_YEAR,
-                JsonConstants.DEATH_YEAR, JsonConstants.ONSET_AGE, JsonConstants.AFFECTED_RELATIVES}:
-                json_record[full_key] = json.loads(value)
-            elif "father" in key or "paternal" in key:
-                json_record[JsonConstants.PATERNAL_ID_COLUMN] = value if value != "." else ""
-            elif "mother" in key or "maternal" in key:
-                json_record[JsonConstants.MATERNAL_ID_COLUMN] = value if value != "." else ""
-            elif "sex" in key or "gender" in key:
-                json_record[JsonConstants.SEX_COLUMN] = value
-            elif "affected" in key:
-                json_record[JsonConstants.AFFECTED_COLUMN] = value
-            elif key.startswith("notes"):
-                json_record[JsonConstants.NOTES_COLUMN] = value
-            elif "coded" in key and "phenotype" in key:
-                json_record[JsonConstants.CODED_PHENOTYPE_COLUMN] = value
-            elif 'proband' in key and 'relation' in key:
-                json_record[JsonConstants.PROBAND_RELATIONSHIP] = value
+        json_record = _parse_row_dict(row_dict)
 
         # validate
         if not json_record.get(JsonConstants.FAMILY_ID_COLUMN):
@@ -215,6 +177,42 @@ def _convert_fam_file_rows_to_json(rows):
         json_results.append(json_record)
 
     return json_results
+
+
+def _parse_row_dict(row_dict):
+    json_record = {}
+    for key, value in row_dict.items():
+        full_key = key
+        key = key.lower()
+        value = (value or '').strip()
+        if key == JsonConstants.FAMILY_NOTES_COLUMN.lower():
+            json_record[JsonConstants.FAMILY_NOTES_COLUMN] = value
+        elif "family" in key:
+            json_record[JsonConstants.FAMILY_ID_COLUMN] = value
+        elif "indiv" in key:
+            if "previous" in key:
+                json_record[JsonConstants.PREVIOUS_INDIVIDUAL_ID_COLUMN] = value
+            else:
+                json_record[JsonConstants.INDIVIDUAL_ID_COLUMN] = value
+        elif full_key in {
+            JsonConstants.MATERNAL_ETHNICITY, JsonConstants.PATERNAL_ETHNICITY, JsonConstants.BIRTH_YEAR,
+            JsonConstants.DEATH_YEAR, JsonConstants.ONSET_AGE, JsonConstants.AFFECTED_RELATIVES}:
+            json_record[full_key] = json.loads(value)
+        elif "father" in key or "paternal" in key:
+            json_record[JsonConstants.PATERNAL_ID_COLUMN] = value if value != "." else ""
+        elif "mother" in key or "maternal" in key:
+            json_record[JsonConstants.MATERNAL_ID_COLUMN] = value if value != "." else ""
+        elif "sex" in key or "gender" in key:
+            json_record[JsonConstants.SEX_COLUMN] = value
+        elif "affected" in key:
+            json_record[JsonConstants.AFFECTED_COLUMN] = value
+        elif key.startswith("notes"):
+            json_record[JsonConstants.NOTES_COLUMN] = value
+        elif "coded" in key and "phenotype" in key:
+            json_record[JsonConstants.CODED_PHENOTYPE_COLUMN] = value
+        elif 'proband' in key and 'relation' in key:
+            json_record[JsonConstants.PROBAND_RELATIONSHIP] = value
+    return json_record
 
 
 def validate_fam_file_records(records, fail_on_warnings=False):
@@ -481,9 +479,7 @@ def _get_testing(row):
         return 'None'
     elif DSMConstants.NOT_SURE_TEST in tests:
         return 'Not sure'
-    return 'Yes;\n{tab}{tab}{tests}'.format(tab=DSMConstants.TAB, tests='\n{0}{0}'.format(DSMConstants.TAB).join([
-        _test_summary(row, test) for test in tests.split(',')
-    ]))
+    return '\n* * '.join(['Yes;'] + [_test_summary(row, test) for test in tests.split(',')])
 
 def _parent_summary(row, parent):
     parent_values = {
@@ -527,11 +523,8 @@ def _relative_list_summary(row, relative, all_affected=False):
     if relative_list is None:
         return 'None'
 
-    divider = '\n{tab}{tab}'.format(tab=DSMConstants.TAB)
-    return '{divider}{relatives}'.format(
-        divider=divider,
-        relatives=divider.join([_relative_summary(rel, relative, all_affected) for rel in relative_list]),
-    )
+    divider = '\n* * '
+    return divider + divider.join([_relative_summary(rel, relative, all_affected) for rel in relative_list])
 
 def _get_rgp_dsm_relative_list(row, relative):
     if row[DSMConstants.NO_RELATIVES_COLUMNS[relative]] == DSMConstants.YES:
@@ -558,29 +551,28 @@ def _get_rgp_dsm_family_notes(row):
     DC = DSMConstants
 
     return """#### Clinical Information
-{tab} __Patient is my:__ {specified_relationship}{relationship}
-{tab} __Current Age:__ {age}
-{tab} __Age of Onset:__ {age_of_onset}
-{tab} __Race/Ethnicity:__ {race}; {ethnicity}
-{tab} __Case Description:__ {description}
-{tab} __Clinical Diagnoses:__ {clinical_diagnoses}
-{tab} __Genetic Diagnoses:__ {genetic_diagnoses}
-{tab} __Website/Blog:__ {website}
-{tab} __Additional Information:__ {info}
+* __Patient is my:__ {specified_relationship}{relationship}
+* __Current Age:__ {age}
+* __Age of Onset:__ {age_of_onset}
+* __Race/Ethnicity:__ {race}; {ethnicity}
+* __Case Description:__ {description}
+* __Clinical Diagnoses:__ {clinical_diagnoses}
+* __Genetic Diagnoses:__ {genetic_diagnoses}
+* __Website/Blog:__ {website}
+* __Additional Information:__ {info}
 #### Prior Testing
-{tab} __Referring Physician:__ {physician}
-{tab} __Doctors Seen:__ {doctors}{other_doctors}
-{tab} __Previous Testing:__ {testing}
-{tab} __Biopsies Available:__ {biopses}{other_biopses}
-{tab} __Other Research Studies:__ {studies}
+* __Referring Physician:__ {physician}
+* __Doctors Seen:__ {doctors}{other_doctors}
+* __Previous Testing:__ {testing}
+* __Biopsies Available:__ {biopses}{other_biopses}
+* __Other Research Studies:__ {studies}
 #### Family Information
-{tab} __Mother:__ {mother}
-{tab} __Father:__ {father}
-{tab} __Siblings:__ {siblings}
-{tab} __Children:__ {children}
-{tab} __Relatives:__ {relatives}
+* __Mother:__ {mother}
+* __Father:__ {father}
+* __Siblings:__ {siblings}
+* __Children:__ {children}
+* __Relatives:__ {relatives}
     """.format(
-        tab=DC.TAB,
         specified_relationship=row[DC.RELATIONSHIP_SPECIFY_COLUMN] or 'Unspecified other relationship'
             if row[DC.RELATIONSHIP_COLUMN] == DC.OTHER else '',
         relationship=DC.RELATIONSHIP_MAP[row[DC.RELATIONSHIP_COLUMN]][row[DC.SEX_COLUMN] or DC.PREFER_NOT_ANSWER],
@@ -759,8 +751,6 @@ class MergedPedigreeSampleManifestConstants:
 
 
 class DSMConstants:
-    TAB = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-
     YES = 'YES'
     NO = 'NO'
     UNSURE = 'UNSURE'

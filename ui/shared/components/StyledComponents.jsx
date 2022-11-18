@@ -1,4 +1,5 @@
 import React from 'react'
+
 import styled from 'styled-components'
 import { Button, Header, Icon, Label, Table } from 'semantic-ui-react'
 import { NavLink } from 'react-router-dom'
@@ -48,8 +49,9 @@ export const ColoredIcon = props => <BaseColoredIcon {...props} />
 const BaseColoredLink = ColoredComponent(NavLink)
 export const ColoredLink = props => <BaseColoredLink {...props} />
 
-const BaseColoredLabel = styled(({ color, ...props }) => <Label {...props} />)`
+const BaseColoredLabel = styled(({ color, minWidth, ...props }) => <Label {...props} />)`
   background-color: ${props => props.color} !important;
+  min-width:  ${props => props.minWidth || 'auto'} !important;
   color: white !important;
 `
 export const ColoredLabel = props => <BaseColoredLabel {...props} />

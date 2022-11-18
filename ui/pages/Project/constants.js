@@ -2,18 +2,7 @@
 
 import { stripMarkdown } from 'shared/utils/stringUtils'
 import {
-  FAMILY_STATUS_SOLVED,
-  FAMILY_STATUS_SOLVED_KNOWN_GENE_KNOWN_PHENOTYPE,
-  FAMILY_STATUS_SOLVED_KNOWN_GENE_DIFFERENT_PHENOTYPE,
-  FAMILY_STATUS_SOLVED_NOVEL_GENE,
-  FAMILY_STATUS_EXTERNAL_SOLVE,
-  FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_KNOWN_PHENOTYPE,
-  FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_DIFFERENT_PHENOTYPE,
-  FAMILY_STATUS_STRONG_CANDIDATE_NOVEL_GENE,
-  FAMILY_STATUS_REVIEWED_PURSUING_CANDIDATES,
-  FAMILY_STATUS_REVIEWED_NO_CLEAR_CANDIDATE,
-  FAMILY_STATUS_CLOSED,
-  FAMILY_STATUS_ANALYSIS_IN_PROGRESS,
+  SELECTABLE_FAMILY_ANALYSIS_STATUS_OPTIONS,
   FAMILY_FIELD_ID,
   FAMILY_DISPLAY_NAME,
   FAMILY_FIELD_DESCRIPTION,
@@ -35,13 +24,16 @@ import {
   INDIVIDUAL_FIELD_AFFECTED,
   INDIVIDUAL_FIELD_NOTES,
   INDIVIDUAL_FIELD_PROBAND_RELATIONSHIP,
-  FAMILY_ANALYSIS_STATUS_OPTIONS,
+  ALL_FAMILY_ANALYSIS_STATUS_OPTIONS,
+  FAMILY_ANALYSIS_STATUS_LOOKUP,
   INDIVIDUAL_FIELD_CONFIGS,
   SHOW_ALL,
   exportConfigForField,
   INDIVIDUAL_EXPORT_DATA,
   INDIVIDUAL_HPO_EXPORT_DATA,
   FAMILY_NOTES_FIELDS,
+  SNP_DATA_TYPE,
+  FAMILY_ANALYSED_BY_DATA_TYPES,
 } from 'shared/utils/constants'
 
 export const CASE_REVIEW_TABLE_NAME = 'Case Review'
@@ -80,11 +72,6 @@ export const CASE_REVIEW_STATUS_OPT_LOOKUP = CASE_REVIEW_STATUS_OPTIONS.reduce(
 export const SHOW_IN_REVIEW = 'IN_REVIEW'
 const SHOW_ACCEPTED = 'ACCEPTED'
 
-const SHOW_SOLVED = 'SHOW_SOLVED'
-const SHOW_STRONG_CANDIDATE = 'SHOW_STRONG_CANDIDATE'
-const SHOW_REVIEWED_NO_CLEAR_CANDIDATE = 'SHOW_REVIEWED_NO_CLEAR_CANDIDATE'
-const SHOW_ANALYSIS_IN_PROGRESS = 'SHOW_ANALYSIS_IN_PROGRESS'
-
 const SHOW_DATA_LOADED = 'SHOW_DATA_LOADED'
 const SHOW_PHENOTYPES_ENTERED = 'SHOW_PHENOTYPES_ENTERED'
 const SHOW_NO_PHENOTYPES_ENTERED = 'SHOW_NO_PHENOTYPES_ENTERED'
@@ -92,42 +79,33 @@ const SHOW_NO_PHENOTYPES_ENTERED = 'SHOW_NO_PHENOTYPES_ENTERED'
 const SHOW_ASSIGNED_TO_ME_IN_REVIEW = 'SHOW_ASSIGNED_TO_ME_IN_REVIEW'
 const SHOW_ASSIGNED_TO_ME = 'SHOW_ASSIGNED_TO_ME'
 const SHOW_ANALYSED_BY_ME = 'SHOW_ANALYSED_BY_ME'
-const SHOW_NOT_ANALYSED_BY_ME = 'SHOW_NOT_ANALYSED_BY_ME'
-const SHOW_ANALYSED_BY_CMG = 'SHOW_ANALYSED_BY_CMG'
-const SHOW_NOT_ANALYSED_BY_CMG = 'SHOW_NOT_ANALYSED_BY_CMG'
 const SHOW_ANALYSED = 'SHOW_ANALYSED'
 const SHOW_NOT_ANALYSED = 'SHOW_NOT_ANALYSED'
-const SHOW_CLOSED = 'SHOW_CLOSED'
 
-const SOLVED_STATUSES = new Set([
-  FAMILY_STATUS_SOLVED,
-  FAMILY_STATUS_SOLVED_KNOWN_GENE_KNOWN_PHENOTYPE,
-  FAMILY_STATUS_SOLVED_KNOWN_GENE_DIFFERENT_PHENOTYPE,
-  FAMILY_STATUS_SOLVED_NOVEL_GENE,
-  FAMILY_STATUS_EXTERNAL_SOLVE,
-])
+const getFamilyCaseReviewStatuses  = (family, individualsByGuid) => {
+  const statuses = family.individualGuids.map(
+    individualGuid => (individualsByGuid[individualGuid] || {}).caseReviewStatus,
+  ).filter(status => status)
+  return statuses.length ? statuses : family.caseReviewStatuses
+}
 
-const STRONG_CANDIDATE_STATUSES = new Set([
-  FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_KNOWN_PHENOTYPE,
-  FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_DIFFERENT_PHENOTYPE,
-  FAMILY_STATUS_STRONG_CANDIDATE_NOVEL_GENE,
-])
+const caseReviewStatusFilter = status => individualsByGuid => family => getFamilyCaseReviewStatuses(
+  family, individualsByGuid,
+).some(caseReviewStatus => caseReviewStatus === status)
 
-const ANALYSIS_IN_PROGRESS_STATUSES = new Set([
-  FAMILY_STATUS_ANALYSIS_IN_PROGRESS,
-  FAMILY_STATUS_REVIEWED_PURSUING_CANDIDATES,
-])
-
-const caseReviewStatusFilter = status => individualsByGuid => family => family.individualGuids.map(
-  individualGuid => individualsByGuid[individualGuid],
-).some(individual => individual.caseReviewStatus === status)
-
-const familyIsInReview = (family, individualsByGuid) => family.individualGuids.map(
-  individualGuid => individualsByGuid[individualGuid],
-).every(individual => individual.caseReviewStatus === CASE_REVIEW_STATUS_IN_REVIEW)
+const familyIsInReview = (family, individualsByGuid) => getFamilyCaseReviewStatuses(family, individualsByGuid).every(
+  status => status === CASE_REVIEW_STATUS_IN_REVIEW,
+)
 
 const familyIsAssignedToMe = (family, user) => (
   family.assignedAnalyst ? family.assignedAnalyst.email === user.email : null)
+
+const familyHasFeatures = (family, individualsByGuid) => {
+  const individuals = family.individualGuids.map(
+    individualGuid => individualsByGuid[individualGuid],
+  ).filter(individual => individual)
+  return individuals.length ? individuals.some(({ features }) => (features || []).length > 0) : family.hasFeatures
+}
 
 const ALL_FAMILIES_FILTER = { value: SHOW_ALL, name: 'All', createFilter: () => () => (true) }
 const IN_REVIEW_FAMILIES_FILTER = {
@@ -146,101 +124,76 @@ const ASSIGNED_TO_ME_FILTER = {
   createFilter: (individualsByGuid, user) => family => familyIsAssignedToMe(family, user),
 }
 
-export const FAMILY_FILTER_OPTIONS = [
-  ALL_FAMILIES_FILTER,
-  {
-    value: SHOW_DATA_LOADED,
-    category: 'Data Status:',
-    name: 'Data Loaded',
-    createFilter: (individualsByGuid, user, samplesByFamily) => family => (
-      (samplesByFamily[family.familyGuid] || []).filter(sample => sample.isActive).length > 0),
-  },
-  {
-    value: SHOW_PHENOTYPES_ENTERED,
-    category: 'Data Status:',
-    name: 'Phenotypes Entered',
-    createFilter: individualsByGuid => family => (
-      family.individualGuids.some(individualGuid => (individualsByGuid[individualGuid].features || []).length > 0)),
-  },
-  {
-    value: SHOW_NO_PHENOTYPES_ENTERED,
-    category: 'Data Status:',
-    name: 'No Phenotypes Entered',
-    createFilter: individualsByGuid => family => (
-      family.individualGuids.every(individualGuid => (individualsByGuid[individualGuid].features || []).length < 1)),
-  },
-  { ...ASSIGNED_TO_ME_FILTER, category: 'Analysed By:' },
-  {
-    value: SHOW_ANALYSED_BY_ME,
-    category: 'Analysed By:',
-    name: 'Analysed By Me',
-    createFilter: (individualsByGuid, user) => family => (
-      family.analysedBy.map(analysedBy => analysedBy.createdBy.email).includes(user.email)),
-  },
-  {
-    value: SHOW_NOT_ANALYSED_BY_ME,
-    category: 'Analysed By:',
-    name: 'Not Analysed By Me',
-    createFilter: (individualsByGuid, user) => family => (
-      !family.analysedBy.map(analysedBy => analysedBy.createdBy.email).includes(user.email)),
-  },
-  {
-    value: SHOW_ANALYSED_BY_CMG,
-    category: 'Analysed By:',
-    name: 'Analysed By CMG',
-    createFilter: () => family => family.analysedBy.some(analysedBy => analysedBy.createdBy.isAnalyst),
-  },
-  {
-    value: SHOW_NOT_ANALYSED_BY_CMG,
-    category: 'Analysed By:',
-    name: 'Not Analysed By CMG',
-    createFilter: () => family => family.analysedBy.every(analysedBy => !analysedBy.createdBy.isAnalyst),
-  },
-  {
-    value: SHOW_ANALYSED,
-    category: 'Analysed By:',
-    name: 'Analysed',
-    createFilter: () => family => family.analysedBy.length > 0,
-  },
-  {
-    value: SHOW_NOT_ANALYSED,
-    category: 'Analysed By:',
-    name: 'Not Analysed',
-    createFilter: () => family => family.analysedBy.length < 1,
-  },
-  {
-    value: SHOW_SOLVED,
-    category: 'Analysis Status:',
-    name: 'Solved',
-    createFilter: () => family => SOLVED_STATUSES.has(family.analysisStatus),
-  },
-  {
-    value: SHOW_STRONG_CANDIDATE,
-    category: 'Analysis Status:',
-    name: 'Strong Candidate',
-    createFilter: () => family => STRONG_CANDIDATE_STATUSES.has(family.analysisStatus),
-  },
-  {
-    value: SHOW_REVIEWED_NO_CLEAR_CANDIDATE,
-    category: 'Analysis Status:',
-    name: 'No Clear Candidate',
-    createFilter: () => family => family.analysisStatus === FAMILY_STATUS_REVIEWED_NO_CLEAR_CANDIDATE,
-  },
-  {
-    value: SHOW_CLOSED,
-    category: 'Analysis Status:',
-    name: 'Closed',
-    createFilter: () => family => family.analysisStatus === FAMILY_STATUS_CLOSED,
-  },
-  {
-    value: SHOW_ANALYSIS_IN_PROGRESS,
-    category: 'Analysis Status:',
-    name: 'Analysis In Progress',
-    createFilter: () => family => ANALYSIS_IN_PROGRESS_STATUSES.has(family.analysisStatus),
-  },
-  { ...ACCEPTED_FILTER, category: 'Analysis Status:' },
-  { ...IN_REVIEW_FAMILIES_FILTER, category: 'Analysis Status:' },
-]
+export const CATEGORY_FAMILY_FILTERS = {
+  [FAMILY_FIELD_ANALYSIS_STATUS]: [
+    ...SELECTABLE_FAMILY_ANALYSIS_STATUS_OPTIONS.map(option => ({
+      ...option,
+      createFilter: () => family => family.analysisStatus === option.value,
+    })),
+    ...[ACCEPTED_FILTER, IN_REVIEW_FAMILIES_FILTER].map(filter => ({ ...filter, category: 'Case Review Status' })),
+  ],
+  [FAMILY_FIELD_ANALYSED_BY]: [
+    ASSIGNED_TO_ME_FILTER,
+    {
+      value: SHOW_ANALYSED_BY_ME,
+      name: 'Analysed By Me',
+      analysedByFilter: (individualsByGuid, user) => ({ createdBy }) => createdBy === (user.displayName || user.email),
+    },
+    {
+      value: SHOW_ANALYSED,
+      name: 'Analysed',
+      analysedByFilter: () => () => true,
+    },
+    {
+      value: SHOW_NOT_ANALYSED,
+      name: 'Not Analysed',
+      requireNoAnalysedBy: true,
+      analysedByFilter: () => () => true,
+    },
+    ...FAMILY_ANALYSED_BY_DATA_TYPES.map(([type, typeDisplay]) => ({
+      value: type,
+      name: typeDisplay,
+      category: 'Data Type',
+      analysedByFilter: () => ({ dataType }) => dataType === type,
+    })),
+    {
+      value: 'yearSinceAnalysed',
+      name: '>1 Year',
+      category: 'Analysis Date',
+      requireNoAnalysedBy: true,
+      analysedByFilter: () => ({ lastModifiedDate }) => (
+        (new Date()).setFullYear(new Date().getFullYear() - 1) < new Date(lastModifiedDate)
+      ),
+    },
+  ],
+  [FAMILY_FIELD_FIRST_SAMPLE]: [
+    {
+      value: SHOW_DATA_LOADED,
+      name: 'Data Loaded',
+      createFilter: (individualsByGuid, user, samplesByFamily) => family => (
+        (samplesByFamily[family.familyGuid] || []).filter(sample => sample.isActive).length > 0),
+    },
+    {
+      value: SHOW_PHENOTYPES_ENTERED,
+      name: 'Phenotypes Entered',
+      createFilter: individualsByGuid => family => familyHasFeatures(family, individualsByGuid),
+    },
+    {
+      value: SHOW_NO_PHENOTYPES_ENTERED,
+      name: 'No Phenotypes Entered',
+      createFilter: individualsByGuid => family => !familyHasFeatures(family, individualsByGuid),
+    },
+  ],
+}
+
+export const FAMILY_FILTER_LOOKUP = Object.values(CATEGORY_FAMILY_FILTERS).reduce(
+  (acc, options) => {
+    options.forEach((opt) => {
+      acc[opt.value] = opt.createFilter
+    })
+    return acc
+  }, {},
+)
 
 export const CASE_REVIEW_FAMILY_FILTER_OPTIONS = [
   ALL_FAMILIES_FILTER,
@@ -264,10 +217,10 @@ export const CASE_REVIEW_FAMILY_FILTER_OPTIONS = [
   })),
 ]
 
-export const FAMILY_FILTER_LOOKUP = [...FAMILY_FILTER_OPTIONS, ...CASE_REVIEW_FAMILY_FILTER_OPTIONS].reduce(
+export const CASE_REVIEW_FILTER_LOOKUP = CASE_REVIEW_FAMILY_FILTER_OPTIONS.reduce(
   (acc, opt) => ({
     ...acc,
-    [opt.value]: opt,
+    [opt.value]: opt.createFilter,
   }), {},
 )
 
@@ -279,7 +232,7 @@ const SORT_BY_REVIEW_STATUS_CHANGED_DATE = 'REVIEW_STATUS_CHANGED_DATE'
 const SORT_BY_ANALYSIS_STATUS = 'SORT_BY_ANALYSIS_STATUS'
 const SORT_BY_ANALYSED_DATE = 'SORT_BY_ANALYSED_DATE'
 
-const FAMILY_ANALYSIS_STATUS_SORT_LOOKUP = FAMILY_ANALYSIS_STATUS_OPTIONS.reduce(
+const FAMILY_ANALYSIS_STATUS_SORT_LOOKUP = ALL_FAMILY_ANALYSIS_STATUS_OPTIONS.reduce(
   (acc, { value }, i) => ({ ...acc, [value]: i.toString(36) }), {},
 )
 
@@ -292,15 +245,7 @@ export const FAMILY_SORT_OPTIONS = [
   {
     value: SORT_BY_FAMILY_ADDED_DATE,
     name: 'Date Added',
-    createSortKeyGetter: individualsByGuid => family => family.individualGuids.map(
-      individualGuid => individualsByGuid[individualGuid],
-    ).reduce(
-      (acc, individual) => {
-        const indivCreatedDate = individual.createdDate || '2000-01-01T01:00:00.000Z'
-        return indivCreatedDate > acc ? indivCreatedDate : acc
-      },
-      '2000-01-01T01:00:00.000Z',
-    ),
+    createSortKeyGetter: () => family => family.createdDate,
   },
   {
     value: SORT_BY_DATA_LOADED_DATE,
@@ -326,22 +271,21 @@ export const FAMILY_SORT_OPTIONS = [
   {
     value: SORT_BY_ANALYSED_DATE,
     name: 'Date Last Analysed',
-    createSortKeyGetter: () => family => family.analysedBy.map(
+    createSortKeyGetter: () => family => family.analysedBy.filter(({ dataType }) => dataType === SNP_DATA_TYPE).map(
       ({ lastModifiedDate }) => lastModifiedDate,
-    ).sort()[family.analysedBy.length - 1] || '3000-01-01T01:00:00.000Z',
+    ).sort().reverse()[0] || '2000-01-01T01:00:00.000Z',
   },
   {
     value: SORT_BY_REVIEW_STATUS_CHANGED_DATE,
     name: 'Date Review Status Changed',
-    createSortKeyGetter: individualsByGuid => family => family.individualGuids.map(
-      individualGuid => individualsByGuid[individualGuid],
-    ).reduce(
-      (acc, individual) => {
-        const indivCaseReviewStatusLastModifiedDate = individual.caseReviewStatusLastModifiedDate || '2000-01-01T01:00:00.000Z'
-        return indivCaseReviewStatusLastModifiedDate > acc ? indivCaseReviewStatusLastModifiedDate : acc
-      },
-      '2000-01-01T01:00:00.000Z',
-    ),
+    createSortKeyGetter: individualsByGuid => (family) => {
+      const lastModified = family.individualGuids.map(
+        individualGuid => (individualsByGuid[individualGuid] || {}).caseReviewStatusLastModifiedDate,
+      ).filter(status => status)
+      return lastModified.length ? lastModified.reduce(
+        (acc, status) => (status > acc ? status : acc), '2000-01-01T01:00:00.000Z',
+      ) : family.caseReviewStatusLastModified || '2000-01-01T01:00:00.000Z'
+    },
   },
 ]
 
@@ -359,10 +303,10 @@ const FAMILY_FIELD_CONFIGS = Object.entries({
   [FAMILY_FIELD_FIRST_SAMPLE]: { label: 'First Data Loaded Date', format: firstSample => (firstSample || {}).loadedDate },
   [FAMILY_FIELD_DESCRIPTION]: { label: 'Description', format: stripMarkdown, width: 10, description: 'A short description of the family' },
   [FAMILY_FIELD_ANALYSIS_STATUS]: {
-    format: status => (FAMILY_ANALYSIS_STATUS_OPTIONS.find(option => option.value === status) || {}).name,
+    format: status => (FAMILY_ANALYSIS_STATUS_LOOKUP[status] || {}).name,
   },
   [FAMILY_FIELD_ASSIGNED_ANALYST]: { format: analyst => (analyst ? analyst.email : '') },
-  [FAMILY_FIELD_ANALYSED_BY]: { format: analysedBy => analysedBy.map(o => o.createdBy.fullName || o.createdBy.email).join(',') },
+  [FAMILY_FIELD_ANALYSED_BY]: { format: analysedBy => analysedBy.map(o => o.createdBy).join(',') },
   [FAMILY_FIELD_CODED_PHENOTYPE]: { label: 'Coded Phenotype', width: 4, description: "High level summary of the family's phenotype/disease" },
   ...FAMILY_NOTES_FIELDS.reduce((acc, { id }) => ({ ...acc, [id]: { format: formatNotes } }), {}),
 }).reduce((acc, [field, config]) => ({ ...acc, [field]: { label: FAMILY_FIELD_NAME_LOOKUP[field], ...config } }), {})
@@ -603,6 +547,6 @@ export const TAG_FORM_FIELD = {
   label: 'Tags',
   includeCategories: true,
   format: value => (value || []).map(({ name }) => name),
-  normalize: value => (value || []).map(name => ({ name })),
+  parse: value => (value || []).map(name => ({ name })),
   validate: value => (value && value.length ? undefined : 'Required'),
 }

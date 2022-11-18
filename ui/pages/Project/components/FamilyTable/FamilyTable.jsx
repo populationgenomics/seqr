@@ -1,19 +1,23 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import { Table, Icon } from 'semantic-ui-react'
+import { Table, Icon, Popup, Visibility } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router'
 
-import ExportTableButton from 'shared/components/buttons/ExportTableButton'
+import DataLoader from 'shared/components/DataLoader'
+import { ExportTableButtonContent, DownloadButton } from 'shared/components/buttons/ExportTableButton'
 import HorizontalStackedBar from 'shared/components/graph/HorizontalStackedBar'
 import TableLoading from 'shared/components/table/TableLoading'
 import { HorizontalSpacer } from 'shared/components/Spacers'
 
-import { getVisibleFamiliesInSortedOrder, getProjectDetailsIsLoading, getProjectExportUrls } from '../../selectors'
+import {
+  getVisibleFamiliesInSortedOrder, getFamiliesLoading, getProjectOverviewIsLoading, getProjectExportUrls,
+  getIndivdualsLoading,
+} from '../../selectors'
+import { loadFamilies, loadProjectExportData } from '../../reducers'
 import { FamilyDetail } from '../FamilyPage'
 import TableHeaderRow from './header/TableHeaderRow'
-import EmptyTableRow from './EmptyTableRow'
 
 const ExportContainer = styled.span`
   float: right;
@@ -23,6 +27,12 @@ const ExportContainer = styled.span`
 const ToggleIcon = styled(Icon).attrs({ size: 'large', link: true, name: 'dropdown' })`
   position: relative;
   z-index: 1;
+`
+
+const EmptyCell = styled(Table.Cell)`
+  padding: 10px 0px 10px 15px;
+  color: gray;
+  border-width: 0px;
 `
 
 // Allows dropdowns to be visible inside table cell
@@ -41,7 +51,7 @@ class FamilyTableRow extends React.PureComponent {
     showDetails: PropTypes.bool,
   }
 
-  state = { showDetails: null }
+  state = { showDetails: null, isVisible: false }
 
   toggle = () => {
     const { showDetails } = this.props
@@ -50,27 +60,37 @@ class FamilyTableRow extends React.PureComponent {
     ))
   }
 
+  handleOnScreen = () => {
+    this.setState({ isVisible: true })
+  }
+
   render() {
     const {
       familyGuid, showVariantDetails, detailFields, noDetailFields, tableName, showDetails: initialShowDetails,
     } = this.props
-    const { showDetails } = this.state
+    const { showDetails, isVisible } = this.state
     const showFamilyDetails = showDetails === null ? initialShowDetails : showDetails
     return (
       <Table.Row>
+        <Table.Cell collapsing verticalAlign="top">
+          {detailFields && noDetailFields &&
+            <ToggleIcon rotated={showFamilyDetails ? undefined : 'counterclockwise'} onClick={this.toggle} />}
+        </Table.Cell>
         <OverflowCell>
-          <FamilyDetail
-            key={familyGuid}
-            familyGuid={familyGuid}
-            showFamilyPageLink
-            showVariantDetails={showVariantDetails}
-            tableName={tableName}
-            fields={showFamilyDetails ? detailFields : noDetailFields}
-            compact={!showFamilyDetails}
-            disableEdit={!showFamilyDetails}
-            annotation={detailFields && noDetailFields && <ToggleIcon rotated={showFamilyDetails ? undefined : 'counterclockwise'} onClick={this.toggle} />}
-            showIndividuals={showFamilyDetails}
-          />
+          <Visibility fireOnMount onOnScreen={this.handleOnScreen}>
+            {isVisible && (
+              <FamilyDetail
+                key={familyGuid}
+                familyGuid={familyGuid}
+                showFamilyPageLink
+                showVariantDetails={showVariantDetails}
+                tableName={tableName}
+                fields={showFamilyDetails ? detailFields : noDetailFields}
+                compact={!showFamilyDetails}
+                disableEdit={!showFamilyDetails}
+              />
+            )}
+          </Visibility>
         </OverflowCell>
       </Table.Row>
     )
@@ -78,10 +98,11 @@ class FamilyTableRow extends React.PureComponent {
 
 }
 
-const FamilyTable = React.memo((
-  { visibleFamilies, loading, headerStatus, exportUrls, noDetailFields, tableName, showVariantDetails, ...props },
-) => (
-  <div>
+const FamilyTable = React.memo(({
+  visibleFamilies, load, loading, headerStatus, exportUrls, noDetailFields, tableName, showVariantDetails,
+  loadExportData, exportDataLoading, ...props
+}) => (
+  <DataLoader load={load} loading={false} content>
     <ExportContainer>
       {headerStatus && (
         <span>
@@ -95,10 +116,19 @@ const FamilyTable = React.memo((
           <HorizontalSpacer width={10} />
         </span>
       )}
-      <ExportTableButton downloads={exportUrls} />
+      <Popup
+        trigger={<DownloadButton />}
+        content={
+          <DataLoader load={loadExportData} loading={exportDataLoading} content>
+            <ExportTableButtonContent downloads={exportUrls} />
+          </DataLoader>
+        }
+        on="click"
+        position="bottom center"
+      />
       <HorizontalSpacer width={45} />
     </ExportContainer>
-    <Table padded fixed attached="top">
+    <Table compact fixed attached="top">
       <TableHeaderRow
         fields={noDetailFields}
         tableName={tableName}
@@ -106,7 +136,7 @@ const FamilyTable = React.memo((
         analysisGroupGuid={props.match.params.analysisGroupGuid}
       />
     </Table>
-    <Table celled striped padded fixed attached="bottom">
+    <Table striped compact attached="bottom">
       <Table.Body>
         {loading && <TableLoading />}
         {!loading && (visibleFamilies.length > 0 ? visibleFamilies.map(family => (
@@ -118,11 +148,20 @@ const FamilyTable = React.memo((
             tableName={tableName}
             {...props}
           />
-        )) : <EmptyTableRow tableName={tableName} />)}
+        )) : (
+          <Table.Row>
+            <EmptyCell content="0 families found" />
+          </Table.Row>
+        ))}
       </Table.Body>
-      <Table.Footer><Table.Row><Table.HeaderCell /></Table.Row></Table.Footer>
+      <Table.Footer>
+        <Table.Row>
+          <Table.HeaderCell />
+          <Table.HeaderCell />
+        </Table.Row>
+      </Table.Footer>
     </Table>
-  </div>
+  </DataLoader>
 ))
 
 export { FamilyTable as FamilyTableComponent }
@@ -130,6 +169,9 @@ export { FamilyTable as FamilyTableComponent }
 FamilyTable.propTypes = {
   visibleFamilies: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
+  load: PropTypes.func,
+  exportDataLoading: PropTypes.bool,
+  loadExportData: PropTypes.func,
   headerStatus: PropTypes.object,
   exportUrls: PropTypes.arrayOf(PropTypes.object),
   showVariantDetails: PropTypes.bool,
@@ -140,8 +182,14 @@ FamilyTable.propTypes = {
 
 const mapStateToProps = (state, ownProps) => ({
   visibleFamilies: getVisibleFamiliesInSortedOrder(state, ownProps),
-  loading: getProjectDetailsIsLoading(state),
+  loading: getFamiliesLoading(state) || getProjectOverviewIsLoading(state),
+  exportDataLoading: getFamiliesLoading(state) || getIndivdualsLoading(state),
   exportUrls: getProjectExportUrls(state, ownProps),
 })
 
-export default withRouter(connect(mapStateToProps)(FamilyTable))
+const mapDispatchToProps = {
+  load: loadFamilies,
+  loadExportData: loadProjectExportData,
+}
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(FamilyTable))

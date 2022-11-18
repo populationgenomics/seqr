@@ -9,6 +9,7 @@
         "last_modified_date": "2017-03-13T09:07:49.582Z",
         "name": "1kg project n\u00e5me with uni\u00e7\u00f8de",
         "description": "1000 genomes project description with uni\u00e7\u00f8de",
+        "consent_code": "H",
 	"can_edit_group": 2,
 	"can_view_group": 3,
     "workspace_name": "anvil-1kg project n\u00e5me with uni\u00e7\u00f8de",
@@ -31,6 +32,7 @@
         "last_modified_date": "2017-03-13T09:07:49.582Z",
         "name": "Empty Project",
         "description": "",
+        "consent_code": "H",
 	"can_edit_group": 2,
 	"can_view_group": 3,
 	"is_mme_enabled": false,
@@ -52,7 +54,8 @@
 	"can_view_group": 3,
     "workspace_name": "anvil-project 1000 Genomes Demo",
     "workspace_namespace": "my-seqr-billing",
-	"is_mme_enabled": false,
+	"is_mme_enabled": true,
+    "is_demo": true,
 	"mme_primary_data_owner": "",
     "mme_contact_url": "mailto:seqr-test@gmail.com,seqr+test@populationgenomics.org.au",
 	"last_accessed_date": "2017-09-15T18:15:50.827Z"
@@ -70,6 +73,7 @@
 	    "can_edit_group": 2,
 	    "can_view_group": 2,
 	    "last_accessed_date": "2017-09-15T18:15:50.827Z",
+        "consent_code": "H",
     "workspace_name": "anvil-non-analyst-project 1000 Genomes Demo",
     "workspace_namespace": "my-seqr-billing"
     }
@@ -117,20 +121,6 @@
     }
 },
 {
-    "model": "seqr.projectcategory",
-    "pk": 4,
-    "fields": {
-        "guid": "PC000004_demo",
-        "created_date": "2017-03-12T23:52:55.846Z",
-        "created_by": null,
-        "last_modified_date": "2017-03-12T23:52:55.846Z",
-        "name": "Demo",
-        "projects": [
-            3
-        ]
-    }
-},
-{
     "model": "seqr.family",
     "pk": 1,
     "fields": {
@@ -140,11 +130,13 @@
         "last_modified_date": "2017-03-13T07:53:27.973Z",
         "project": 1,
         "family_id": "1",
-        "display_name": "1",
+        "display_name": "",
         "description": "test descripti\u00f8n",
         "post_discovery_omim_number": "615120,615123",
         "pedigree_image": "ped_1.png",
         "analysis_status": "Q",
+        "coded_phenotype": "myopathy",
+        "pubmed_ids": ["34415322", "33665635"],
         "case_review_notes": "<div>initial notes with uni&ccedil;&oslash;de</div>\n<div>test</div>",
         "case_review_summary": "<div>internal case review summary with uni&ccedil;&oslash;de</div>"
     }
@@ -159,7 +151,7 @@
         "last_modified_date": "2017-03-12T22:36:26.681Z",
         "project": 1,
         "family_id": "2",
-        "display_name": "2",
+        "display_name": "2_1",
         "description": "",
         "pedigree_image": "ped_2.png",
         "analysis_status": "Q",
@@ -339,7 +331,7 @@
         "last_modified_date": "2017-03-12T22:37:17.555Z",
         "project": 3,
         "family_id": "12",
-        "display_name": "12",
+        "display_name": "12-a",
         "description": "",
         "pedigree_image": null,
         "analysis_status": "Q",
@@ -359,7 +351,7 @@
         "last_modified_date": "2017-03-12T19:27:08.773Z",
         "project": 1,
         "family_id": "no_individuals",
-        "display_name": "family without individuals and samples",
+        "display_name": "42",
         "description": "",
         "pedigree_image": "ped.png",
         "analysis_status": "Q",
@@ -381,6 +373,17 @@
         "family_id": "14",
         "success_story": "Differential treatement",
         "success_story_types": ["A", "D"]
+    }
+},
+    {
+    "model": "seqr.familyanalysedby",
+    "pk": 1,
+    "fields": {
+        "guid": "FAB000001_1",
+        "created_date": "2021-07-22T19:27:08.563Z",
+        "created_by": 13,
+        "last_modified_date": null,
+        "family": 1
     }
 },
 {
@@ -443,7 +446,7 @@
         "case_review_status_last_modified_by": null,
         "case_review_discussion": null,
         "proband_relationship": "S",
-        "birth_year": null,
+        "birth_year": 1999,
         "death_year": null,
         "onset_age": "A",
         "maternal_ethnicity": ["Azerbaijanis"],
@@ -451,13 +454,14 @@
         "consanguinity": true,
         "affected_relatives": false,
         "expected_inheritance": ["R"],
-        "features": [{"id": "HP:0001631"}, {"id": "HP:0002011"}, {"id": "HP:0001636"}],
-        "absent_features": [{"id": "HP:0011675"}, {"id": "HP:0001674"}, {"id": "HP:0001508"}],
+        "features": [{"id": "HP:0001631"}, {"id": "HP:0002011", "qualifiers":  [{"label": "Infantile onset", "type": "age_of_onset"}, {"label": "Mild", "type": "severity"}, {"label": "Nonprogressive", "type": "pace_of_progression"}]}, {"id": "HP:0001636"}],
+        "absent_features": [{"id": "HP:0011675"}, {"id": "HP:0001674", "notes":  "originally indicated"}, {"id": "HP:0001508"}],
         "nonstandard_features": "[]",
         "absent_nonstandard_features": null,
         "disorders": ["615593"],
         "candidate_genes": [{"gene": "EHBP1L1", "comments": "comments EHBP1L1"}, {"gene": "ACY3", "comments": "comments ACY3"}],
         "rejected_genes": [{"gene": "IKBKAP", "comments": "comments IKBKAP"}, {"gene": "CCDC102B", "comments": "comments for CCDC102B"}],
+        "population": "MDE",
         "ar_fertility_meds": null,
         "ar_iui": null,
         "ar_ivf": null,
@@ -525,7 +529,7 @@
         "father_id": 5,
         "sex": "F",
         "affected": "A",
-        "display_name": "",
+        "display_name": "HG00731_a",
 	"notes": "",
         "case_review_status": "3",
         "case_review_status_last_modified_date": "2017-03-12T22:34:59.093Z",
@@ -1186,6 +1190,112 @@
     }
 },
 {
+    "model": "seqr.sample",
+    "pk": 149,
+    "fields": {
+        "guid": "S000149_hg00733",
+        "created_date": "2022-02-05T06:42:55.397Z",
+        "created_by": null,
+        "last_modified_date": "2022-03-13T09:07:49.937Z",
+        "elasticsearch_index": "test_index_mito_wgs",
+        "sample_id": "HG00733",
+        "sample_type": "WGS",
+        "is_active": true,
+        "individual": 6,
+        "dataset_type": "MITO",
+        "loaded_date": "2022-02-05T06:42:55.397Z"
+    }
+},
+{
+    "model": "seqr.sample",
+    "pk": 150,
+    "fields": {
+        "guid": "S000150_na19675_d2",
+        "created_date": "2017-02-05T06:42:55.397Z",
+        "created_by": null,
+        "last_modified_date": "2017-03-13T09:07:49.744Z",
+        "individual": 1,
+        "sample_type": "RNA",
+        "dataset_type": "VARIANTS",
+        "sample_id": "NA19675_D2",
+        "is_active": true,
+        "elasticsearch_index":null,
+        "tissue_type": "M",
+        "data_source": "muscle_samples.tsv.gz",
+        "loaded_date": "2017-02-05T06:42:55.397Z"
+    }
+},
+{
+    "model": "seqr.sample",
+    "pk": 151,
+    "fields": {
+        "guid": "S000151_na20889",
+        "created_date": "2017-02-05T06:42:55.397Z",
+        "created_by": null,
+        "last_modified_date": "2017-03-13T09:07:49.744Z",
+        "individual": 17,
+        "sample_type": "RNA",
+        "dataset_type": "VARIANTS",
+        "sample_id": "NA20889",
+        "is_active": true,
+        "elasticsearch_index":null,
+        "tissue_type": "M",
+        "data_source": "muscle_samples.tsv.gz",
+        "loaded_date": "2017-02-05T06:42:55.397Z"
+    }
+},
+{
+    "model": "seqr.rnaseqoutlier",
+    "pk": 1,
+    "fields": {
+        "sample": 150,
+        "gene_id": "ENSG00000135953",
+        "z_score": 7.31,
+        "p_value": 0.00000000000948,
+        "p_adjust": 0.00000000781
+    }
+},
+{
+    "model": "seqr.rnaseqoutlier",
+    "pk": 2,
+    "fields": {
+        "sample": 150,
+        "gene_id": "ENSG00000240361",
+        "z_score": -4.08,
+        "p_value": 5.88,
+        "p_adjust": 0.09
+    }
+},
+    {
+    "model": "seqr.rnaseqoutlier",
+    "pk": 3,
+    "fields": {
+        "sample": 150,
+        "gene_id": "ENSG00000268903",
+        "z_score": 7.08,
+        "p_value": 0.000000000588,
+        "p_adjust": 0.00000000139
+    }
+},
+{
+    "model": "seqr.rnaseqtpm",
+    "pk": 3,
+    "fields": {
+        "sample": 150,
+        "gene_id": "ENSG00000135953",
+        "tpm": 8.38
+    }
+},
+{
+    "model": "seqr.rnaseqtpm",
+    "pk": 4,
+    "fields": {
+        "sample": 151,
+        "gene_id": "ENSG00000135953",
+        "tpm": 1.01
+    }
+},
+{
     "model": "seqr.igvsample",
     "pk": 145,
     "fields": {
@@ -1288,6 +1398,7 @@
             "predictions": {"eigen": null, "revel": null, "sift": null, "cadd": "14.33", "metasvm": "", "mpc": null, "splice_ai": null, "phastcons_100_vert": null, "mut_taster": null, "fathmm": null, "polyphen": null, "dann": null, "primate_ai": null, "gerp_rs": null},
             "hgmd": {"accession": null, "class": null},
             "rsid": null,
+            "selectedMainTranscriptId": null,
             "liftedOverChrom": "",
             "originalAltAlleles": ["G"],
             "transcripts": {"ENSG00000135953": [
@@ -1328,7 +1439,6 @@
             ],
             "liftedOverPos": "",
             "genotypeFilters": "pass",
-            "mainTranscriptId": "ENST00000258436",
             "populations": {
                 "callset": {
                     "ac": null,
@@ -1395,24 +1505,7 @@
                 "T"
             ],
             "transcripts": {
-                "ENSG00000135953": [
-                    {
-                        "transcriptId": "ENST00000258436",
-                        "lofFilter": "",
-                        "biotype": "protein_coding",
-                        "geneSymbol": "MFSD9",
-                        "majorConsequence": "inframe_deletion",
-                        "canonical": "YES",
-                        "hgvsp": "ENSP00000258436.5:p.Leu126del",
-                        "lof": "",
-                        "lofFlags": "",
-                        "codons": "ctTCTc/ctc",
-                        "hgvsc": "ENST00000258436.5:c.375_377delTCT",
-                        "transcriptRank": 0,
-                        "aminoAcids": "LL/L",
-                        "cdnaPosition": "419-421"
-                    }
-                ]
+                "ENSG00000135953": []
             },
             "chrom": "1",
             "genotypes": {
@@ -1829,7 +1922,7 @@
     "pk": 1,
     "fields": {
         "guid": "LL00049_pid_genes_autosomal_do",
-        "projects": [3],
+        "projects": [1, 3],
         "created_date": "2017-02-07T12:55:30.700Z",
         "created_by": 11,
         "last_modified_date": "2018-05-01T00:02:38.733Z",
@@ -1874,6 +1967,20 @@
     "last_modified_date": "2018-04-28T00:03:25.347Z",
     "locus_list": 1,
     "gene_id": "ENSG00000227232"
+  }
+},
+{
+  "model": "panelapp.palocuslist",
+  "pk": 1,
+  "fields": {
+    "seqr_locus_list": 1,
+    "panel_app_id": 1,
+    "disease_group": null,
+    "disease_sub_group": "2018-04-28T00:03:25.347Z",
+    "status": "public",
+    "version": "1.0",
+    "version_created": "2018-04-28T00:03:25.347Z",
+    "url": "https://panelapp.agha.umccr.org/api/v1/panels/254/genes"
   }
 },
 {
@@ -1942,6 +2049,19 @@
         "description": "A sample analysis group",
         "project": 1,
         "families": [1, 3, 5]
+    }
+},
+{
+    "model": "seqr.analysisgroup",
+    "pk": 2,
+    "fields": {
+        "guid": "AG0000185_accepted",
+        "created_date": "2018-08-09T18:53:24.207Z",
+        "created_by": null,
+        "last_modified_date": "2018-08-09T18:53:24.207Z",
+        "name": "Accepted",
+        "project": 1,
+        "families": [3]
     }
 },
 {

@@ -1,4 +1,5 @@
-import { getIntitialSearch, getSearchedProjectsLocusListOptions, getDatasetTypes } from './selectors'
+import { getProjectDatasetTypes } from 'redux/selectors'
+import { getIntitialSearch, getLocusListOptions, getDatasetTypes } from './selectors'
 
 import { STATE, SEARCH_HASH, SEARCH, PROJECT_GUID, FAMILY_GUID, ANALYSIS_GROUP_GUID, LOCUS_LIST } from './fixtures'
 
@@ -33,14 +34,20 @@ test('getIntitialSearch', () => {
   )
 })
 
-test('getSearchGeneBreakdownValues', () => {
-  expect(getSearchedProjectsLocusListOptions.resultFunc(
-    [PROJECT_GUID], STATE.projectsByGuid, STATE.locusListsByGuid,
-  )).toEqual([{ value: null }, { text: LOCUS_LIST.name, value: LOCUS_LIST.locusListGuid }])
+test('getLocusListOptions', () => {
+  expect(getLocusListOptions(
+    STATE, { projectFamilies: [{ projectGuid: PROJECT_GUID }] },
+  )).toEqual([{
+    text: LOCUS_LIST.name,
+    value: LOCUS_LIST.locusListGuid,
+    key: LOCUS_LIST.locusListGuid,
+    description: '60 Genes',
+    icon: { name: 'users', size: 'small' },
+    category: 'Project Lists',
+    categoryRank: 0,
+  }])
 })
 
 test('getDatasetTypes', () => {
-  expect(getDatasetTypes.resultFunc(
-    [PROJECT_GUID], { [PROJECT_GUID]: STATE.samplesByGuid },
-  )).toEqual('SV,VARIANTS')
+  expect(getDatasetTypes(STATE, { projectFamilies: [{ projectGuid: PROJECT_GUID }] })).toEqual('SV,VARIANTS')
 })

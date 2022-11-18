@@ -23,7 +23,7 @@ PA_LOCUS_LIST_FIELDS.update(LOCUS_LIST_DETAIL_FIELDS)
 
 PA_LOCUS_LIST_DETAIL_FIELDS = {'items', 'intervalGenomeVersion'}
 PA_LOCUS_LIST_DETAIL_FIELDS.update(PA_LOCUS_LIST_FIELDS)
-PA_GENE_FIELDS = {'confidenceLevel'}
+PA_GENE_FIELDS = {'confidenceLevel', 'modeOfInheritance'}
 
 PANEL_APP_API_URL_AU = 'https://test-panelapp.url.au/api'
 PANEL_APP_API_URL_UK = 'https://test-panelapp.url.uk/api'
@@ -82,13 +82,6 @@ class PaLocusListAPITest(AuthenticationTestCase):
             {item['geneId'] for item in locus_list['items'] if item.get('geneId')},
             set(response_json['genesById'].keys())
         )
-        self.assertSetEqual(
-            {item['geneId'] for item in locus_list['items'] if item.get('geneId')},
-            set(response_json['pagenesById'].keys())
-        )
-        self.assertTrue(all(
-            {set(pagene.keys()) == PA_GENE_FIELDS for pagene in response_json['pagenesById'].values()}
-        ))
 
     def test_private_locus_list_info(self):
         url = reverse(locus_list_info, args=[PRIVATE_LOCUS_LIST_GUID])
@@ -102,7 +95,7 @@ class PaLocusListAPITest(AuthenticationTestCase):
         self.assertListEqual(list(locus_lists_dict.keys()), [PRIVATE_LOCUS_LIST_GUID])
 
     def test_add_and_remove_project_locus_lists(self):
-        existing_guid = 'LL00005_retina_proteome'
+        existing_guids = {'LL00005_retina_proteome', LOCUS_LIST_GUID}
 
         # add a locus list to project
         url = reverse(add_project_locus_lists, args=[PROJECT_GUID])
@@ -111,7 +104,9 @@ class PaLocusListAPITest(AuthenticationTestCase):
         response = self.client.post(url, content_type='application/json',
                                     data=json.dumps({'locusListGuids': [EXISTING_AU_PA_LOCUS_LIST_GUID]}))
         self.assertEqual(response.status_code, 200)
-        self.assertSetEqual(set(response.json()['locusListGuids']), {EXISTING_AU_PA_LOCUS_LIST_GUID, existing_guid})
+        expected_guids = {EXISTING_AU_PA_LOCUS_LIST_GUID}
+        expected_guids.update(existing_guids)
+        self.assertSetEqual(set(response.json()['locusListGuids']), expected_guids)
         ll_projects = LocusList.objects.get(guid=EXISTING_AU_PA_LOCUS_LIST_GUID).projects.all()
         self.assertEqual(ll_projects.count(), 2)
         self.assertTrue(PROJECT_GUID in {p.guid for p in ll_projects})
@@ -126,7 +121,7 @@ class PaLocusListAPITest(AuthenticationTestCase):
         response = self.client.post(url, content_type='application/json',
                                     data=json.dumps({'locusListGuids': [EXISTING_AU_PA_LOCUS_LIST_GUID]}))
         self.assertEqual(response.status_code, 200)
-        self.assertListEqual(response.json()['locusListGuids'], [existing_guid])
+        self.assertSetEqual(set(response.json()['locusListGuids']), existing_guids)
         ll_projects = LocusList.objects.get(guid=EXISTING_AU_PA_LOCUS_LIST_GUID).projects.all()
         self.assertEqual(ll_projects.count(), 1)
         self.assertFalse(PROJECT_GUID in {p.guid for p in ll_projects})
@@ -170,21 +165,21 @@ class PaLocusListAPITest(AuthenticationTestCase):
         response = self.client.get(url_au260)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        self.assertSetEqual(set(response_json['pagenesById'].keys()), {'ENSG00000106991', 'ENSG00000139567'})
+        self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000106991', 'ENSG00000139567'})
 
         # and list 3069 contains only one gene because the other one was skipped during import
         url3069 = reverse(locus_list_info, args=['LL00006_hereditary_neuropathy_'])
         response = self.client.get(url3069)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        self.assertSetEqual(set(response_json['pagenesById'].keys()), {'ENSG00000090861'})
+        self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000090861'})
 
         # and UK list 260 contains expected one gene
         url_uk260 = reverse(locus_list_info, args=['LL00007_auditory_neuropathy_sp'])
         response = self.client.get(url_uk260)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        self.assertSetEqual(set(response_json['pagenesById'].keys()), {'ENSG00000139734'})
+        self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000139734'})
 
         # and import is idempotent
         call_command('import_all_panels', PANEL_APP_API_URL_AU)
@@ -206,7 +201,7 @@ class PaLocusListAPITest(AuthenticationTestCase):
             'locusListGuid': NEW_AU_PA_LOCUS_LIST_GUID,
             'name': 'Hereditary Neuropathy_CMT - isolated',
             'description': 'PanelApp_3069_0.199_Neurology and neurodevelopmental disorders',
-            'items': [{'geneId': 'ENSG00000090861'}], 'paLocusList': {'panelAppId': 3069},
+            'items': [{'geneId': 'ENSG00000090861'}], 'paLocusList': {'url': 'https://test-panelapp.url.au/api/panels/3069/genes', 'panelAppId': 3069},
             'numEntries': 1, 'numProjects': 0, 'isPublic': True, 'createdBy': None,
             'canEdit': False, 'createdDate': mock.ANY, 'lastModifiedDate': mock.ANY, 'intervalGenomeVersion': None,
         })
@@ -214,7 +209,7 @@ class PaLocusListAPITest(AuthenticationTestCase):
             'locusListGuid': NEW_UK_PA_LOCUS_LIST_GUID,
             'name': 'Auditory Neuropathy Spectrum Disorde',
             'description': 'PanelApp_UK_260_1.8_Hearing and ear disorders;Non-syndromic hearing loss',
-            'items': [{'geneId': 'ENSG00000139734'}], 'paLocusList': {'panelAppId': 260},
+            'items': [{'geneId': 'ENSG00000139734'}], 'paLocusList': {'url': 'https://test-panelapp.url.uk/api/panels/260/genes', 'panelAppId': 260},
             'numEntries': 1, 'numProjects': 0, 'isPublic': True, 'createdBy': None,
             'canEdit': False, 'createdDate': mock.ANY, 'lastModifiedDate': mock.ANY, 'intervalGenomeVersion': None,
         })

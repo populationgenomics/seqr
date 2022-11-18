@@ -1,6 +1,9 @@
 import base64
 from collections import defaultdict
+from datetime import datetime
+import gzip
 import json
+import os
 import re
 import requests
 import urllib3
@@ -15,13 +18,14 @@ from seqr.utils.elasticsearch.utils import get_es_client, get_index_metadata
 from seqr.utils.file_utils import file_iter, does_file_exist
 from seqr.utils.logging_utils import SeqrLogger
 
-from seqr.views.utils.file_utils import parse_file
+from seqr.views.utils.dataset_utils import load_rna_seq_outlier, load_rna_seq_tpm
+from seqr.views.utils.file_utils import parse_file, get_temp_upload_directory, load_uploaded_file
 from seqr.views.utils.json_utils import create_json_response, _to_camel_case
 from seqr.views.utils.permissions_utils import data_manager_required
 
-from seqr.models import Sample, Individual
+from seqr.models import Sample, Individual, RnaSeqOutlier, RnaSeqTpm
 
-from settings import ELASTICSEARCH_SERVER, KIBANA_SERVER, KIBANA_ELASTICSEARCH_PASSWORD, DEMO_PROJECT_CATEGORY
+from settings import KIBANA_SERVER, KIBANA_ELASTICSEARCH_PASSWORD
 
 logger = SeqrLogger(__name__)
 
@@ -35,9 +39,12 @@ def elasticsearch_status(request):
         _get_es_meta(client, 'allocation', ['node', 'shards', 'disk.avail', 'disk.used', 'disk.percent'])
     }
 
-    for node in  _get_es_meta(
-            client, 'nodes', ['name', 'heap.percent'], filter_rows=lambda node: node['name'] in disk_status):
-        disk_status[node.pop('name')].update(node)
+    node_stats = {}
+    for node in  _get_es_meta(client, 'nodes', ['name', 'heap.percent']):
+        if node['name'] in disk_status:
+            disk_status[node.pop('name')].update(node)
+        else:
+            node_stats[node['name'] ] = node
 
     indices, seqr_index_projects = _get_es_indices(client)
 
@@ -48,7 +55,7 @@ def elasticsearch_status(request):
     return create_json_response({
         'indices': indices,
         'diskStats': list(disk_status.values()),
-        'elasticsearchHost': ELASTICSEARCH_SERVER,
+        'nodeStats': list(node_stats.values()),
         'errors': errors,
     })
 
@@ -71,7 +78,7 @@ def _get_es_indices(client):
 
     index_metadata = get_index_metadata('_all', client, use_cache=False)
 
-    active_samples = Sample.objects.filter(is_active=True).select_related('individual__family__project')
+    active_samples = Sample.objects.filter(is_active=True, elasticsearch_index__isnull=False).select_related('individual__family__project')
 
     seqr_index_projects = defaultdict(lambda: defaultdict(set))
     es_projects = set()
@@ -107,7 +114,7 @@ def delete_index(request):
         projects = {
             sample.individual.family.project.name for sample in active_index_samples.select_related('individual__family__project')
         }
-        return create_json_response({'error': 'Index "{}" is still used by: {}'.format(index, ', '.join(projects))}, status=403)
+        return create_json_response({'error': 'Index "{}" is still used by: {}'.format(index, ', '.join(projects))}, status=400)
 
     client = get_es_client()
     client.indices.delete(index)
@@ -142,7 +149,7 @@ def upload_qc_pipeline_output(request):
         dataset_type=dataset_type,
     ).exclude(
         individual__family__project__name__in=EXCLUDE_PROJECTS
-    ).exclude(individual__family__project__projectcategory__name=DEMO_PROJECT_CATEGORY)
+    ).exclude(individual__family__project__is_demo=True)
 
     sample_individuals = {
         agg['sample_id']: agg['individuals'] for agg in
@@ -168,7 +175,7 @@ def upload_qc_pipeline_output(request):
     if missing_sample_ids:
         individuals = Individual.objects.filter(individual_id__in=missing_sample_ids).exclude(
             family__project__name__in=EXCLUDE_PROJECTS).exclude(
-            family__project__projectcategory__name=DEMO_PROJECT_CATEGORY).filter(
+            family__project__is_demo=True).filter(
             sample__sample_type=Sample.SAMPLE_TYPE_WES if data_type == 'exome' else Sample.SAMPLE_TYPE_WGS).distinct()
         individual_db_ids_by_id = defaultdict(list)
         for individual in individuals:
@@ -211,14 +218,23 @@ def upload_qc_pipeline_output(request):
         'info': info,
     })
 
+SV_WES_FALSE_FLAGS = {'lt100_raw_calls': 'raw_calls:_>100', 'lt10_highQS_rare_calls': 'high_QS_rare_calls:_>10'}
+SV_WGS_FALSE_FLAGS = {'expected_num_calls': 'outlier_num._calls'}
+SV_FALSE_FLAGS = {}
+SV_FALSE_FLAGS.update(SV_WES_FALSE_FLAGS)
+SV_FALSE_FLAGS.update(SV_WGS_FALSE_FLAGS)
 
 def _parse_raw_qc_records(json_records):
-    # Parse SV QC
-    if all(field in json_records[0] for field in ['sample', 'lt100_raw_calls', 'lt10_highQS_rare_calls']):
+    # Parse SV WES QC
+    if all(field in json_records[0] for field in ['sample'] + list(SV_WES_FALSE_FLAGS.keys())):
         records_by_sample_id = {
             re.search('(\d+)_(?P<sample_id>.+)_v\d_Exome_GCP', record['sample']).group('sample_id'): record
             for record in json_records}
         return Sample.DATASET_TYPE_SV_CALLS, 'exome', records_by_sample_id
+
+    # Parse SV WGS QC
+    if all(field in json_records[0] for field in ['sample'] + list(SV_WGS_FALSE_FLAGS.keys())):
+        return Sample.DATASET_TYPE_SV_CALLS, 'genome', {record['sample']: record for record in json_records}
 
     # Parse regular variant QC
     missing_columns = [field for field in ['seqr_id', 'data_type', 'filter_flags', 'qc_metrics_filters', 'qc_pop']
@@ -288,18 +304,13 @@ def _update_individuals_variant_qc(json_records, data_type, warnings, user):
 
 
 def _update_individuals_sv_qc(json_records, user):
-    inidividuals_by_qc = defaultdict(list)
+    inidividuals_by_qc_flags = defaultdict(list)
     for record in json_records:
-        inidividuals_by_qc[(record['lt100_raw_calls'], record['lt10_highQS_rare_calls'])] += record['individual_ids']
+        flags = tuple(sorted(flag for field, flag in SV_FALSE_FLAGS.items() if record.get(field) == 'FALSE'))
+        inidividuals_by_qc_flags[flags] += record['individual_ids']
 
-    for raw_flags, indiv_ids in inidividuals_by_qc.items():
-        lt100_raw_calls, lt10_highQS_rare_calls = raw_flags
-        sv_flags = []
-        if lt100_raw_calls == 'FALSE':
-            sv_flags.append('raw_calls:_>100')
-        if lt10_highQS_rare_calls == 'FALSE':
-            sv_flags.append('high_QS_rare_calls:_>10')
-        Individual.bulk_update(user, {'sv_flags': sv_flags or None}, id__in=indiv_ids)
+    for flags, indiv_ids in inidividuals_by_qc_flags.items():
+        Individual.bulk_update(user, {'sv_flags': list(flags) or None}, id__in=indiv_ids)
 
 
 FILTER_FLAG_COL_MAP = {
@@ -321,6 +332,68 @@ EXCLUDE_PROJECTS = [
     '[DISABLED_OLD_CMG_Walsh_WES]', 'Old Engle Lab All Samples 352S', 'Old MEEI Engle Samples',
     'kl_temp_manton_orphan-diseases_cmg-samples_exomes_v1', 'Interview Exomes', 'v02_loading_test_project',
 ]
+
+
+RNA_DATA_TYPE_CONFIGS = {
+    'outlier': {'load_func': load_rna_seq_outlier, 'model_class': RnaSeqOutlier},
+    'tpm': {'load_func': load_rna_seq_tpm, 'model_class': RnaSeqTpm},
+}
+
+@data_manager_required
+def update_rna_seq(request):
+    request_json = json.loads(request.body)
+
+    data_type = request_json['dataType']
+    file_path = request_json['file']
+    if not does_file_exist(file_path, user=request.user):
+        return create_json_response({'error': 'File not found: {}'.format(file_path)}, status=400)
+
+    mapping_file = None
+    uploaded_mapping_file_id = request_json.get('mappingFile', {}).get('uploadedFileId')
+    if uploaded_mapping_file_id:
+        mapping_file = load_uploaded_file(uploaded_mapping_file_id)
+
+    try:
+        load_func = RNA_DATA_TYPE_CONFIGS[data_type]['load_func']
+        samples_to_load, info, warnings = load_func(
+            file_path, user=request.user, mapping_file=mapping_file, ignore_extra_samples=request_json.get('ignoreExtraSamples'))
+    except ValueError as e:
+        return create_json_response({'error': str(e)}, status=400)
+
+    # Save sample data for loading
+    file_name = f'rna_sample_data__{data_type}__{datetime.now().isoformat()}.json.gz'
+    with gzip.open(os.path.join(get_temp_upload_directory(), file_name), 'wt') as f:
+        for sample, sample_data in samples_to_load.items():
+            f.write(f'{sample.guid}\t\t{json.dumps(sample_data)}\n')
+
+    return create_json_response({
+        'info': info,
+        'warnings': warnings,
+        'fileName': file_name,
+        'sampleGuids': [s.guid for s in samples_to_load.keys()],
+    })
+
+
+@data_manager_required
+def load_rna_seq_sample_data(request, sample_guid):
+    sample = Sample.objects.get(guid=sample_guid)
+    logger.info(f'Loading outlier data for {sample.sample_id}', request.user)
+
+    request_json = json.loads(request.body)
+    file_name = request_json['fileName']
+    data_type = request_json['dataType']
+    with gzip.open(os.path.join(get_temp_upload_directory(), file_name), 'rt') as f:
+        row = next(line for line in f if line.split('\t\t')[0] == sample_guid)
+        data_by_gene = json.loads(row.split('\t\t')[1])
+
+    model_cls = RNA_DATA_TYPE_CONFIGS[data_type]['model_class']
+    models = model_cls.objects.bulk_create([model_cls(sample=sample, **data) for data in data_by_gene.values()])
+    logger.info(f'create {len(models)} {model_cls.__name__}', request.user, db_update={
+        'dbEntity': model_cls.__name__, 'numEntities': len(models), 'parentEntityIds': [sample_guid], 'updateType': 'bulk_create',
+    })
+
+    return create_json_response({'success': True})
+
 
 # Hop-by-hop HTTP response headers shouldn't be forwarded.
 # More info at: http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html#sec13.5.1

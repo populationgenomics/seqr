@@ -11,6 +11,9 @@ from reference_data.management.commands.update_omim import OmimReferenceDataHand
 from reference_data.management.commands.update_primate_ai import PrimateAIReferenceDataHandler
 from reference_data.management.commands.update_mgi import MGIReferenceDataHandler
 from reference_data.management.commands.update_gene_cn_sensitivity import CNSensitivityReferenceDataHandler
+from reference_data.management.commands.update_gencc import GenCCReferenceDataHandler
+from reference_data.management.commands.update_clingen import ClinGenReferenceDataHandler
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +23,8 @@ REFERENCE_DATA_SOURCES = OrderedDict([
     ("gene_cn_sensitivity", CNSensitivityReferenceDataHandler),
     ("primate_ai", PrimateAIReferenceDataHandler),
     ("mgi", MGIReferenceDataHandler),
+    ("gencc", GenCCReferenceDataHandler),
+    ("clingen", ClinGenReferenceDataHandler),
     ("hpo", None),
 ])
 
@@ -47,7 +52,8 @@ class Command(BaseCommand):
         if not options["skip_gencode"]:
             # Download latest version first, and then add any genes from old releases not included in the latest release
             # Old gene ids are used in the gene constraint table and other datasets, as well as older sequencing data
-            update_gencode(31, reset=True)
+            update_gencode(39, reset=True)
+            update_gencode(31)
             update_gencode(29)
             update_gencode(28)
             update_gencode(27)

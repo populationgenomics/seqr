@@ -5,10 +5,11 @@ import { Tab, Table } from 'semantic-ui-react'
 
 import Modal from 'shared/components/modal/Modal'
 import { ButtonLink, NoBorderTable } from 'shared/components/StyledComponents'
-import ReduxFormWrapper from 'shared/components/form/ReduxFormWrapper'
+import FormWrapper from 'shared/components/form/FormWrapper'
 import FileUploadField, { validateUploadedFile } from 'shared/components/form/XHRUploaderField'
 import { BooleanCheckbox, Select } from 'shared/components/form/Inputs'
-import { DATASET_TYPE_VARIANT_CALLS, DATASET_TYPE_SV_CALLS } from 'shared/utils/constants'
+import { AddWorkspaceDataForm } from 'shared/components/panel/LoadWorkspaceDataForm'
+import { DATASET_TYPE_VARIANT_CALLS, DATASET_TYPE_SV_CALLS, DATASET_TYPE_MITO_CALLS } from 'shared/utils/constants'
 
 import { addVariantsDataset, addIGVDataset } from '../reducers'
 import { getProjectGuid } from '../selectors'
@@ -26,8 +27,7 @@ const SUBMIT_FUNCTIONS = {
 }
 
 const BaseUpdateDatasetForm = React.memo(({ formType, formFields, initialValues, onSubmit }) => (
-  <ReduxFormWrapper
-    form={`upload${formType}`}
+  <FormWrapper
     modalName={MODAL_NAME}
     onSubmit={onSubmit}
     confirmCloseIfNotSaved
@@ -67,6 +67,7 @@ const UPLOAD_CALLSET_FIELDS = [
     options: [
       { value: DATASET_TYPE_VARIANT_CALLS, name: 'Haplotypecaller' },
       { value: DATASET_TYPE_SV_CALLS, name: 'SV Caller' },
+      { value: DATASET_TYPE_MITO_CALLS, name: 'Mitochondria Caller' },
     ],
     validate: value => (value ? undefined : 'Specify the caller type'),
   },
@@ -86,7 +87,6 @@ const UPLOAD_CALLSET_FIELDS = [
 
 const IGVFileUploadField = React.memo(({ projectGuid, ...props }) => (
   <FileUploadField
-    clearTimeOut={0}
     dropzoneLabel={
       <NoBorderTable basic="very" compact="very">
         <Table.Body>
@@ -120,7 +120,6 @@ const IGVFileUploadField = React.memo(({ projectGuid, ...props }) => (
       </NoBorderTable>
     }
     url={`/api/project/${projectGuid}/upload_igv_dataset`}
-    auto
     required
     styles={UPLOADER_STYLES}
     {...props}
@@ -172,20 +171,30 @@ const PANES = [
 
 const IGV_ONLY_PANES = [PANES[1]]
 
-const EditDatasetsButton = React.memo(({ user }) => (
-  (user.isDataManager || user.isPm) ? (
-    <Modal
-      modalName={MODAL_NAME}
-      title="Datasets"
-      size="small"
-      trigger={<ButtonLink>Edit Datasets</ButtonLink>}
-    >
-      <Tab panes={user.isDataManager ? PANES : IGV_ONLY_PANES} />
-    </Modal>
-  ) : null
-))
+const EditDatasetsButton = React.memo(({ project, user }) => {
+  const showLoadWorkspaceData = project.workspaceName && !project.isAnalystProject && project.canEdit
+  const showEditDatasets = user.isDataManager || user.isPm
+  return (
+    (showEditDatasets || showLoadWorkspaceData) ? (
+      <Modal
+        modalName={MODAL_NAME}
+        title={showEditDatasets ? 'Datasets' : 'Load Additional Data From AnVIL Workspace'}
+        size="small"
+        trigger={<ButtonLink>{showEditDatasets ? 'Edit Datasets' : 'Load Additional Data'}</ButtonLink>}
+      >
+        {showEditDatasets ? <Tab panes={user.isDataManager ? PANES : IGV_ONLY_PANES} /> : (
+          <AddWorkspaceDataForm
+            params={project}
+            successMessage="Your request to load data has been submitted. Loading data from AnVIL to seqr is a slow process, and generally takes a week. You will receive an email letting you know once your new data is available."
+          />
+        )}
+      </Modal>
+    ) : null
+  )
+})
 
 EditDatasetsButton.propTypes = {
+  project: PropTypes.object.isRequired,
   user: PropTypes.object,
 }
 
