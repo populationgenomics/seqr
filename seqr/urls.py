@@ -53,18 +53,20 @@ from seqr.views.apis.case_review_api import \
     save_internal_case_review_notes, \
     save_internal_case_review_summary
 
-from seqr.views.apis.saved_variant_api import \
-    saved_variant_data, \
-    create_saved_variant_handler, \
-    update_variant_tags_handler, \
-    update_variant_acmg_classification_handler, \
-    update_variant_functional_data_handler, \
-    create_variant_note_handler, \
-    update_variant_note_handler, \
-    delete_variant_note_handler, \
-    update_variant_main_transcript, \
-    update_saved_variant_json, \
+from seqr.views.apis.saved_variant_api import (
+    aip_saved_variants,
+    saved_variant_data,
+    create_saved_variant_handler,
+    update_variant_tags_handler,
+    update_variant_acmg_classification_handler,
+    update_variant_functional_data_handler,
+    create_variant_note_handler,
+    update_variant_note_handler,
+    delete_variant_note_handler,
+    update_variant_main_transcript,
+    update_saved_variant_json,
     sa_update_saved_variant_json
+)
 
 from seqr.views.apis.dashboard_api import dashboard_page_data
 
@@ -211,6 +213,7 @@ api_endpoints = {
     'project/(?P<project_guid>[^/]+)/update_workspace': update_project_workspace,
 
     'project/(?P<project_guid>[^/]+)/saved_variants/(?P<variant_guids>[^/]+)?': saved_variant_data,
+    'project/(?P<project_guid>[^/]+)/aip_saved_variants': aip_saved_variants,
 
     'project/(?P<project_guid>[^/]+)/edit_families': edit_families_handler,
     'project/(?P<project_guid>[^/]+)/delete_families': delete_families_handler,

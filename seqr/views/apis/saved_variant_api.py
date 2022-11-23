@@ -20,6 +20,42 @@ logger = logging.getLogger(__name__)
 
 INCLUDE_LOCUS_LISTS_PARAM = 'includeLocusLists'
 
+
+@service_account_access
+def aip_saved_variants(request, project_guid):
+    """
+    alternate method, the default dumps ALL variant details
+    this should be much cleaner/more efficient with an ORM method
+    instead of re-parsing all this stuff we can just clean up server-side
+
+    :param request:
+    :param project_guid:
+    :return:
+    """
+    project = get_project_and_check_permissions(project_guid, request.user)
+
+    variant_query = SavedVariant.objects.filter(family__project=project)
+
+    add_locus_list_detail = request.GET.get(INCLUDE_LOCUS_LISTS_PARAM) == 'true'
+    response = get_variants_response(request, variant_query, add_locus_list_detail=add_locus_list_detail)
+
+    # gutting this response post-query for now instead of re-writing
+    tag_lookup = {
+        guid: tag['name']
+        for guid, tag
+        in response['variantTagsByGuid'].items()
+    }
+    response = {
+        guid: {
+            'tagNames': [tag_lookup[x] for x in variant['tagGuids']],
+            'families': variant['familyGuids'],
+            'variantId': variant['variantId']
+        } for guid, variant
+        in response['savedVariantsByGuid'].items()
+    }
+
+    return create_json_response(response)
+
 @login_and_policies_required
 def saved_variant_data(request, project_guid, variant_guids=None):
     project = get_project_and_check_permissions(project_guid, request.user)
@@ -47,10 +83,11 @@ def saved_variant_data(request, project_guid, variant_guids=None):
     return create_json_response(response)
 
 
-@login_and_policies_required
+@service_account_access
 def create_saved_variant_handler(request):
     variant_json = json.loads(request.body)
     family_guid = variant_json['familyGuid']
+    print(family_guid)
 
     family = Family.objects.get(guid=family_guid)
     check_project_permissions(family.project, request.user)
@@ -294,8 +331,9 @@ def _update_tags(saved_variants, tags_json, user, tag_key='tags', model_cls=Vari
     tags = tags_json.get(tag_key, [])
     updated_models = []
     for tag in tags:
-        if tag.get('tagGuid'):
-            model = model_cls.objects.get(guid=tag.get('tagGuid'))
+        if this_tag := tag.get('tagGuid'):
+            print(this_tag)
+            model = model_cls.objects.get(guid=this_tag)
             update_model_from_json(model, tag, user=user, allow_unknown_keys=True)
         else:
             create_data = get_tag_create_data(tag, saved_variants=saved_variants)
