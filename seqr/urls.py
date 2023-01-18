@@ -108,10 +108,13 @@ from seqr.views.apis.variant_search_api import \
 
 from seqr.views.apis.users_api import \
     get_all_collaborator_options, \
+    get_all_user_group_options, \
     get_project_collaborator_options, \
     create_project_collaborator, \
     update_project_collaborator, \
     delete_project_collaborator, \
+    update_project_collaborator_group, \
+    delete_project_collaborator_group, \
     set_password, \
     update_policies, \
     update_user, \
@@ -286,10 +289,13 @@ api_endpoints = {
     'users/update_policies': update_policies,
 
     'users/get_options': get_all_collaborator_options,
+    'users/get_group_options': get_all_user_group_options,
     'users/get_options/(?P<project_guid>[^/]+)': get_project_collaborator_options,
     'project/(?P<project_guid>[^/]+)/collaborators/create': create_project_collaborator,
     'project/(?P<project_guid>[^/]+)/collaborators/(?P<username>[^/]+)/update': update_project_collaborator,
     'project/(?P<project_guid>[^/]+)/collaborators/(?P<username>[^/]+)/delete': delete_project_collaborator,
+    'project/(?P<project_guid>[^/]+)/collaboratorGroups/(?P<name>[^/]+)/update': update_project_collaborator_group,
+    'project/(?P<project_guid>[^/]+)/collaboratorGroups/(?P<name>[^/]+)/delete': delete_project_collaborator_group,
 
     'awesomebar': awesomebar_autocomplete_handler,
 
@@ -356,6 +362,8 @@ urlpatterns += [
     url(API_LOGIN_REQUIRED_URL.lstrip('/'), login_required_error),
     url(API_POLICY_REQUIRED_URL.lstrip('/'), policies_required_error),
 ]
+
+handler401 = 'seqr.views.apis.auth_api.app_login_required_error'
 
 kibana_urls = '^(?:{})'.format('|'.join([
     'app', '\d+/built_assets', '\d+/bundles', 'bundles', 'elasticsearch', 'es_admin', 'node_modules/@kbn', 'internal',

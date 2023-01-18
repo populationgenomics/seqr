@@ -639,7 +639,6 @@ class DataManagerAPITest(AuthenticationTestCase):
     #       is causing conflicts when patching subprocess (when creating the GSClient)
     #       Solving that leads to an inability for me to patch file_exists, and then I gave up
     #
-    # @mock.patch('seqr.views.utils.dataset_utils.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
     # @mock.patch('seqr.views.apis.data_manager_api.datetime')
     # @mock.patch('seqr.views.apis.data_manager_api.os')
     # @mock.patch('seqr.views.apis.data_manager_api.load_uploaded_file')

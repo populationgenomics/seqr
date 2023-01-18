@@ -10,10 +10,11 @@ from seqr.views.apis.project_api import create_project_handler, delete_project_h
     project_page_data, project_families, project_overview, project_mme_submisssions, project_individuals, \
     project_analysis_groups, update_project_workspace, project_family_notes
 from seqr.views.utils.terra_api_utils import TerraAPIException, TerraRefreshTokenFailedException
-from seqr.views.utils.test_utils import AuthenticationTestCase, PROJECT_FIELDS, LOCUS_LIST_FIELDS, PA_LOCUS_LIST_FIELDS, \
+from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, \
+    PROJECT_FIELDS, LOCUS_LIST_FIELDS, PA_LOCUS_LIST_FIELDS, NO_INTERNAL_CASE_REVIEW_INDIVIDUAL_FIELDS, \
     SAMPLE_FIELDS, FAMILY_FIELDS, INTERNAL_FAMILY_FIELDS, INTERNAL_INDIVIDUAL_FIELDS, INDIVIDUAL_FIELDS, TAG_TYPE_FIELDS, \
     CASE_REVIEW_FAMILY_FIELDS, FAMILY_NOTE_FIELDS, MATCHMAKER_SUBMISSION_FIELDS, ANALYSIS_GROUP_FIELDS, \
-    TEST_WORKSPACE_NAMESPACE, TEST_NO_PROJECT_WORKSPACE_NAME2, AnvilAuthenticationTestCase
+    TEST_WORKSPACE_NAMESPACE, TEST_NO_PROJECT_WORKSPACE_NAME2
 
 PROJECT_GUID = 'R0001_1kg'
 EMPTY_PROJECT_GUID = 'R0002_empty'
@@ -36,7 +37,6 @@ class ProjectAPITest(object):
     REQUIRED_FIELDS = ['name', 'genomeVersion', 'workspaceNamespace', 'workspaceName']
 
     @mock.patch('seqr.models.uuid.uuid4', lambda: MOCK_GROUP_UUID)
-    @mock.patch('seqr.views.apis.project_api.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
     @mock.patch('seqr.views.utils.permissions_utils.PM_USER_GROUP', 'project-managers')
     def test_create_and_delete_project(self):
         create_project_url = reverse(create_project_handler)
@@ -66,7 +66,7 @@ class ProjectAPITest(object):
         self.assertTrue(new_project.is_demo)
         self.assertFalse(new_project.is_mme_enabled)
         self.assertEqual(new_project.created_by, self.pm_user)
-        self.assertSetEqual({'analyst-projects'}, {pc.name for pc in new_project.projectcategory_set.all()})
+        self.assertEqual(new_project.projectcategory_set.count(), 0)
         expected_workspace_name = self.CREATE_PROJECT_JSON.get('workspaceName')
         self.assertEqual(new_project.workspace_name, expected_workspace_name)
         self._check_created_project_groups(new_project)
@@ -87,8 +87,6 @@ class ProjectAPITest(object):
             Group.objects.filter(name__in=['new_project_can_edit_123abd', 'new_project_can_view_123abd']).count(), 0,
         )
 
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_USER_GROUP', 'analysts')
     @mock.patch('seqr.views.utils.permissions_utils.PM_USER_GROUP', 'project-managers')
     def test_update_project(self):
         update_project_url = reverse(update_project_handler, args=[PROJECT_GUID])
@@ -126,7 +124,6 @@ class ProjectAPITest(object):
         self.assertEqual(response.json()['projectsByGuid'][PROJECT_GUID]['consentCode'], 'G')
         self.assertEqual(Project.objects.get(guid=PROJECT_GUID).consent_code, 'G')
 
-    @mock.patch('seqr.views.apis.project_api.ANALYST_PROJECT_CATEGORY', None)
     @mock.patch('seqr.views.utils.permissions_utils.PM_USER_GROUP', None)
     def test_create_project_no_pm(self):
         create_project_url = reverse(create_project_handler)
@@ -150,8 +147,6 @@ class ProjectAPITest(object):
 
         self.assertSetEqual(set(response.json()['projectsByGuid'].keys()), {new_project.guid})
 
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_USER_GROUP', 'analysts')
     @mock.patch('seqr.views.utils.permissions_utils.PM_USER_GROUP', 'project-managers')
     def test_update_project_workspace(self):
         url = reverse(update_project_workspace, args=[PROJECT_GUID])
@@ -246,10 +241,9 @@ class ProjectAPITest(object):
 
         project_fields = {
             'collaborators', 'locusListGuids', 'variantTagTypes', 'variantFunctionalTagTypes', 'detailsLoaded',
-            'workspaceName', 'workspaceNamespace', 'mmeDeletedSubmissionCount', 'mmeSubmissionCount',
-            'analysisGroupsLoaded',
+            'projectGuid', 'name', 'mmeDeletedSubmissionCount', 'mmeSubmissionCount',
+            'analysisGroupsLoaded', 'collaboratorGroups',
         }
-        project_fields.update(PROJECT_FIELDS)
         project_response = response_json['projectsByGuid'][PROJECT_GUID]
         self.assertSetEqual(set(project_response.keys()), project_fields)
         tag_type_fields = {'numTags'}
@@ -266,6 +260,7 @@ class ProjectAPITest(object):
             'numTags': 1,
         })
         self.assertListEqual(project_response['collaborators'], self.PROJECT_COLLABORATORS)
+        self.assertEqual(project_response['collaboratorGroups'], self.PROJECT_COLLABORATOR_GROUPS)
         self.assertListEqual(project_response['locusListGuids'], ['LL00049_pid_genes_autosomal_do', 'LL00005_retina_proteome'])
         self.assertEqual(project_response['mmeSubmissionCount'], 1)
         self.assertEqual(project_response['mmeDeletedSubmissionCount'], 0)
@@ -289,7 +284,7 @@ class ProjectAPITest(object):
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(
             response.json()['familyTagTypeCounts'],
-            {'F000011_11': {'Tier 1 - Novel gene and phenotype': 1}},
+            {'F000012_12': {'Tier 1 - Novel gene and phenotype': 1}},
         )
 
         # Test empty project
@@ -308,10 +303,7 @@ class ProjectAPITest(object):
             self.assertEqual(response.json()['error'], '/login')
 
 
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
-    @mock.patch('seqr.views.utils.orm_to_json_utils.ANALYST_USER_GROUP', 'analysts')
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_USER_GROUP')
-    def test_project_families(self, mock_analyst_group):
+    def test_project_families(self):
         url = reverse(project_families, args=[PROJECT_GUID])
         self.check_collaborator_login(url)
 
@@ -352,23 +344,20 @@ class ProjectAPITest(object):
         # Test analyst users have internal fields returned
         self.login_analyst_user()
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
-        mock_analyst_group.__bool__.return_value = True
-        mock_analyst_group.resolve_expression.return_value = 'analysts'
-        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
-        family_fields.update(INTERNAL_FAMILY_FIELDS)
         family_fields.update(CASE_REVIEW_FAMILY_FIELDS)
-        self.assertSetEqual(set(next(iter(response_json['familiesByGuid'].values())).keys()), family_fields)
+        internal_fields = deepcopy(family_fields)
+        internal_fields.update(INTERNAL_FAMILY_FIELDS)
+        self.assertSetEqual(set(next(iter(response_json['familiesByGuid'].values())).keys()), internal_fields)
 
+        self.mock_analyst_group.__str__.return_value = ''
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertSetEqual(set(next(iter(response.json()['familiesByGuid'].values())).keys()), family_fields)
 
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_PROJECT_CATEGORY', 'analyst-projects')
-    @mock.patch('seqr.views.utils.orm_to_json_utils.ANALYST_USER_GROUP', 'analysts')
-    @mock.patch('seqr.views.utils.permissions_utils.ANALYST_USER_GROUP')
-    def test_project_individuals(self, mock_analyst_group):
+    def test_project_individuals(self):
         url = reverse(project_individuals, args=[PROJECT_GUID])
         self.check_collaborator_login(url)
 
@@ -397,15 +386,19 @@ class ProjectAPITest(object):
         # Test analyst users have internal fields returned
         self.login_analyst_user()
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
-        mock_analyst_group.__bool__.return_value = True
-        mock_analyst_group.resolve_expression.return_value = 'analysts'
-        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
         self.assertSetEqual(set(next(iter(response_json['individualsByGuid'].values())).keys()), INTERNAL_INDIVIDUAL_FIELDS)
+
+        self.mock_analyst_group.__str__.return_value = ''
+        self.mock_analyst_group.resolve_expression.return_value = ''
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertSetEqual(
+            set(next(iter(response.json()['individualsByGuid'].values())).keys()),
+            NO_INTERNAL_CASE_REVIEW_INDIVIDUAL_FIELDS,
+        )
 
     def test_project_analysis_groups(self):
         url = reverse(project_analysis_groups, args=[PROJECT_GUID])
@@ -454,11 +447,11 @@ class ProjectAPITest(object):
         response_keys = {'projectsByGuid', 'mmeSubmissionsByGuid', 'familyNotesByGuid'}
         self.assertSetEqual(set(response_json.keys()), response_keys)
         self.assertDictEqual(response_json['projectsByGuid'], {PROJECT_GUID: {'mmeSubmissionsLoaded': True}})
+        self.assertSetEqual(set(response_json['mmeSubmissionsByGuid'].keys()), {'MS000001_na19675'})
         submission_fields = {'geneIds'}
         submission_fields.update(MATCHMAKER_SUBMISSION_FIELDS)
-        self.assertSetEqual(
-            set(next(iter(response_json['mmeSubmissionsByGuid'].values())).keys()), submission_fields
-        )
+        self.assertSetEqual(set(response_json['mmeSubmissionsByGuid']['MS000001_na19675'].keys()), submission_fields)
+        self.assertListEqual(response_json['mmeSubmissionsByGuid']['MS000001_na19675']['geneIds'], ['ENSG00000135953'])
         self.assertSetEqual(set(next(iter(response_json['familyNotesByGuid'].values())).keys()), FAMILY_NOTE_FIELDS)
 
         # Test empty project
@@ -472,8 +465,11 @@ BASE_COLLABORATORS = [
     {'displayName': 'Test Collaborator User', 'email': 'test_user_collaborator@test.com', 'username': 'test_user_collaborator',
      'hasEditPermissions': False, 'hasViewPermissions': True}]
 
-ANVIL_COLLABORATORS = deepcopy(BASE_COLLABORATORS) + [{
-    'displayName': False, 'email': 'test_user_pure_anvil@test.com', 'username': 'test_user_pure_anvil@test.com',
+ANVIL_COLLABORATORS = [
+    {'displayName': '', 'email': 'analysts@firecloud.org', 'username': 'analysts@firecloud.org',
+    'hasEditPermissions': True, 'hasViewPermissions': True, },
+] + deepcopy(BASE_COLLABORATORS) + [{
+    'displayName': '', 'email': 'test_user_pure_anvil@test.com', 'username': 'test_user_pure_anvil@test.com',
     'hasEditPermissions': False, 'hasViewPermissions': True, }]
 
 
@@ -482,6 +478,7 @@ class LocalProjectAPITest(AuthenticationTestCase, ProjectAPITest):
     fixtures = ['users', '1kg_project', 'reference_data']
     PROJECT_COLLABORATORS = BASE_COLLABORATORS
     CREATE_PROJECT_JSON = BASE_CREATE_PROJECT_JSON
+    PROJECT_COLLABORATOR_GROUPS = [{'name': 'analysts', 'hasViewPermissions': True, 'hasEditPermissions': True}]
     REQUIRED_FIELDS = ['name', 'genomeVersion']
     HAS_EMPTY_PROJECT = True
 
@@ -503,12 +500,17 @@ class LocalProjectAPITest(AuthenticationTestCase, ProjectAPITest):
 class AnvilProjectAPITest(AnvilAuthenticationTestCase, ProjectAPITest):
     fixtures = ['users', 'social_auth', '1kg_project', 'reference_data']
     PROJECT_COLLABORATORS = ANVIL_COLLABORATORS
+    PROJECT_COLLABORATOR_GROUPS = None
     HAS_EMPTY_PROJECT = False
 
     def test_create_and_delete_project(self):
         super(AnvilProjectAPITest, self).test_create_and_delete_project()
         self.mock_list_workspaces.assert_not_called()
         self.mock_get_ws_acl.assert_not_called()
+        self.mock_get_group_members.assert_not_called()
+        self.mock_get_groups.assert_has_calls([
+            mock.call(self.collaborator_user), mock.call(self.manager_user), mock.call(self.analyst_user),
+            mock.call(self.pm_user)])
         self.mock_get_ws_access_level.assert_has_calls([
             mock.call(self.pm_user, 'bar', 'foo'),
             mock.call(self.pm_user, 'my-seqr-billing', 'anvil-no-project-workspace2'),
@@ -518,10 +520,16 @@ class AnvilProjectAPITest(AnvilAuthenticationTestCase, ProjectAPITest):
         self.assertIsNone(project.can_edit_group)
         self.assertIsNone(project.can_view_group)
 
+    def test_create_project_no_pm(self):
+        # Fallng back to superusers as PMs is only supported for local installs
+        pass
+
     def test_update_project(self):
         super(AnvilProjectAPITest, self).test_update_project()
         self.mock_list_workspaces.assert_not_called()
         self.mock_get_ws_acl.assert_not_called()
+        self.mock_get_group_members.assert_not_called()
+        self.mock_get_groups.assert_has_calls([mock.call(self.manager_user), mock.call(self.pm_user)])
         self.mock_get_ws_access_level.assert_has_calls([
             mock.call(self.collaborator_user, 'my-seqr-billing', 'anvil-1kg project nåme with uniçøde'),
             mock.call(self.manager_user, 'my-seqr-billing', 'anvil-1kg project nåme with uniçøde'),
@@ -530,14 +538,16 @@ class AnvilProjectAPITest(AnvilAuthenticationTestCase, ProjectAPITest):
     def test_project_page_data(self):
         super(AnvilProjectAPITest, self).test_project_page_data()
         self.mock_list_workspaces.assert_not_called()
-        self.mock_get_ws_acl.assert_not_called()
+        self.assert_no_extra_anvil_calls()
 
     def test_project_overview(self):
         super(AnvilProjectAPITest, self).test_project_overview()
         self.mock_list_workspaces.assert_not_called()
+        self.mock_get_groups.assert_not_called()
+        self.mock_get_group_members.assert_not_called()
         self.mock_get_ws_acl.assert_called_with(self.collaborator_user,
             'my-seqr-billing', 'anvil-1kg project n\u00e5me with uni\u00e7\u00f8de')
         self.assertEqual(self.mock_get_ws_acl.call_count, 4)
         self.mock_get_ws_access_level.assert_called_with(self.collaborator_user,
             'my-seqr-billing', 'anvil-1kg project n\u00e5me with uni\u00e7\u00f8de')
-        self.assertEqual(self.mock_get_ws_access_level.call_count, 9)
+        self.assertEqual(self.mock_get_ws_access_level.call_count, 6)
