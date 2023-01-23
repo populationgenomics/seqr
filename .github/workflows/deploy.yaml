@@ -88,8 +88,8 @@ jobs:
         run: |
           gcloud beta run jobs execute --wait \
             --region australia-southeast1 \
-            seqr-$DEPLOY_TARGET-schema-migrator
+            $DEPLOY_TARGET-schema-migrator
 
           gcloud beta run jobs execute --wait \
             --region australia-southeast1 \
-            seqr-$DEPLOY_TARGET-reference-schema-migrator
+            $DEPLOY_TARGET-reference-schema-migrator
