@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - staging
-      - adjust-cloud-run-params
       - reanalysis-dev
 
 jobs:
@@ -37,8 +36,6 @@ jobs:
             echo DEPLOY_TARGET=prod >> $GITHUB_ENV
           elif [[ $GITHUB_REF == 'refs/heads/staging' ]]; then
             echo DEPLOY_TARGET=staging >> $GITHUB_ENV
-          elif [[ $GITHUB_REF == 'refs/heads/adjust-cloud-run-params' ]]; then
-            echo DEPLOY_TARGET=staging >> $GITHUB_ENV
           elif [[ $GITHUB_REF == 'refs/heads/reanalysis-dev' ]]; then
             echo DEPLOY_TARGET=reanalysis-dev >> $GITHUB_ENV
           fi
@@ -63,7 +60,7 @@ jobs:
         run: docker push --all-tags $DOCKER_IMAGE
 
       - name: Update cloudrun jobs
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/adjust-cloud-run-params'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
         run: |
           # cloud run jobs to update
           run_job_names=("$DEPLOY_TARGET-schema-migrator" "$DEPLOY_TARGET-reference-schema-migrator" "$DEPLOY_TARGET-reference-updater" "$DEPLOY_TARGET-reference-update-hpo-terms" "$DEPLOY_TARGET-reference-import-panels")
