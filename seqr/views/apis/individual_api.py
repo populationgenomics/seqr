@@ -681,7 +681,7 @@ def _get_record_updates(record, individual, invalid_values, allowed_assigned_ana
                 parsed_val = v
             else:
                 parsed_val = INDIVIDUAL_METADATA_FIELDS[k](v)
-                if (k not in {FEATURES_COL, ABSENT_FEATURES_COL} and parsed_val == getattr(individual, k)) or has_same_features:
+                if (k in {FEATURES_COL, ABSENT_FEATURES_COL} and parsed_val == getattr(individual, k)) or has_same_features:
                     parsed_val = None
             if parsed_val:
                 update_record[k] = parsed_val
