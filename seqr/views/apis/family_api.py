@@ -123,7 +123,7 @@ def edit_families_handler_base(request, project_guid):
             missing_guids = set(family_guids) - set(family_models.keys())
             return create_json_response({'error': 'Invalid family guids: {}'.format(', '.join(missing_guids))}, status=400)
 
-        family_analysis_notes = {family_guid : {note_guid : note for note_guid, note in family_note.items() if note.get('NoteType') == 'A'} for family_guid, family_note in family_notes.items() }
+        family_analysis_notes = {note.family.guid : {note_guid : note.note for note_guid, note in family_note.items() if note.get('NoteType') == 'A'} for family_note in family_notes['familyNotesByGuid']}
         
         updated_family_analysis_notes = {}
         for family_guid in family_guids:
