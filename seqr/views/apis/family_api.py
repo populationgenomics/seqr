@@ -2,13 +2,16 @@
 APIs used to retrieve and modify Individual fields
 """
 import json
+import requests
 from collections import defaultdict
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django.db.models.fields.files import ImageFieldFile
+from django.urls.base import reverse
 
 from matchmaker.models import MatchmakerSubmission
 from seqr.utils.gene_utils import get_genes_for_variant_display
+from seqr.views.apis.project_api import project_family_notes
 from seqr.views.utils.file_utils import save_uploaded_file, load_uploaded_file
 from seqr.views.utils.individual_utils import delete_individuals
 from seqr.views.utils.json_to_orm_utils import update_family_from_json, update_model_from_json, \
@@ -111,12 +114,36 @@ def edit_families_handler_base(request, project_guid):
             {}, status=400, reason="'families' not specified")
 
     family_guids = [f['familyGuid'] for f in modified_families if f.get('familyGuid')]
+    family_notes = project_family_notes(request, project_guid)
+
     family_models = {}
     if family_guids:
         family_models.update({f.guid: f for f in Family.objects.filter(project=project, guid__in=family_guids)})
         if len(family_models) != len(family_guids):
             missing_guids = set(family_guids) - set(family_models.keys())
             return create_json_response({'error': 'Invalid family guids: {}'.format(', '.join(missing_guids))}, status=400)
+
+        family_analysis_notes = {note.family.guid : {note_guid : note.note for note_guid, note in family_note.items() if note.get('NoteType') == 'A'} for family_note in family_notes['familyNotesByGuid']}
+        
+        updated_family_analysis_notes = {}
+        for family_guid in family_guids:
+            if not family_analysis_notes.get(family_guid):
+                new_note = '# Test\nAnalysis note\n - *note* 1\n - **note** 2'
+                create_note_url = reverse(create_family_note, args=[family_guid])
+                requests.post(create_note_url, content_type='application/json', data=json.dumps({'note': new_note, 'noteType': 'A'}))
+                continue
+
+            updated_analysis_notes = {}
+            analysis_note = family_analysis_notes[family_guid]
+            for note_guid, note in analysis_note.items():
+                updated_note = note + '\n# Test\nAnalysis note\n - *note* 1\n - **note** 2'
+                updated_analysis_notes[note_guid] = updated_note
+
+                update_note_url = reverse(update_family_note, args=[family_guid, note_guid])
+                requests.post(update_note_url, content_type='application/json',  data=json.dumps({'note': updated_note}))
+
+            updated_family_analysis_notes[family_guid] = updated_analysis_notes
+            
 
         updated_family_ids = {
             fields[FAMILY_ID_FIELD]: family_models[fields['familyGuid']].family_id for fields in modified_families
