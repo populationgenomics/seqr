@@ -6,10 +6,9 @@ import pytz
 import responses
 from settings import AIRTABLE_URL
 
-from seqr.models import Project
-from seqr.views.apis.report_api import seqr_stats, get_category_projects, discovery_sheet, anvil_export, \
-    sample_metadata_export, gregor_export
-from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase
+from seqr.models import Project, SavedVariant
+from seqr.views.apis.report_api import seqr_stats, get_category_projects, discovery_sheet, anvil_export, gregor_export
+from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, AirtableTest
 
 
 PROJECT_GUID = 'R0001_1kg'
@@ -109,46 +108,6 @@ AIRTABLE_SAMPLE_RECORDS = {
     }
 ]}
 
-PAGINATED_AIRTABLE_SAMPLE_RECORDS = {
-    'offset': 'abc123',
-    'records': [{
-      'id': 'rec2B6OGmQpfuRW5z',
-      'fields': {
-        'CollaboratorSampleID': 'NA19675',
-        'Collaborator': ['recW24C2CJW5lT64K'],
-        'dbgap_study_id': 'dbgap_study_id_2',
-        'dbgap_subject_id': 'dbgap_subject_id_1',
-        'dbgap_sample_id': 'SM-A4GQ4',
-        'SequencingProduct': [
-          'Mendelian Rare Disease Exome'
-        ],
-        'dbgap_submission': [
-          'WES',
-          'Array'
-        ]
-      },
-      'createdTime': '2019-09-09T19:21:12.000Z'
-    }
-]}
-
-AIRTABLE_COLLABORATOR_RECORDS = {
-    "records": [
-        {
-            "id": "recW24C2CJW5lT64K",
-            "fields": {
-                "CollaboratorID": "Hildebrandt",
-            }
-        },
-        {
-            "id": "reca4hcBnbA2cnZf9",
-            "fields": {
-                "CollaboratorID": "Seidman",
-            }
-        }
-    ]
-}
-
-
 AIRTABLE_GREGOR_SAMPLE_RECORDS = {
   "records": [
     {
@@ -156,7 +115,18 @@ AIRTABLE_GREGOR_SAMPLE_RECORDS = {
       "fields": {
         "SeqrCollaboratorSampleID": "VCGS_FAM203_621_D1",
         "CollaboratorSampleID": "NA19675_1",
+        'CollaboratorParticipantID': 'NA19675',
         'SMID': 'SM-AGHT',
+        'Recontactable': 'Yes',
+      },
+    },
+    {
+      "id": "rec2B67GmXpAkQW8z",
+      "fields": {
+        'SeqrCollaboratorSampleID': 'NA19679',
+        'CollaboratorSampleID': 'NA19679',
+        'CollaboratorParticipantID': 'NA19679',
+        'SMID': 'SM-N1P91',
         'Recontactable': 'Yes',
       },
     },
@@ -165,30 +135,44 @@ AIRTABLE_GREGOR_SAMPLE_RECORDS = {
       "fields": {
         "SeqrCollaboratorSampleID": "HG00731",
         "CollaboratorSampleID": "VCGS_FAM203_621_D2",
+        'CollaboratorParticipantID': 'VCGS_FAM203_621',
         'SMID': 'SM-JDBTM',
       },
-    }
+    },
+    {
+      "id": "rec2Nkg1fKssJc7",
+      "fields": {
+        'SeqrCollaboratorSampleID': 'NA20888',
+        'CollaboratorSampleID': 'NA20888',
+        'CollaboratorParticipantID': 'NA20888',
+        'SMID': 'SM-L5QMP',
+        'Recontactable': 'No',
+      },
+    },
 ]}
+
 AIRTABLE_GREGOR_RECORDS = {
   "records": [
     {
       "id": "rec2B6OGmQpAkQW3s",
       "fields": {
-        'SMID': 'SM-JDBTM',
-        'seq_library_prep_kit_method': 'Kapa HyperPrep',
-        'read_length': '151',
-        'experiment_type': 'exome',
-        'targeted_regions_method': 'Twist',
+        'CollaboratorParticipantID': 'VCGS_FAM203_621',
+        'CollaboratorSampleID_wes': 'VCGS_FAM203_621_D2',
+        'SMID_wes': 'SM-JDBTM',
+        'seq_library_prep_kit_method_wes': 'Kapa HyperPrep',
+        'read_length_wes': '151',
+        'experiment_type_wes': 'exome',
+        'targeted_regions_method_wes': 'Twist',
         'targeted_region_bed_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/SR_experiment.bed',
-        'date_data_generation': '2022-08-15',
-        'target_insert_size': '385',
-        'sequencing_platform': 'NovaSeq',
-        'aligned_dna_short_read_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_COL_FAM1_1_D1.cram',
-        'aligned_dna_short_read_index_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_COL_FAM1_1_D1.crai',
-        'md5sum': '129c28163df082',
+        'date_data_generation_wes': '2022-08-15',
+        'target_insert_size_wes': '385',
+        'sequencing_platform_wes': 'NovaSeq',
+        'aligned_dna_short_read_file_wes': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_COL_FAM1_1_D1.cram',
+        'aligned_dna_short_read_index_file_wes': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_COL_FAM1_1_D1.crai',
+        'md5sum_wes': '129c28163df082',
         'reference_assembly': 'GRCh38',
-        'alignment_software': 'BWA-MEM-2.3',
-        'mean_coverage': '42.4',
+        'alignment_software_dna': 'BWA-MEM-2.3',
+        'mean_coverage_wgs': '42.4',
         'analysis_details': 'DOI:10.5281/zenodo.4469317',
         'called_variants_dna_short_read_id': 'SX2-3',
         'aligned_dna_short_read_set_id': 'BCM_H7YG5DSX2',
@@ -200,76 +184,342 @@ AIRTABLE_GREGOR_RECORDS = {
     {
       "id": "rec2B6OGmCVzkQW3s",
       "fields": {
-        'SMID': 'SM-AGHT',
+        'CollaboratorParticipantID': 'NA19675',
+        'CollaboratorSampleID_wgs': 'NA19675_1',
+        'SMID_wgs': 'SM-AGHT-2',
+        'experiment_type_wgs': 'genome',
+      },
+    },
+    {
+      "id": "rec4B7OGmQpVkQW7z",
+      "fields": {
+        'CollaboratorParticipantID': 'NA19679',
+        'CollaboratorSampleID_rna': 'NA19679',
+        'SMID_rna': 'SM-N1P91',
+        'seq_library_prep_kit_method_rna': 'Unknown',
+        'library_prep_type_rna': 'stranded poly-A pulldown',
+        'read_length_rna': '151',
+        'experiment_type_rna': 'paired-end',
+        'single_or_paired_ends_rna': 'paired-end',
+        'date_data_generation_rna': '2023-02-11',
+        'sequencing_platform_rna': 'NovaSeq',
+        'aligned_rna_short_read_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/NA19679.Aligned.out.cram',
+        'aligned_rna_short_read_index_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/NA19679.Aligned.out.crai',
+        'md5sum_rna': 'f6490b8ebdf2',
+        '5prime3prime_bias_rna': '1.05',
+        'gene_annotation_rna': 'GENCODEv26',
+        'reference_assembly': 'GRCh38',
+        'reference_assembly_uri_rna': 'gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta',
+        'alignment_software_rna': 'STARv2.7.10b',
+        'alignment_log_file_rna': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/NA19679.Log.final.out',
+        'percent_uniquely_aligned_rna': '80.53',
+        'percent_multimapped_rna': '17.08',
+        'percent_unaligned_rna': '1.71',
+        'percent_mRNA': '80.2',
+        'percent_rRNA': '5.9',
+        'RIN_rna': '8.9818',
+        'total_reads_rna': '106,842,386',
+        'within_site_batch_name_rna': 'LCSET-26942',
+        'estimated_library_size_rna': '19,480,858',
+        'variant_types': 'SNV',
+      },
+    },
+    {
+      "id": "rec2BFCGmQpAkQ7x",
+      "fields": {
+        'CollaboratorParticipantID': 'NA20888',
+        'CollaboratorSampleID_wes': 'NA20888',
+        'CollaboratorSampleID_wgs': 'NA20888_1',
+        'SMID_wes': 'SM-L5QMP',
+        'SMID_wgs': 'SM-L5QMWP',
+        'seq_library_prep_kit_method_wes': 'Kapa HyperPrep',
+        'seq_library_prep_kit_method_wgs': 'Kapa HyperPrep w/o amplification',
+        'read_length_wes': '151',
+        'read_length_wgs': '200',
+        'experiment_type_wes': 'exome',
+        'experiment_type_wgs': 'genome',
+        'targeted_regions_method_wes': 'Twist',
+        'targeted_region_bed_file': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/SR_experiment.bed',
+        'date_data_generation_wes': '2022-06-05',
+        'date_data_generation_wgs': '2023-03-13',
+        'target_insert_size_wes': '380',
+        'target_insert_size_wgs': '450',
+        'sequencing_platform_wes': 'NovaSeq',
+        'sequencing_platform_wgs': 'NovaSeq2',
+        'aligned_dna_short_read_file_wes': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_NA20888.cram',
+        'aligned_dna_short_read_index_file_wes': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_NA20888.crai',
+        'aligned_dna_short_read_file_wgs': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_NA20888_1.cram',
+        'aligned_dna_short_read_index_file_wgs': 'gs://fc-eb352699-d849-483f-aefe-9d35ce2b21ac/Broad_NA20888_1.crai',
+        'md5sum_wes': 'a6f6308866765ce8',
+        'md5sum_wgs': '2aa33e8c32020b1c',
+        'reference_assembly': 'GRCh38',
+        'alignment_software_dna': 'BWA-MEM-2.3',
+        'mean_coverage_wes': '42.8',
+        'mean_coverage_wgs': '36.1',
+        'analysis_details': '',
+        'called_variants_dna_short_read_id': '',
+        'aligned_dna_short_read_set_id': 'Broad_NA20888_D1',
+        'called_variants_dna_file': '',
+        'caller_software': 'NA',
+        'variant_types': 'SNV',
       },
     },
 ]}
-
-EXPECTED_NO_AIRTABLE_SAMPLE_METADATA_ROW = {
-    "project_guid": "R0003_test",
-    "num_saved_variants": 2,
-    "solve_state": "Tier 1",
-    "sample_id": "NA20889",
-    "Gene_Class-1": "Tier 1 - Candidate",
-    "Gene_Class-2": "Tier 1 - Candidate",
-    "inheritance_description-1": "Autosomal recessive (compound heterozygous)",
-    "inheritance_description-2": "Autosomal recessive (compound heterozygous)",
-    "hpo_absent": "",
-    "novel_mendelian_gene-1": "Y",
-    "novel_mendelian_gene-2": "Y",
-    "hgvsc-1": "c.3955G>A",
-    "date_data_generation": "2017-02-05",
-    "Zygosity-1": "Heterozygous",
-    "Zygosity-2": "Heterozygous",
-    "variant_genome_build-1": "GRCh37",
-    "variant_genome_build-2": "GRCh37",
-    "Ref-1": "TC",
-    "sv_type-2": "Deletion",
-    "sv_name-2": "DEL:chr12:49045487-49045898",
-    "ancestry_detail": "Ashkenazi Jewish",
-    "maternal_id": "",
-    "paternal_id": "",
-    "hgvsp-1": "c.1586-17C>G",
-    "entity:family_id": "12",
-    "entity:discovery_id": "NA20889",
-    "project_id": "Test Reprocessed Project",
-    "Pos-1": "248367227",
-    "data_type": "WES",
-    "family_guid": "F000012_12",
-    "congenital_status": "Unknown",
-    "family_history": "Yes",
-    "hpo_present": "HP:0011675 (Arrhythmia)|HP:0001509 ()",
-    "Transcript-1": "ENST00000505820",
-    "ancestry": "Ashkenazi Jewish",
-    "phenotype_group": "",
-    "sex": "Female",
-    "entity:subject_id": "NA20889",
-    "entity:sample_id": "NA20889",
-    "Chrom-1": "1",
-    "Alt-1": "T",
-    "Gene-1": "OR4G11P",
-    "pmid_id": None,
-    "phenotype_description": None,
-    "affected_status": "Affected",
-    "family_id": "12",
-    "MME": "Y",
-    "subject_id": "NA20889",
-    "proband_relationship": "",
-    "consanguinity": "None suspected",
-    "sequencing_center": "Broad",
-}
-EXPECTED_SAMPLE_METADATA_ROW = {
-    "dbgap_submission": "No",
-    "dbgap_study_id": "",
-    "dbgap_subject_id": "",
-    "sample_provider": "",
-    "multiple_datasets": "No",
-}
-EXPECTED_SAMPLE_METADATA_ROW.update(EXPECTED_NO_AIRTABLE_SAMPLE_METADATA_ROW)
+EXPECTED_GREGOR_FILES = [
+    'participant', 'family', 'phenotype', 'analyte', 'experiment_dna_short_read',
+    'aligned_dna_short_read', 'aligned_dna_short_read_set', 'called_variants_dna_short_read',
+    'experiment_rna_short_read', 'aligned_rna_short_read', 'experiment', 'genetic_findings',
+]
 
 MOCK_DATA_MODEL_URL = 'http://raw.githubusercontent.com/gregor_data_model.json'
 MOCK_DATA_MODEL = {
     'name': 'test data model',
+    'tables': [
+        {
+            'table': 'participant',
+            'required': True,
+            'columns': [
+                {'column': 'participant_id', 'required': True, 'data_type': 'string'},
+                {'column': 'internal_project_id'},
+                {'column': 'gregor_center', 'required': True, 'data_type': 'enumeration', 'enumerations': ['BCM', 'BROAD', 'UW']},
+                {'column': 'consent_code', 'required': True, 'data_type': 'enumeration', 'enumerations': ['GRU', 'HMB']},
+                {'column': 'recontactable', 'data_type': 'enumeration', 'enumerations': ['Yes', 'No']},
+                {'column': 'prior_testing'},
+                {'column': 'pmid_id'},
+                {'column': 'family_id', 'required': True},
+                {'column': 'paternal_id'},
+                {'column': 'maternal_id'},
+                {'column': 'twin_id'},
+                {'column': 'proband_relationship'},
+                {'column': 'proband_relationship_detail'},
+                {'column': 'sex', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Male', 'Female', 'Unknown']},
+                {'column': 'sex_detail'},
+                {'column': 'reported_race', 'data_type': 'enumeration', 'enumerations': ['American Indian or Alaska Native', 'Asian', 'Black or African American', 'Native Hawaiian or Other Pacific Islander', 'Middle Eastern or North African', 'White']},
+                {'column': 'reported_ethnicity', 'data_type': 'enumeration', 'enumerations': ['Hispanic or Latino', 'Not Hispanic or Latino']},
+                {'column': 'ancestry_detail'},
+                {'column': 'age_at_last_observation'},
+                {'column': 'affected_status', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Affected', 'Unaffected', 'Unknown']},
+                {'column': 'phenotype_description'},
+                {'column': 'age_at_enrollment'},
+                {'column': 'solve_status', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Yes', 'Likely', 'No', 'Partial']},
+                {'column': 'missing_variant_case', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Yes', 'No']},
+            ],
+        },
+        {
+            'table': 'family',
+            'required': True,
+            'columns': [
+                {'column': 'family_id', 'required': True, 'data_type': 'string'},
+                {'column': 'consanguinity', 'required': True, 'data_type': 'enumeration', 'enumerations': ['None suspected', 'Suspected', 'Present', 'Unknown']},
+                {'column': 'consanguinity_detail'},
+            ]
+        },
+        {
+            'table': 'phenotype',
+            'required': True,
+            'columns': [
+                {'column': 'phenotype_id'},
+                {'column': 'participant_id', 'references': '> participant.participant_id', 'required': True, 'data_type': 'string'},
+                {'column': 'term_id', 'required': True},
+                {'column': 'presence', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Present', 'Absent', 'Unknown']},
+                {'column': 'ontology', 'required': True, 'data_type': 'enumeration', 'enumerations': ['HPO', 'MONDO']},
+                {'column': 'additional_details'},
+                {'column': 'onset_age_range'},
+                {'column': 'additional_modifiers'},
+            ]
+        },
+        {
+            'table': 'analyte',
+            'required': True,
+            'columns': [
+                {'column': 'analyte_id', 'required': True, 'data_type': 'string'},
+                {'column': 'participant_id', 'required': True, 'data_type': 'string'},
+                {'column': 'analyte_type', 'data_type': 'enumeration', 'enumerations': ['DNA', 'RNA', 'cDNA', 'blood plasma', 'frozen whole blood', 'high molecular weight DNA', 'urine']},
+                {'column': 'analyte_processing_details'},
+                {'column': 'primary_biosample'},
+                {'column': 'primary_biosample_id'},
+                {'column': 'primary_biosample_details'},
+                {'column': 'tissue_affected_status', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Yes', 'No']},
+            ]
+        },
+        {
+            'table': 'experiment',
+            'columns': [
+                {'column': 'experiment_id', 'required': True, 'data_type': 'string'},
+                {'column': 'table_name', 'required': True, 'data_type': 'enumeration', 'enumerations': ['experiment_dna_short_read', 'experiment_rna_short_read']},
+                {'column': 'id_in_table', 'required': True},
+                {'column': 'participant_id', 'required': True},
+            ]
+        },
+        {
+            'table': 'experiment_dna_short_read',
+            'required': 'CONDITIONAL (aligned_dna_short_read, aligned_dna_short_read_set, called_variants_dna_short_read)',
+            'columns': [
+                {'column': 'experiment_dna_short_read_id', 'required': True},
+                {'column': 'analyte_id', 'required': True},
+                {'column': 'experiment_sample_id', 'required': True},
+                {'column': 'seq_library_prep_kit_method'},
+                {'column': 'read_length', 'data_type': 'integer'},
+                {'column': 'experiment_type', 'required': True, 'data_type': 'enumeration', 'enumerations': ['targeted', 'genome', 'exome']},
+                {'column': 'targeted_regions_method'},
+                {'column': 'targeted_region_bed_file', 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'date_data_generation', 'data_type': 'date'},
+                {'column': 'target_insert_size', 'data_type': 'integer'},
+                {'column': 'sequencing_platform'},
+            ],
+        },
+        {
+            'table': 'aligned_dna_short_read',
+            'required': 'CONDITIONAL (aligned_dna_short_read_set, called_variants_dna_short_read)',
+            'columns': [
+                {'column': 'aligned_dna_short_read_id', 'required': True},
+                {'column': 'experiment_dna_short_read_id', 'required': True},
+                {'column': 'aligned_dna_short_read_file', 'is_unique': True, 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'aligned_dna_short_read_index_file', 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'md5sum', 'is_unique': True},
+                {'column': 'reference_assembly', 'data_type': 'enumeration', 'enumerations': ['GRCh38', 'GRCh37']},
+                {'column': 'reference_assembly_uri'},
+                {'column': 'reference_assembly_details'},
+                {'column': 'mean_coverage', 'data_type': 'float'},
+                {'column': 'alignment_software', 'required': True},
+                {'column': 'analysis_details', 'data_type': 'string'},
+                {'column': 'quality_issues'},
+            ],
+        },
+        {
+            'table': 'aligned_dna_short_read_set',
+            'required': 'CONDITIONAL (called_variants_dna_short_read)',
+            'columns': [
+                {'column': 'aligned_dna_short_read_set_id', 'required': True},
+                {'column': 'aligned_dna_short_read_id', 'required': True},
+            ],
+        },
+        {
+            'table': 'called_variants_dna_short_read',
+            'columns': [
+                {'column': 'called_variants_dna_short_read_id', 'required': True, 'is_unique': True},
+                {'column': 'aligned_dna_short_read_set_id', 'required': True},
+                {'column': 'called_variants_dna_file', 'is_unique': True, 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'md5sum', 'required': True, 'is_unique': True},
+                {'column': 'caller_software', 'required': True},
+                {'column': 'variant_types', 'required': True, 'data_type': 'enumeration', 'enumerations': ['SNV', 'INDEL', 'SV', 'CNV', 'RE','MEI', 'STR']},
+                {'column': 'analysis_details'},
+            ],
+        },
+        {
+            'table': 'experiment_rna_short_read',
+            'required': 'CONDITIONAL (aligned_rna_short_read)',
+            'columns': [
+                {'column': 'experiment_rna_short_read_id', 'required': True},
+                {'column': 'analyte_id', 'required': True},
+                {'column': 'experiment_sample_id'},
+                {'column': 'seq_library_prep_kit_method'},
+                {'column': 'read_length', 'data_type': 'integer'},
+                {'column': 'experiment_type'},
+                {'column': 'date_data_generation', 'data_type': 'date'},
+                {'column': 'sequencing_platform'},
+                {'column': 'library_prep_type'},
+                {'column': 'single_or_paired_ends'},
+                {'column': 'within_site_batch_name'},
+                {'column': 'RIN', 'data_type': 'float'},
+                {'column': 'estimated_library_size', 'data_type': 'float'},
+                {'column': 'total_reads', 'data_type': 'integer'},
+                {'column': 'percent_rRNA', 'data_type': 'float'},
+                {'column': 'percent_mRNA', 'data_type': 'float'},
+                {'column': '5prime3prime_bias', 'data_type': 'float'},
+                {'column': 'percent_mtRNA', 'data_type': 'float'},
+                {'column': 'percent_Globin', 'data_type': 'float'},
+                {'column': 'percent_UMI', 'data_type': 'float'},
+                {'column': 'percent_GC', 'data_type': 'float'},
+                {'column': 'percent_chrX_Y', 'data_type': 'float'},
+            ],
+        },
+        {
+            'table': 'aligned_rna_short_read',
+            'columns': [
+                {'column': 'aligned_rna_short_read_id', 'required': True},
+                {'column': 'experiment_rna_short_read_id', 'required': True},
+                {'column': 'aligned_rna_short_read_file', 'is_unique': True, 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'aligned_rna_short_read_index_file', 'data_type': 'string', 'is_bucket_path': True},
+                {'column': 'md5sum', 'is_unique': True},
+                {'column': 'reference_assembly', 'data_type': 'enumeration', 'enumerations': ['GRCh38', 'GRCh37']},
+                {'column': 'reference_assembly_uri'},
+                {'column': 'reference_assembly_details'},
+                {'column': 'mean_coverage', 'data_type': 'float'},
+                {'column': 'gene_annotation', 'required': True},
+                {'column': 'gene_annotation_details'},
+                {'column': 'alignment_software', 'required': True},
+                {'column': 'alignment_log_file', 'required': True},
+                {'column': 'alignment_postprocessing'},
+                {'column': 'percent_uniquely_aligned'},
+                {'column': 'percent_multimapped'},
+                {'column': 'percent_unaligned'},
+                {'column': 'quality_issues'},
+            ],
+        },
+        {
+            'table': 'genetic_findings',
+            'columns': [
+                {'column': 'genetic_findings_id', 'required': True},
+                {'column': 'participant_id', 'required': True},
+                {'column': 'experiment_id'},
+                {'column': 'variant_type', 'required': True, 'data_type': 'enumeration', 'enumerations': ['SNV/INDEL', 'SV', 'CNV', 'RE', 'MEI']},
+                {'column': 'variant_reference_assembly', 'required': True, 'data_type': 'enumeration', 'enumerations': ['GRCh37', 'GRCh38']},
+                {'column': 'chrom', 'required': True},
+                {'column': 'pos', 'required': True, 'data_type': 'integer'},
+                {'column': 'ref','required': True},
+                {'column': 'alt', 'required': True},
+                {'column': 'ClinGen_allele_ID'},
+                {'column': 'gene', 'required': True},
+                {'column': 'transcript'},
+                {'column': 'hgvsc'},
+                {'column': 'hgvsp'},
+                {'column': 'zygosity', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Heterozygous', 'Homozygous', 'Hemizygous', 'Heteroplasmy', 'Homoplasmy', 'Mosaic']},
+                {'column': 'allele_balance_or_heteroplasmy_percentage', 'data_type': 'float'},
+                {'column': 'variant_inheritance', 'data_type': 'enumeration', 'enumerations': ['de novo', 'maternal', 'paternal', 'biparental', 'nonmaternal', 'nonpaternal', 'unknown']},
+                {'column': 'linked_variant'},
+                {'column': 'linked_variant_phase'},
+                {'column': 'gene_known_for_phenotype', 'required': True, 'data_type': 'enumeration', 'enumerations': ['Known', 'Candidate']},
+                {'column': 'known_condition_name'},
+                {'column': 'condition_id'},
+                {'column': 'condition_inheritance', 'data_type': 'enumeration', 'multi_value_delimiter': '|', 'enumerations': ['Autosomal recessive', 'Autosomal dominant', 'X-linked', 'Mitochondrial', 'Y-linked', 'Contiguous gene syndrome', 'Somatic mosaicism', 'Digenic', 'Other', 'Unknown']},
+                {'column': 'phenotype_contribution', 'data_type': 'enumeration', 'enumerations': ['Partial', 'Full', 'Uncertain']},
+                {'column': 'partial_contribution_explained'},
+                {'column': 'additional_family_members_with_variant'},
+                {'column': 'method_of_discovery', 'data_type': 'enumeration', 'multi_value_delimiter': '|', 'enumerations': ['SR-ES', 'SR-GS', 'LR-GS', 'SNP array']},
+                {'column': 'notes'}
+            ]
+        },
+    ]
+}
+MOCK_DATA_MODEL_RESPONSE = json.dumps(MOCK_DATA_MODEL, indent=2).replace('"references"', '//"references"')
+
+INVALID_MODEL_TABLES = {
+    'participant': {
+        'internal_project_id': {'data_type': 'reference'},
+        'prior_testing': {'data_type': 'enumeration'},
+        'proband_relationship': {'required': True},
+        'reported_race': {'enumerations': ['Asian', 'White', 'Black']},
+        'age_at_enrollment': {'data_type': 'date'}
+    },
+    'aligned_dna_short_read': {
+        'analysis_details': {'is_bucket_path': True},
+        'reference_assembly': {'data_type': 'integer'},
+        'mean_coverage': {'required': True},
+        'alignment_software': {'is_unique': True},
+    },
+    'aligned_dna_short_read_set': {},
+    'experiment_rna_short_read': {'date_data_generation': {'data_type': 'float'}},
+    'genetic_findings': {'experiment_id': {'required': True}},
+}
+INVALID_TABLES = [
+    {**t, 'columns': [{**c, **(INVALID_MODEL_TABLES[t['table']].get(c['column'], {}))} for c in t['columns']]}
+    for t in MOCK_DATA_MODEL['tables'] if t['table'] in INVALID_MODEL_TABLES
+]
+INVALID_TABLES[0]['columns'] = [c for c in INVALID_TABLES[0]['columns'] if c['column'] not in {
+    'pmid_id', 'age_at_last_observation', 'ancestry_detail', 'missing_variant_case',
+}]
+MOCK_INVALID_DATA_MODEL = {
     'tables': [
         {
             'table': 'subject',
@@ -277,50 +527,19 @@ MOCK_DATA_MODEL = {
             'columns': [{'column': 'subject_id', 'required': True}],
         },
         {
-            'table': 'participant',
-            'required': True,
-            'columns': [
-                {'column': 'participant_id', 'required': True},
-                {'column': 'internal_project_id'},
-                {'column': 'gregor_center', 'required': True, 'enumerations': ['BCM', 'BROAD', 'UW']},
-                {'column': 'consent_code', 'required': True, 'enumerations': ['GRU', 'HMB']},
-                {'column': 'recontactable', 'enumerations': ['Yes', 'No', 'Unknown']},
-                {'column': 'prior_testing'},
-                {'column': 'family_id', 'required': True},
-                {'column': 'paternal_id'},
-                {'column': 'maternal_id'},
-                {'column': 'proband_relationship', 'required': True},
-                {'column': 'sex', 'required': True, 'enumerations': ['Male', 'Female', 'Unknown']},
-                {'column': 'reported_race', 'enumerations': ['Asian', 'White', 'Black', 'Unknown']},
-                {'column': 'reported_ethnicity', 'enumerations': ['Hispanic', 'Not Hispanic', 'Unknown']},
-                {'column': 'ancestry_metadata'},
-                {'column': 'affected_status', 'required': True, 'enumerations': ['Affected', 'Unaffected', 'Unknown']},
-                {'column': 'phenotype_description'},
-                {'column': 'age_at_enrollment'},
-            ],
-        },
-        {
-            'table': 'aligned_dna_short_read_set',
-            'columns': [
-                {'column': 'aligned_dna_short_read_set_id', 'required': True},
-                {'column': 'aligned_dna_short_read_id', 'required': True},
-            ],
-        },
-        {
             'table': 'dna_read_data',
             'columns': [{'column': 'analyte_id', 'required': True}],
         },
-    ]
+        {
+            'table': 'dna_read_data_set',
+            'required': 'CONDITIONAL (aligned_dna_short_read_set, dna_read_data)',
+            'columns': [{'column': 'analyte_id', 'required': True}],
+        },
+    ] + INVALID_TABLES
 }
 
 
-def _get_list_param(call, param):
-    query_params = call.url.split('?')[1].split('&')
-    param_str = f'{param}='
-    return [p.replace(param_str, '') for p in query_params if p.startswith(param_str)]
-
-
-class ReportAPITest(object):
+class ReportAPITest(AirtableTest):
 
     def _get_zip_files(self, mock_zip, filenames):
         mock_write_zip = mock_zip.return_value.__enter__.return_value.writestr
@@ -331,17 +550,6 @@ class ReportAPITest(object):
             [row.split('\t') for row in mock_write_zip.call_args_list[i][0][1].split('\n') if row]
             for i in range(len(filenames))
         )
-
-    def _assert_expected_airtable_call(self, call_index, filter_formula, fields, additional_params=None):
-        expected_params = {
-            'fields[]': mock.ANY,
-            'pageSize': '100',
-            'filterByFormula': filter_formula,
-        }
-        if additional_params:
-            expected_params.update(additional_params)
-        self.assertDictEqual(responses.calls[call_index].request.params, expected_params)
-        self.assertListEqual(_get_list_param(responses.calls[call_index].request, 'fields%5B%5D'), fields)
 
     def test_seqr_stats(self):
         no_access_project = Project.objects.get(id=2)
@@ -702,17 +910,16 @@ class ReportAPITest(object):
 
 class LocalReportAPITest(AuthenticationTestCase, ReportAPITest):
     fixtures = ['users', '1kg_project', 'reference_data', 'report_variants']
-    ADDITIONAL_SAMPLES = ['NA21234']
     STATS_DATA = {
         'projectsCount': {'non_demo': 3, 'demo': 1},
         'familiesCount': {'non_demo': 12, 'demo': 2},
         'individualsCount': {'non_demo': 16, 'demo': 4},
         'sampleCountsByType': {
-            'WES__VARIANTS': {'demo': 1, 'non_demo': 7},
+            'WES__SNV_INDEL': {'demo': 1, 'non_demo': 7},
             'WGS__MITO': {'non_demo': 1},
             'WES__SV': {'non_demo': 3},
             'WGS__SV': {'non_demo': 1},
-            'RNA__VARIANTS': {'non_demo': 3},
+            'RNA__SNV_INDEL': {'non_demo': 3},
         },
     }
 

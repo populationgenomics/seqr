@@ -7,9 +7,10 @@ import redis
 from matchmaker.models import MatchmakerSubmissionGenes, MatchmakerSubmission
 from reference_data.models import TranscriptInfo
 from seqr.models import SavedVariant, VariantSearchResults, Family, LocusList, LocusListInterval, LocusListGene, \
-    RnaSeqOutlier, RnaSeqTpm, PhenotypePrioritization, Project
+    RnaSeqTpm, PhenotypePrioritization, Project, Sample, VariantTagType
 from seqr.utils.search.utils import get_variants_for_variant_ids
 from seqr.utils.gene_utils import get_genes_for_variants
+from seqr.utils.xpos_utils import get_xpos
 from seqr.views.utils.json_to_orm_utils import update_model_from_json
 from seqr.views.utils.orm_to_json_utils import get_json_for_discovery_tags, get_json_for_locus_lists, \
     get_json_for_queryset, get_json_for_rna_seq_outliers, get_json_for_saved_variants_with_tags, \
@@ -22,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 MAX_VARIANTS_FETCH = 1000
+DISCOVERY_CATEGORY = 'CMG Discovery Tags'
+
 
 def update_project_saved_variant_json(project, family_id=None, user=None):
     saved_variants = SavedVariant.objects.filter(family__project=project).select_related('family')
@@ -56,6 +59,24 @@ def update_project_saved_variant_json(project, family_id=None, user=None):
     return updated_saved_variant_guids
 
 
+def parse_saved_variant_json(variant_json, family):
+    if 'xpos' not in variant_json:
+        variant_json['xpos'] = get_xpos(variant_json['chrom'], variant_json['pos'])
+    xpos = variant_json['xpos']
+    ref = variant_json.get('ref')
+    alt = variant_json.get('alt')
+    var_length = variant_json['end'] - variant_json['pos'] if variant_json.get('end') is not None else len(ref) - 1
+    update_json = {'saved_variant_json': variant_json}
+    return {
+        'xpos': xpos,
+        'xpos_end': xpos + var_length,
+        'ref': ref,
+        'alt': alt,
+        'family': family,
+        'variant_id': variant_json['variantId']
+    }, update_json
+
+
 def reset_cached_search_results(project, reset_index_metadata=False):
     try:
         redis_client = redis.StrictRedis(host=REDIS_SERVICE_HOSTNAME, port=REDIS_SERVICE_PORT, socket_connect_timeout=3)
@@ -82,6 +103,7 @@ def get_variant_key(xpos=None, ref=None, alt=None, genomeVersion=None, **kwargs)
 
 
 def _saved_variant_genes_transcripts(variants):
+    family_genes = defaultdict(set)
     gene_ids = set()
     transcript_ids = set()
     for variant in variants:
@@ -91,6 +113,8 @@ def _saved_variant_genes_transcripts(variants):
             for gene_id, transcripts in var.get('transcripts', {}).items():
                 gene_ids.add(gene_id)
                 transcript_ids.update([t['transcriptId'] for t in transcripts if t.get('transcriptId')])
+            for family_guid in var['familyGuids']:
+                family_genes[family_guid].update(var.get('transcripts', {}).keys())
 
     genes = get_genes_for_variants(gene_ids)
     for gene in genes.values():
@@ -104,7 +128,7 @@ def _saved_variant_genes_transcripts(variants):
         )
     }
 
-    return genes, transcripts
+    return genes, transcripts, family_genes
 
 
 def _add_locus_lists(projects, genes, add_list_detail=False, user=None):
@@ -130,18 +154,10 @@ def _add_locus_lists(projects, genes, add_list_detail=False, user=None):
     return locus_lists_by_guid
 
 
-def _get_rna_seq_outliers(gene_ids, family_guids):
-    data_by_individual_gene = defaultdict(lambda: {'outliers': {}})
+def _get_rna_seq_outliers(gene_ids, sample_ids):
+    filters = {'gene_id__in': gene_ids, 'sample_id__in': sample_ids}
 
-    outlier_data = get_json_for_rna_seq_outliers(
-        RnaSeqOutlier.objects.filter(
-            gene_id__in=gene_ids, p_adjust__lt=RnaSeqOutlier.SIGNIFICANCE_THRESHOLD, sample__individual__family__guid__in=family_guids),
-        nested_fields=[{'fields': ('sample', 'individual', 'guid'), 'key': 'individualGuid'},]
-    )
-    for data in outlier_data:
-        data_by_individual_gene[data.pop('individualGuid')]['outliers'][data['geneId']] = data
-
-    return data_by_individual_gene
+    return get_json_for_rna_seq_outliers(filters)
 
 
 def get_phenotype_prioritization(family_guids, gene_ids=None):
@@ -160,12 +176,17 @@ def get_phenotype_prioritization(family_guids, gene_ids=None):
     return data_by_individual_gene
 
 
-def _add_family_has_rna_tpm(families_by_guid, gene_ids):
+def _get_family_has_rna_tpm(family_genes, gene_ids, sample_family_map):
     tpm_family_genes = RnaSeqTpm.objects.filter(
-        sample__individual__family__guid__in=families_by_guid.keys(), gene_id__in=gene_ids,
-    ).values('sample__individual__family__guid').annotate(genes=ArrayAgg('gene_id', distinct=True))
-    for agg in tpm_family_genes:
-        families_by_guid[agg['sample__individual__family__guid']]['tpmGenes'] = agg['genes']
+        sample_id__in=sample_family_map.keys(), gene_id__in=gene_ids,
+    ).values('sample_id').annotate(genes=ArrayAgg('gene_id', distinct=True))
+    family_tpms = defaultdict(lambda: {'tpmGenes': []})
+    for agg in tpm_family_genes.iterator():
+        family_guid = sample_family_map[agg['sample_id']]
+        genes = [gene for gene in agg['genes'] if gene in family_genes[family_guid]]
+        if genes:
+            family_tpms[family_guid]['tpmGenes'] += genes
+    return family_tpms
 
 
 def _add_discovery_tags(variants, discovery_tags):
@@ -193,14 +214,13 @@ LOAD_FAMILY_CONTEXT_PARAM = 'loadFamilyContext'
 
 def get_variants_response(request, saved_variants, response_variants=None, add_all_context=False, include_igv=True,
                           add_locus_list_detail=False, include_individual_gene_scores=True, include_project_name=False):
-    response = get_json_for_saved_variants_with_tags(saved_variants, add_details=True)
+    response = get_json_for_saved_variants_with_tags(saved_variants, add_details=True) \
+        if saved_variants is not None else {'savedVariantsByGuid': {}}
 
     variants = list(response['savedVariantsByGuid'].values()) if response_variants is None else response_variants
+    genes, transcripts, family_genes = _saved_variant_genes_transcripts(variants)
 
-    loaded_family_guids = set()
-    for variant in variants:
-        loaded_family_guids.update(variant['familyGuids'])
-    projects = Project.objects.filter(family__guid__in=loaded_family_guids).distinct()
+    projects = Project.objects.filter(family__guid__in=family_genes.keys()).distinct()
     project = list(projects)[0] if len(projects) == 1 else None
 
     discovery_tags = None
@@ -209,7 +229,6 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
         discovery_tags, discovery_response = get_json_for_discovery_tags(response['savedVariantsByGuid'].values(), request.user)
         response.update(discovery_response)
 
-    genes, transcripts = _saved_variant_genes_transcripts(variants)
     response['transcriptsById'] = transcripts
     response['locusListsByGuid'] = _add_locus_lists(
         projects, genes, add_list_detail=add_locus_list_detail, user=request.user)
@@ -231,6 +250,16 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
         matchmakersubmissiongenes__saved_variant__guid__in=response['savedVariantsByGuid'].keys()))
     response['mmeSubmissionsByGuid'] = {s['submissionGuid']: s for s in submissions}
 
+    rna_tpm = None
+    if include_individual_gene_scores:
+        present_family_genes = {k: v for k, v in family_genes.items() if v}
+        rna_sample_family_map = dict(Sample.objects.filter(
+            individual__family__guid__in=present_family_genes.keys(), sample_type=Sample.SAMPLE_TYPE_RNA, is_active=True,
+        ).values_list('id', 'individual__family__guid'))
+        response['rnaSeqData'] = _get_rna_seq_outliers(genes.keys(), rna_sample_family_map.keys())
+        rna_tpm = _get_family_has_rna_tpm(present_family_genes, genes.keys(), rna_sample_family_map)
+        response['phenotypeGeneScores'] = get_phenotype_prioritization(present_family_genes.keys(), gene_ids=genes.keys())
+
     if add_all_context or request.GET.get(LOAD_PROJECT_TAG_TYPES_CONTEXT_PARAM) == 'true':
         project_fields = {'projectGuid': 'guid'}
         if include_project_name:
@@ -241,18 +270,137 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
         add_project_tag_types(response['projectsByGuid'])
 
     if add_all_context or request.GET.get(LOAD_FAMILY_CONTEXT_PARAM) == 'true':
-        families = Family.objects.filter(guid__in=loaded_family_guids)
+        families = Family.objects.filter(guid__in=family_genes.keys())
         add_families_context(
             response, families, project_guid=project.guid if project else None, user=request.user, is_analyst=is_analyst,
             has_case_review_perm=bool(project) and has_case_review_permissions(project, request.user), include_igv=include_igv,
         )
 
-    if include_individual_gene_scores:
-        response['rnaSeqData'] = _get_rna_seq_outliers(genes.keys(), loaded_family_guids)
-        families_by_guid = response.get('familiesByGuid')
-        if families_by_guid:
-            _add_family_has_rna_tpm(families_by_guid, genes.keys())
-
-        response['phenotypeGeneScores'] = get_phenotype_prioritization(loaded_family_guids, gene_ids=genes.keys())
+        if rna_tpm:
+            for family_guid, data in rna_tpm.items():
+                response['familiesByGuid'][family_guid].update(data)
 
     return response
+
+
+def get_variant_main_transcript(variant):
+    main_transcript_id = variant.get('selectedMainTranscriptId') or variant.get('mainTranscriptId')
+    if main_transcript_id:
+        for gene_id, transcripts in variant.get('transcripts', {}).items():
+            main_transcript = next((t for t in transcripts if t['transcriptId'] == main_transcript_id), None)
+            if main_transcript:
+                if 'geneId' not in main_transcript:
+                    main_transcript['geneId'] = gene_id
+                return main_transcript
+    elif len(variant.get('transcripts', {})) == 1:
+        gene_id = next(k for k in variant['transcripts'].keys())
+        #  Handle manually created SNPs
+        if variant['transcripts'][gene_id] == []:
+            return {'geneId': gene_id}
+    return {}
+
+
+def get_sv_name(variant_json):
+    return variant_json.get('svName') or '{svType}:chr{chrom}:{pos}-{end}'.format(**variant_json)
+
+
+def get_saved_discovery_variants_by_family(variant_filter, format_variants, get_family_id):
+    tag_types = VariantTagType.objects.filter(project__isnull=True, category=DISCOVERY_CATEGORY)
+
+    project_saved_variants = SavedVariant.objects.filter(
+        varianttag__variant_tag_type__in=tag_types,
+        **variant_filter,
+    ).order_by('created_date').distinct()
+
+    project_saved_variants = format_variants(project_saved_variants, tag_types)
+
+    saved_variants_by_family = defaultdict(list)
+    for saved_variant in project_saved_variants:
+        family_id = get_family_id(saved_variant)
+        saved_variants_by_family[family_id].append(saved_variant)
+
+    return saved_variants_by_family
+
+
+HET = 'Heterozygous'
+HOM_ALT = 'Homozygous'
+HEMI = 'Hemizygous'
+
+
+def get_variant_inheritance_models(variant_json, family_individual_data):
+    affected_individual_guids, unaffected_individual_guids, male_individual_guids, parent_guid_map = family_individual_data
+    inheritance_models = set()
+
+    affected_indivs_with_hom_alt_variants = set()
+    affected_indivs_with_het_variants = set()
+    unaffected_indivs_with_het_variants = set()
+    is_x_linked = False
+
+    genotypes = variant_json.get('genotypes')
+    genotype_zygosity = {}
+    if genotypes:
+        chrom = variant_json['chrom']
+        is_x_linked = "X" in chrom
+        for sample_guid, genotype in genotypes.items():
+            zygosity = _get_genotype_zygosity(genotype, is_hemi_variant=is_x_linked and sample_guid in male_individual_guids)
+            genotype_zygosity[sample_guid] = zygosity
+            if zygosity in (HOM_ALT, HEMI) and sample_guid in unaffected_individual_guids:
+                # No valid inheritance modes for hom alt unaffected individuals
+                return set(), set()
+
+            if zygosity in (HOM_ALT, HEMI) and sample_guid in affected_individual_guids:
+                affected_indivs_with_hom_alt_variants.add(sample_guid)
+            elif zygosity == HET and sample_guid in affected_individual_guids:
+                affected_indivs_with_het_variants.add(sample_guid)
+            elif zygosity == HET and sample_guid in unaffected_individual_guids:
+                unaffected_indivs_with_het_variants.add(sample_guid)
+
+    # AR-homozygote, AR-comphet, AR, AD, de novo, X-linked, UPD, other, multiple
+    if affected_indivs_with_hom_alt_variants:
+        if is_x_linked:
+            inheritance_models.add("X-linked")
+        else:
+            inheritance_models.add("AR-homozygote")
+
+    if not unaffected_indivs_with_het_variants and affected_indivs_with_het_variants:
+        inherited = any(
+            guid for guid in affected_indivs_with_het_variants
+            if any(parent_guid in affected_indivs_with_het_variants for parent_guid in parent_guid_map[guid])
+        )
+        if inherited or not unaffected_individual_guids:
+            inheritance_models.add("AD")
+        else:
+            inheritance_models.add("de novo")
+
+    potential_compound_het_gene_ids = set()
+    if (len(unaffected_individual_guids) < 2 or unaffected_indivs_with_het_variants) \
+            and affected_indivs_with_het_variants and not affected_indivs_with_hom_alt_variants \
+            and 'transcripts' in variant_json:
+        potential_compound_het_gene_ids.update(list(variant_json['transcripts'].keys()))
+
+    return inheritance_models, potential_compound_het_gene_ids, genotype_zygosity
+
+
+def _get_genotype_zygosity(genotype, is_hemi_variant):
+    num_alt = genotype.get('numAlt')
+    cn = genotype.get('cn')
+    if num_alt == 2 or cn == 0 or (cn != None and cn > 3):
+        return HOM_ALT
+    if num_alt == 1 or cn == 1 or cn == 3:
+        return HEMI if is_hemi_variant else HET
+    return None
+
+
+DISCOVERY_PHENOTYPE_CLASSES = {
+    'NEW': ['Tier 1 - Known gene, new phenotype', 'Tier 2 - Known gene, new phenotype'],
+    'EXPAN': ['Tier 1 - Phenotype expansion', 'Tier 1 - Novel mode of inheritance', 'Tier 2 - Phenotype expansion'],
+    'UE': ['Tier 1 - Phenotype not delineated', 'Tier 2 - Phenotype not delineated'],
+    'KNOWN': ['Known gene for phenotype'],
+}
+
+
+def get_discovery_phenotype_class(variant_tag_names):
+    for phenotype_class, class_tag_names in DISCOVERY_PHENOTYPE_CLASSES.items():
+        if any(tag in variant_tag_names for tag in class_tag_names):
+            return phenotype_class
+    return None

@@ -8,8 +8,8 @@ import responses
 from seqr.models import Project, Family, Individual
 from seqr.views.apis.anvil_workspace_api import anvil_workspace_page, create_project_from_workspace, \
     validate_anvil_vcf, grant_workspace_access, add_workspace_data, get_anvil_vcf_list
-from seqr.views.utils.test_utils import AnvilAuthenticationTestCase, AuthenticationTestCase, TEST_WORKSPACE_NAMESPACE,\
-    TEST_WORKSPACE_NAME, TEST_WORKSPACE_NAME1, TEST_NO_PROJECT_WORKSPACE_NAME, TEST_NO_PROJECT_WORKSPACE_NAME2
+from seqr.views.utils.test_utils import AnvilAuthenticationTestCase, AuthenticationTestCase, AirflowTestCase, \
+    TEST_WORKSPACE_NAMESPACE, TEST_WORKSPACE_NAME, TEST_WORKSPACE_NAME1, TEST_NO_PROJECT_WORKSPACE_NAME, TEST_NO_PROJECT_WORKSPACE_NAME2
 from seqr.views.utils.terra_api_utils import remove_token, TerraAPIException, TerraRefreshTokenFailedException
 from settings import SEQR_SLACK_ANVIL_DATA_LOADING_CHANNEL, SEQR_SLACK_LOADING_NOTIFICATION_CHANNEL
 
@@ -63,89 +63,8 @@ REQUEST_BODY.update(VALIDATE_VFC_RESPONSE)
 
 TEMP_PATH = '/temp_path/temp_filename'
 
-TEST_GUID=f'P_{TEST_NO_PROJECT_WORKSPACE_NAME}'
-MOCK_TOKEN = 'mock_openid_bearer' # nosec
-MOCK_AIRFLOW_URL = 'http://testairflowserver'
 MOCK_AIRTABLE_URL = 'http://testairtable'
 MOCK_AIRTABLE_KEY = 'mock_key' # nosec
-
-DAG_RUNS = {
-    'dag_runs': [
-        {'conf': {},
-         'dag_id': 'seqr_vcf_to_es_AnVIL_WGS_v0.0.1',
-         'dag_run_id': 'manual__2022-04-28T11:51:22.735124+00:00',
-         'end_date': None, 'execution_date': '2022-04-28T11:51:22.735124+00:00',
-         'external_trigger': True, 'start_date': '2022-04-28T11:51:25.626176+00:00',
-         'state': 'success'}
-    ]
-}
-
-DAG_RUNS_RUNNING = {
-    'dag_runs': [
-        {'conf': {},
-         'dag_id': 'seqr_vcf_to_es_AnVIL_WGS_v0.0.1',
-         'dag_run_id': 'manual__2022-04-28T11:51:22.735124+00:00',
-         'end_date': None, 'execution_date': '2022-04-28T11:51:22.735124+00:00',
-         'external_trigger': True, 'start_date': '2022-04-28T11:51:25.626176+00:00',
-         'state': 'running'}
-    ]
-}
-
-UPDATED_ANVIL_VARIABLES = {
-    "key": "AnVIL_WES",
-    "value": json.dumps({
-        "active_projects": [TEST_GUID],
-        "vcf_path": "gs://test_bucket/test_path.vcf",
-        "project_path": "gs://seqr-datasets/v02/GRCh38/AnVIL_WES/{guid}/v20210301".format(guid=TEST_GUID),
-        "projects_to_run": [TEST_GUID] })
-}
-
-DAG_TASKS_RESP = {
-    "tasks": [
-        {
-            "task_id": "create_dataproc_cluster",
-        },
-        {
-            "task_id": "pyspark_compute_project_R0006_test",
-        },
-        {
-            "task_id": "pyspark_compute_variants_AnVIL_WES",
-        },
-        {
-            "task_id": "pyspark_export_project_R0006_test",
-        },
-        {
-            "task_id": "scale_dataproc_cluster",
-        },
-        {
-            "task_id": "skip_compute_project_subset_R0006_test",
-        }
-        ],
-    "total_entries": 6
-}
-UPDATE_DAG_TASKS_RESP = {
-            "tasks": [
-                {
-                    "task_id": "create_dataproc_cluster",
-                },
-                {
-                    "task_id": f"pyspark_compute_project_{TEST_GUID}",
-                },
-                {
-                    "task_id": "pyspark_compute_variants_AnVIL_WES",
-                },
-                {
-                    "task_id": f"pyspark_export_project_{TEST_GUID}",
-                },
-                {
-                    "task_id": "scale_dataproc_cluster",
-                },
-                {
-                    "task_id": f"skip_compute_project_subset_{TEST_GUID}",
-                }
-                ],
-            "total_entries": 6
-        }
 
 PROJECT1_SAMPLES = ['HG00735', 'NA19675', 'NA19678', 'NA20870', 'HG00732', 'NA19675_1', 'NA20874', 'HG00733', 'HG00731']
 PROJECT2_SAMPLES = ['HG00735', 'NA19675', 'NA19678', 'NA20885']
@@ -158,37 +77,6 @@ REQUEST_BODY_ADD_DATA2['vcfSamples'] = PROJECT2_SAMPLES
 
 PROJECT1_GUID = 'R0001_1kg'
 PROJECT2_GUID = 'R0003_test'
-ADD_DATA_UPDATED_ANVIL_VARIABLES = {
-    "key": "AnVIL_WES",
-    "value": json.dumps({
-        "active_projects": [PROJECT1_GUID],
-        "vcf_path": "gs://test_bucket/test_path.vcf",
-        "project_path": "gs://seqr-datasets/v02/GRCh37/AnVIL_WES/{guid}/v20210301".format(guid=PROJECT1_GUID),
-        "projects_to_run": [PROJECT1_GUID] })
-}
-ADD_DATA_UPDATE_DAG_TASKS_RESP = {
-            "tasks": [
-                {
-                    "task_id": "create_dataproc_cluster",
-                },
-                {
-                    "task_id": f"pyspark_compute_project_{PROJECT1_GUID}",
-                },
-                {
-                    "task_id": "pyspark_compute_variants_AnVIL_WES",
-                },
-                {
-                    "task_id": f"pyspark_export_project_{PROJECT1_GUID}",
-                },
-                {
-                    "task_id": "scale_dataproc_cluster",
-                },
-                {
-                    "task_id": f"skip_compute_project_subset_{PROJECT1_GUID}",
-                }
-                ],
-            "total_entries": 6
-        }
 
 BASIC_META = [
     b'##fileformat=VCFv4.3\n',
@@ -214,7 +102,7 @@ INFO_META = [
 
 BAD_FORMAT_META = [
     b'##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">\n',
-    b'##FORMAT=<ID=DP,Number=1,Type=String,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">\n',
+    b'##FORMAT=<ID=GQ,Number=1,Type=String,Description="Genotype Quality">\n',
 ]
 
 FORMAT_META = [
@@ -383,7 +271,7 @@ DATA_LINES = [
 #         mock_subprocess.return_value.stdout = [b'File not found']
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.json()['error'], 'Data file or path /test_path.vcf.gz is not found.')
+#         self.assertListEqual(response.json()['error'], 'Data file or path /test_path.vcf.gz is not found.')
 #         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path.vcf.gz', stdout=-1, stderr=-2, shell=True)
 #         mock_file_logger.info.assert_has_calls([
 #             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf.gz', self.manager_user),
@@ -395,7 +283,7 @@ DATA_LINES = [
 #         mock_subprocess.return_value.communicate.return_value = b'', b'File not found'
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_SHARDED_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.json()['error'], 'Data file or path /test_path-*.vcf.gz is not found.')
+#         self.assertListEqual(response.json()['error'], 'Data file or path /test_path-*.vcf.gz is not found.')
 #         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path-*.vcf.gz', stdout=-1, stderr=-1, shell=True)
 #         mock_file_logger.info.assert_has_calls([
 #             mock.call('==> gsutil ls gs://test_bucket/test_path-*.vcf.gz', self.manager_user),
@@ -415,8 +303,8 @@ DATA_LINES = [
 #
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_BAD_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.json()['error'],
-#                          'Invalid VCF file format - file path must end with .vcf or .vcf.gz or .vcf.bgz')
+#         self.assertListEqual(response.json()['errors'],
+#                         ['Invalid VCF file format - file path must end with .vcf or .vcf.gz or .vcf.bgz'])
 #
 #         # test no header line
 #         mock_subprocess.reset_mock()
@@ -455,10 +343,8 @@ DATA_LINES = [
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
 #         self.assertListEqual(response.json()['errors'], [
-#             'Missing required INFO field(s) AN',
-#             'Incorrect meta Type for INFO.AF - expected "Float", got "Integer"',
-#             'Missing required FORMAT field(s) GQ, GT',
-#             'Incorrect meta Type for FORMAT.DP - expected "Integer", got "String"'
+#             'Missing required FORMAT field(s) GT',
+#             'Incorrect meta Type for FORMAT.GQ - expected "Integer", got "String"'
 #         ])
 #
 #         # Test valid operations
