@@ -37,10 +37,14 @@ def update_gencode(gencode_release, gencode_gtf_path=None, genome_version=None, 
             Setting this to False can be useful to sequentially load more than one gencode release so that data in the
             tables represents the union of multiple gencode releases.
     """
-    existing_gene_ids = {gene.gene_id for gene in GeneInfo.objects.all().only('gene_id')}
-    existing_transcript_ids = {
-        transcript.transcript_id for transcript in TranscriptInfo.objects.all().only('transcript_id')
-    }
+    if reset:
+        existing_gene_ids = set()
+        existing_transcript_ids = set()
+    else:
+        existing_gene_ids = {gene.gene_id for gene in GeneInfo.objects.all().only('gene_id')}
+        existing_transcript_ids = {
+            transcript.transcript_id for transcript in TranscriptInfo.objects.all().only('transcript_id')
+        }
 
     new_genes, new_transcripts, counters = load_gencode_records(
         gencode_release, gencode_gtf_path, genome_version, existing_gene_ids, existing_transcript_ids)
