@@ -41,7 +41,7 @@ def update_gencode(gencode_release, gencode_gtf_path=None, genome_version=None, 
     existing_transcript_ids = {
         transcript.transcript_id for transcript in TranscriptInfo.objects.all().only('transcript_id')
     }
-    
+
     new_genes, new_transcripts, counters = load_gencode_records(
         gencode_release, gencode_gtf_path, genome_version, existing_gene_ids, existing_transcript_ids)
     
