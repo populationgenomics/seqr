@@ -37,6 +37,9 @@ def update_gencode(gencode_release, gencode_gtf_path=None, genome_version=None, 
             Setting this to False can be useful to sequentially load more than one gencode release so that data in the
             tables represents the union of multiple gencode releases.
     """
+    new_genes, new_transcripts, counters = load_gencode_records(
+        gencode_release, gencode_gtf_path, genome_version, existing_gene_ids, existing_transcript_ids)
+    
     if reset:
         logger.info("Dropping the {} existing TranscriptInfo entries".format(TranscriptInfo.objects.count()))
         TranscriptInfo.objects.all().delete()
@@ -47,9 +50,6 @@ def update_gencode(gencode_release, gencode_gtf_path=None, genome_version=None, 
     existing_transcript_ids = {
         transcript.transcript_id for transcript in TranscriptInfo.objects.all().only('transcript_id')
     }
-
-    new_genes, new_transcripts, counters = load_gencode_records(
-        gencode_release, gencode_gtf_path, genome_version, existing_gene_ids, existing_transcript_ids)
 
     logger.info('Creating {} GeneInfo records'.format(len(new_genes)))
     counters["genes_created"] = len(new_genes)
