@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 LATEST_GENCODE_RELEASE = 39
 OLD_GENCODE_RELEASES = [31, 29, 28, 27, 19]
 
-GENCODE_URL_TEMPLATE = 'https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{gencode_release}/{path}gencode.v{gencode_release}{file}'
+GENCODE_URL_TEMPLATE = 'http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_{gencode_release}/{path}gencode.v{gencode_release}{file}'
 
 # expected GTF file header
 GENCODE_FILE_HEADER = [
