@@ -3,6 +3,7 @@ import os
 import requests
 import tempfile
 from tqdm import tqdm
+from requests.exceptions import ConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,17 @@ def download_file(url, to_dir=tempfile.gettempdir(), verbose=True):
     #     return local_file_path
 
     is_gz = url.endswith(".gz")
-    response = requests.get(url, stream=is_gz)
+    nb_tries = 10
+    while True:
+        try:
+            response = requests.get(url, stream=is_gz)
+            break
+        except ConnectionError as e:
+            nb_tries -= 1
+            if nb_tries == 0:
+                raise e
+            logger.warning("Connection error: {}. Retrying...".format(e))
+    # response = requests.get(url, stream=is_gz)
     input_iter = response if is_gz else response.iter_content()
     if verbose:
         logger.info("Downloading {} to {}".format(url, local_file_path))
