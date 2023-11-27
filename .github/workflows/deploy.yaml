@@ -6,7 +6,6 @@ on:
       - main
       - staging
       - reanalysis-dev
-      - update_gencode_fix
 
 jobs:
   docker:
@@ -65,20 +64,6 @@ jobs:
       - name: push image
         run: docker push --all-tags $DOCKER_IMAGE
 
-      - name: Update cloudrun jobs (reference updaters only)
-        if: github.ref == 'refs/heads/update_gencode_fix'
-        run: |
-          # cloud run jobs to update
-          run_job_names=("$DEPLOY_TARGET-reference-updater" "$DEPLOY_TARGET-reference-update-hpo-terms")
-          for cloud_run_target in "${run_job_names[@]}"; do
-
-            gcloud beta run jobs update \
-              "$cloud_run_target" \
-              --region "australia-southeast1" \
-              --image="$DOCKER_IMAGE:gcloud-$DEPLOY_TARGET"
-          
-          done;
-
       - name: Update cloudrun jobs
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
         run: |
@@ -93,20 +78,20 @@ jobs:
           
           done;
 
-      # - name: restart seqr instances
-      #   run: |
-      #     gcloud compute instance-groups managed rolling-action replace \
-      #       seqr-$DEPLOY_TARGET-group \
-      #       --region australia-southeast1 \
-      #       --max-unavailable 0 \
-      #       --max-surge 3
+      - name: restart seqr instances
+        run: |
+          gcloud compute instance-groups managed rolling-action replace \
+            seqr-$DEPLOY_TARGET-group \
+            --region australia-southeast1 \
+            --max-unavailable 0 \
+            --max-surge 3
 
-      # - name: apply schema
-      #   run: |
-      #     gcloud beta run jobs execute --wait \
-      #       --region australia-southeast1 \
-      #       $DEPLOY_TARGET-schema-migrator
+      - name: apply schema
+        run: |
+          gcloud beta run jobs execute --wait \
+            --region australia-southeast1 \
+            $DEPLOY_TARGET-schema-migrator
 
-      #     gcloud beta run jobs execute --wait \
-      #       --region australia-southeast1 \
-      #       $DEPLOY_TARGET-reference-schema-migrator
+          gcloud beta run jobs execute --wait \
+            --region australia-southeast1 \
+            $DEPLOY_TARGET-reference-schema-migrator
