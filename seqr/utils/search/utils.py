@@ -346,7 +346,7 @@ def _variant_ids_dataset_type(variant_ids):
     if len(has_mito) == len(variant_ids):
         return Sample.DATASET_TYPE_MITO_CALLS
     elif not has_mito:
-        return DATASET_TYPE_SNP_INDEL_ONLY
+        return DATASET_TYPES_LOOKUP[DATASET_TYPE_SNP_INDEL_ONLY]
     return Sample.DATASET_TYPE_VARIANT_CALLS
 
 
