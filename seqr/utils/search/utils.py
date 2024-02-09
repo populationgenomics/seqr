@@ -40,7 +40,7 @@ DATASET_TYPES_LOOKUP = {
 }
 DATASET_TYPES_LOOKUP[ALL_DATA_TYPES] = [dt for dts in DATASET_TYPES_LOOKUP.values() for dt in dts]
 DATASET_TYPE_SNP_INDEL_ONLY = f'{Sample.DATASET_TYPE_VARIANT_CALLS}_only'
-DATASET_TYPES_LOOKUP[DATASET_TYPE_SNP_INDEL_ONLY] = [Sample.DATASET_TYPE_VARIANT_CALLS]
+DATASET_TYPES_LOOKUP[DATASET_TYPE_SNP_INDEL_ONLY] = Sample.DATASET_TYPE_VARIANT_CALLS
 
 
 def _raise_search_error(error):
@@ -346,7 +346,7 @@ def _variant_ids_dataset_type(variant_ids):
     if len(has_mito) == len(variant_ids):
         return Sample.DATASET_TYPE_MITO_CALLS
     elif not has_mito:
-        return DATASET_TYPES_LOOKUP[DATASET_TYPE_SNP_INDEL_ONLY]
+        return DATASET_TYPE_SNP_INDEL_ONLY
     return Sample.DATASET_TYPE_VARIANT_CALLS
 
 
