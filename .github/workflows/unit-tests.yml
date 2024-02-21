@@ -73,7 +73,7 @@ jobs:
         pushd ui
         npm install
         npm run build
-        cp dist/* ../static/
+        cp -r dist/* ../static/
         popd
     - name: Run coverage tests
       run: |

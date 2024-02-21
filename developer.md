@@ -19,7 +19,7 @@ Install dependencies:
    cd ui/
    npm install
    npm run build
-   cp dist/* ../static/
+   cp -r dist/* ../static/
    cd ..
    ```
 
