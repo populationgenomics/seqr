@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Icon, List } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { getGenesById, getSavedVariantsByGuid } from 'redux/selectors'
+import { getGenesById, getSavedVariantsByGuid } from 'store/selectors'
 import { GENOME_VERSION_DISPLAY_LOOKUP } from 'shared/utils/constants'
 import ShowGeneModal from '../buttons/ShowGeneModal'
 

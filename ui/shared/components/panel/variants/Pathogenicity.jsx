@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import styled from 'styled-components'
 import { Label, Icon, Popup } from 'semantic-ui-react'
 
-import { getUser, getFamiliesByGuid, getProjectsByGuid } from 'redux/selectors'
+import { getUser, getFamiliesByGuid, getProjectsByGuid } from 'store/selectors'
 import { clinvarSignificance, clinvarColor, getPermissionedHgmdClass } from '../../../utils/constants'
 import { snakecaseToTitlecase } from '../../../utils/stringUtils'
 import { HorizontalSpacer } from '../../Spacers'

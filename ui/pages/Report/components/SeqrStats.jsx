@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Header, Table } from 'semantic-ui-react'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import DataLoader from 'shared/components/DataLoader'
 import { DATASET_TITLE_LOOKUP } from 'shared/utils/constants'
 import { getSeqrStatsLoading, getSeqrStatsLoadingError, getSeqrStats } from '../selectors'

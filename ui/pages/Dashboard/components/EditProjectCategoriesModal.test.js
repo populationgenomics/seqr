@@ -2,7 +2,7 @@ import React from 'react'
 import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import { EditProjectCategoriesModalComponent } from './EditProjectCategoriesModal'
-import { getProjectsByGuid, getProjectCategoriesByGuid } from 'redux/selectors'
+import { getProjectsByGuid, getProjectCategoriesByGuid } from 'store/selectors'
 
 import { STATE1, PROJECT_GUID } from '../fixtures'
 

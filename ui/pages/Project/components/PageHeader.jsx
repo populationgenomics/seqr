@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Header } from 'semantic-ui-react'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import EditProjectButton from 'shared/components/buttons/EditProjectButton'
 import PageHeaderLayout from 'shared/components/page/PageHeaderLayout'
 import { HorizontalSpacer } from 'shared/components/Spacers'

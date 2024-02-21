@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { getLocusListIsLoading } from 'redux/selectors'
+import { getLocusListIsLoading } from 'store/selectors'
 import VariantSearchFormContainer from 'shared/components/panel/search/VariantSearchFormContainer'
 import { SaveSearchButton } from './SavedSearch'
 import VariantSearchFormContent from './VariantSearchFormContent'

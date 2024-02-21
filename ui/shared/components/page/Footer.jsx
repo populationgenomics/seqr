@@ -5,7 +5,7 @@ import { Table, Modal, Header } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { getVersion } from 'redux/selectors'
+import { getVersion } from 'store/selectors'
 import { FAQ_PATH, PRIVACY_PATH, TOS_PATH } from 'shared/utils/constants'
 import { ButtonLink } from '../StyledComponents'
 

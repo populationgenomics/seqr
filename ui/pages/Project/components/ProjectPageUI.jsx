@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Grid, Loader } from 'semantic-ui-react'
 import { Link } from 'react-router-dom'
 
-import { getProjectDetailsIsLoading } from 'redux/selectors'
+import { getProjectDetailsIsLoading } from 'store/selectors'
 import DataLoader from 'shared/components/DataLoader'
 import { HorizontalSpacer, VerticalSpacer } from 'shared/components/Spacers'
 import { SectionHeader } from 'shared/components/StyledComponents'

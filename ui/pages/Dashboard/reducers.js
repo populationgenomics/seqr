@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux'
-import { createSingleObjectReducer } from '../../redux/utils/reducerFactories'
+import { createSingleObjectReducer } from '../../store/utils/reducerFactories'
 import { SHOW_ALL } from './constants'
 
 /**

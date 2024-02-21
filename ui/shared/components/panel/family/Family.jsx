@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { updateFamily } from 'redux/rootReducer'
-import { getProjectsByGuid, getNotesByFamilyType } from 'redux/selectors'
+import { updateFamily } from 'store/rootReducer'
+import { getProjectsByGuid, getNotesByFamilyType } from 'store/selectors'
 
 import PedigreeImagePanel from '../view-pedigree-image/PedigreeImagePanel'
 import BaseFieldView from '../view-fields/BaseFieldView'

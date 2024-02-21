@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import styled from 'styled-components'
 
-import { closeModal } from 'redux/utils/modalReducer'
+import { closeModal } from 'store/utils/modalReducer'
 import DeleteButton from '../buttons/DeleteButton'
 import DataTable from '../table/DataTable'
 import FormWrapper from './FormWrapper'

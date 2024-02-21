@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import { SubmissionGeneVariants, Phenotypes } from './MatchmakerPanel'
 import { STATE1 } from './fixtures'
 import configureStore from "redux-mock-store";

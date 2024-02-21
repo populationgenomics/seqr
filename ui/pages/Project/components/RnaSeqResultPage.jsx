@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { Loader, Grid, Dropdown } from 'semantic-ui-react'
 
-import { getGenesById, getIndividualsByGuid, getRnaSeqSignificantJunctionData } from 'redux/selectors'
+import { getGenesById, getIndividualsByGuid, getRnaSeqSignificantJunctionData } from 'store/selectors'
 import { RNASEQ_JUNCTION_PADDING, TISSUE_DISPLAY } from 'shared/utils/constants'
 import DataLoader from 'shared/components/DataLoader'
 import FamilyReads from 'shared/components/panel/family/FamilyReads'

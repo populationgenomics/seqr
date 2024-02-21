@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Grid, Dropdown, Message } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { getSavedVariantsIsLoading, getSavedVariantsLoadingError } from 'redux/selectors'
+import { getSavedVariantsIsLoading, getSavedVariantsLoadingError } from 'store/selectors'
 import { VARIANT_PAGINATION_FIELD } from 'shared/utils/constants'
 
 import ExportTableButton from '../../buttons/ExportTableButton'

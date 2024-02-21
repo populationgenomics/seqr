@@ -7,7 +7,7 @@ import arrayMutators from 'final-form-arrays'
 import { Form, Message, Confirm } from 'semantic-ui-react'
 import flattenDeep from 'lodash/flattenDeep'
 
-import { closeModal, setModalConfirm } from 'redux/utils/modalReducer'
+import { closeModal, setModalConfirm } from 'store/utils/modalReducer'
 import ButtonPanel from './ButtonPanel'
 import { StyledForm, configuredFields } from './FormHelpers'
 import { NONE, SUCCEEDED, ERROR } from '../panel/RequestStatus'

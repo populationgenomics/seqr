@@ -3,7 +3,7 @@ import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import configureStore from 'redux-mock-store'
 
-import { getRnaSeqDataByFamilyGene } from 'redux/selectors'
+import { getRnaSeqDataByFamilyGene } from 'store/selectors'
 import RnaSeqTpm from './RnaSeqTpm'
 import { STATE1 } from '../fixtures'
 

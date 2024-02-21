@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { Popup } from 'semantic-ui-react'
 
-import { getOpenModals } from 'redux/utils/modalReducer'
+import { getOpenModals } from 'store/utils/modalReducer'
 
 export const BehindModalPopup = styled(Popup)`
   z-index: 500 !important;

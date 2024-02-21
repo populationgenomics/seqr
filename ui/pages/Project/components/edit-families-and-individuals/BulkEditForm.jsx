@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import DataLoader from 'shared/components/DataLoader'
 
 import FormWrapper from 'shared/components/form/FormWrapper'

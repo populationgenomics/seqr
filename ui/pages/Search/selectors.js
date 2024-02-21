@@ -10,7 +10,7 @@ import {
   getCurrentSearchParams,
   getUser,
   getProjectDatasetTypes,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { FAMILY_ANALYSIS_STATUS_LOOKUP } from 'shared/utils/constants'
 import { compareObjects } from 'shared/utils/sortUtils'
 

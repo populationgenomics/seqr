@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { Grid, Loader, Message } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 
-import { getWarningMessages } from 'redux/selectors'
+import { getWarningMessages } from 'store/selectors'
 
 const ReactMarkdown = React.lazy(() => import('react-markdown'))
 

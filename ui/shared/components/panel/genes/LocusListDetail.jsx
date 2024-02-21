@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { Header, Grid } from 'semantic-ui-react'
 
-import { updateLocusList } from 'redux/rootReducer'
+import { updateLocusList } from 'store/rootReducer'
 import BaseFieldView from '../view-fields/BaseFieldView'
 import { DeleteLocusListButton } from '../../buttons/LocusListButtons'
 import ShowGeneModal from '../../buttons/ShowGeneModal'

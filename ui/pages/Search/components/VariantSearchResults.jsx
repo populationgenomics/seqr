@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { loadSearchedVariants } from 'redux/rootReducer'
+import { loadSearchedVariants } from 'store/rootReducer'
 import { InlineToggle } from 'shared/components/form/Inputs'
 import { helpLabel, StyledForm } from 'shared/components/form/FormHelpers'
 import VariantSearchResults, { DisplayVariants } from 'shared/components/panel/search/VariantSearchResults'

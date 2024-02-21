@@ -3,8 +3,8 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Grid, Divider, Accordion } from 'semantic-ui-react'
 
-import { updateVariantTags } from 'redux/rootReducer'
-import { getUser, getSortedIndividualsByFamily } from 'redux/selectors'
+import { updateVariantTags } from 'store/rootReducer'
+import { getUser, getSortedIndividualsByFamily } from 'store/selectors'
 
 import UpdateButton from 'shared/components/buttons/UpdateButton'
 import { Select, IntegerInput, LargeMultiselect } from 'shared/components/form/Inputs'

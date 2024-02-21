@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Modal, Icon, Popup, Confirm } from 'semantic-ui-react'
 
-import { getModalOpen, getModalConfim, openModal, closeModal, cancelCloseModal } from 'redux/utils/modalReducer'
+import { getModalOpen, getModalConfim, openModal, closeModal, cancelCloseModal } from 'store/utils/modalReducer'
 import { ButtonLink } from '../StyledComponents'
 
 class CustomModal extends React.PureComponent {

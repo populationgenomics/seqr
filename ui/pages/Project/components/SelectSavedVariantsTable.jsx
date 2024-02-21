@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 
-import { getSavedVariantsIsLoading } from 'redux/selectors'
+import { getSavedVariantsIsLoading } from 'store/selectors'
 import { SelectableTableFormInput } from 'shared/components/table/DataTable'
 import DataLoader from 'shared/components/DataLoader'
 import { ColoredLabel } from 'shared/components/StyledComponents'

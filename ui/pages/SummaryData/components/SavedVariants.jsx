@@ -5,7 +5,7 @@ import { Route, Switch, NavLink } from 'react-router-dom'
 
 import { Form, Button } from 'semantic-ui-react'
 
-import { getGenesById } from 'redux/selectors'
+import { getGenesById } from 'store/selectors'
 import {
   REVIEW_TAG_NAME,
   KNOWN_GENE_FOR_PHENOTYPE_TAG_NAME,

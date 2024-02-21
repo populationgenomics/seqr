@@ -11,7 +11,7 @@ import {
   getFamiliesByGuid,
   getUser,
   getSpliceOutliersByChromFamily,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { HorizontalSpacer, VerticalSpacer } from '../../Spacers'
 import SearchResultsLink from '../../buttons/SearchResultsLink'
 import Modal from '../../modal/Modal'

@@ -5,8 +5,8 @@ import { Route, Switch, Link } from 'react-router-dom'
 import { Grid } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { updateVariantTags } from 'redux/rootReducer'
-import { getAnalysisGroupsByGuid } from 'redux/selectors'
+import { updateVariantTags } from 'store/rootReducer'
+import { getAnalysisGroupsByGuid } from 'store/selectors'
 import {
   VARIANT_SORT_FIELD,
   VARIANT_HIDE_EXCLUDED_FIELD,

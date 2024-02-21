@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Route, Switch } from 'react-router-dom'
 
-import { getUser, getElasticsearchEnabled } from 'redux/selectors'
+import { getUser, getElasticsearchEnabled } from 'store/selectors'
 import { Error404 } from 'shared/components/page/Errors'
 import { SimplePageHeader } from 'shared/components/page/PageHeaderLayout'
 import GeneDetail from 'shared/components/panel/genes/GeneDetail'

@@ -1,4 +1,4 @@
-import { getProjectDatasetTypes } from 'redux/selectors'
+import { getProjectDatasetTypes } from 'store/selectors'
 import { getIntitialSearch, getLocusListOptions, getDatasetTypes } from './selectors'
 
 import { STATE, SEARCH_HASH, SEARCH, PROJECT_GUID, FAMILY_GUID, ANALYSIS_GROUP_GUID, LOCUS_LIST } from './fixtures'

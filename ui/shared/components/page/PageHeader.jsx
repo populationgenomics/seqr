@@ -8,7 +8,7 @@ import VariantSearchPageHeader from 'pages/Search/components/PageHeader'
 import { DataManagementPageHeader } from 'pages/DataManagement/DataManagement'
 import { REPORT_PAGES } from 'pages/Report/Report'
 import { SummaryDataPageHeader } from 'pages/SummaryData/SummaryData'
-import { getGenesById } from 'redux/selectors'
+import { getGenesById } from 'store/selectors'
 import { PUBLIC_PAGES } from 'shared/utils/constants'
 import PageHeaderLayout, { SimplePageHeader, useSeqrTitle } from './PageHeaderLayout'
 

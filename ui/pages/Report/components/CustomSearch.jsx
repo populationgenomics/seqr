@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { FormSpy } from 'react-final-form'
 import { Grid, Header } from 'semantic-ui-react'
 
-import { getProjectsByGuid, getProjectDatasetTypes, getCurrentSearchParams } from 'redux/selectors'
+import { getProjectsByGuid, getProjectDatasetTypes, getCurrentSearchParams } from 'store/selectors'
 import { Select, ButtonRadioGroup, BaseSemanticInput, BooleanCheckbox } from 'shared/components/form/Inputs'
 import { configuredField } from 'shared/components/form/FormHelpers'
 import VariantSearchFormContainer from 'shared/components/panel/search/VariantSearchFormContainer'

@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import { Multiselect } from 'shared/components/form/Inputs'
 import OptionFieldView from 'shared/components/panel/view-fields/OptionFieldView'
 
-import { updateProject } from 'redux/rootReducer'
+import { updateProject } from 'store/rootReducer'
 
 import { getEditableCategoryOptions } from '../selectors'
 

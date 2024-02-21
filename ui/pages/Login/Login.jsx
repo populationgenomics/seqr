@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Route, Switch } from 'react-router-dom'
 
-import { getGoogleLoginEnabled } from 'redux/selectors'
+import { getGoogleLoginEnabled } from 'store/selectors'
 import { Error404 } from 'shared/components/page/Errors'
 import Login from './components/Login'
 import LoginError from './components/LoginError'

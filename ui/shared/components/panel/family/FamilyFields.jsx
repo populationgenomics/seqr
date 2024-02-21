@@ -4,8 +4,8 @@ import { connect } from 'react-redux'
 import { Popup, Icon } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { loadUserOptions, updateFamily } from 'redux/rootReducer'
-import { loadProjectAnalysisGroups } from 'redux/utils/reducerUtils'
+import { loadUserOptions, updateFamily } from 'store/rootReducer'
+import { loadProjectAnalysisGroups } from 'store/utils/reducerUtils'
 import {
   getSamplesByFamily,
   getUserOptionsIsLoading,
@@ -14,7 +14,7 @@ import {
   getProjectAnalysisGroupOptions,
   getAnalysisGroupsByFamily,
   getAnalysisGroupIsLoading,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { SNP_DATA_TYPE, FAMILY_ANALYSED_BY_DATA_TYPES } from 'shared/utils/constants'
 
 import DispatchRequestButton from '../../buttons/DispatchRequestButton'

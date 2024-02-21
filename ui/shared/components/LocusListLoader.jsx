@@ -2,8 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { loadLocusLists, loadLocusListItems } from 'redux/rootReducer'
-import { getLocusListIsLoading, getLocusListsIsLoading, getLocusListsByGuid, getParsedLocusList } from 'redux/selectors'
+import { loadLocusLists, loadLocusListItems } from 'store/rootReducer'
+import { getLocusListIsLoading, getLocusListsIsLoading, getLocusListsByGuid, getParsedLocusList } from 'store/selectors'
 import DataLoader from './DataLoader'
 
 const BaseLocusListsLoader = React.memo(({ locusListsByGuid, loading, load, allProjectLists, children }) => (

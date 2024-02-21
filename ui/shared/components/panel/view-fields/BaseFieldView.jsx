@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { Icon, Segment, Popup } from 'semantic-ui-react'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import DispatchRequestButton from '../../buttons/DispatchRequestButton'
 import DeleteButton from '../../buttons/DeleteButton'
 import UpdateButton from '../../buttons/UpdateButton'

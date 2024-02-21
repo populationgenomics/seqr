@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { connect } from 'react-redux'
 import { Popup, Icon, Header, Divider, Label } from 'semantic-ui-react'
 
-import { getSortedIndividualsByFamily, getGenesById } from 'redux/selectors'
+import { getSortedIndividualsByFamily, getGenesById } from 'store/selectors'
 import {
   INDIVIDUAL_FIELD_FEATURES,
   INDIVIDUAL_FIELD_FILTER_FLAGS,

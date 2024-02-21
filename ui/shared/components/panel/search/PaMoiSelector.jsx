@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { getLocusListsWithGenes } from 'redux/selectors'
+import { getLocusListsWithGenes } from 'store/selectors'
 import { Multiselect } from 'shared/components/form/Inputs'
 import { moiToMoiInitials, formatPanelAppItems } from 'shared/utils/panelAppUtils'
 import { PANEL_APP_MOI_OPTIONS } from 'shared/utils/constants'

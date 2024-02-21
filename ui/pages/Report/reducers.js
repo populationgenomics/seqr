@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux'
 
-import { loadingReducer, createSingleValueReducer } from 'redux/utils/reducerFactories'
-import { RECEIVE_DATA } from 'redux/utils/reducerUtils'
+import { loadingReducer, createSingleValueReducer } from 'store/utils/reducerFactories'
+import { RECEIVE_DATA } from 'store/utils/reducerUtils'
 import { HttpRequestHelper } from 'shared/utils/httpRequestHelper'
 
 // action creators and reducers in one file as suggested by https://github.com/erikras/ducks-modular-redux

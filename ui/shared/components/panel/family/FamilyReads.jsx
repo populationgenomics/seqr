@@ -11,7 +11,7 @@ import {
   getProjectsByGuid,
   getGenesById,
   getSpliceOutliersByChromFamily,
-} from 'redux/selectors'
+} from 'store/selectors'
 import PedigreeIcon from '../../icons/PedigreeIcon'
 import { CheckboxGroup, RadioGroup } from '../../form/Inputs'
 import StateChangeForm from '../../form/StateChangeForm'

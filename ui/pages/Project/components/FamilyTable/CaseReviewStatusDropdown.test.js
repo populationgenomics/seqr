@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
-import { getIndividualsByGuid } from 'redux/selectors'
+import { getIndividualsByGuid } from 'store/selectors'
 import { CaseReviewStatusDropdownComponent } from './CaseReviewStatusDropdown'
 
 import { STATE1 } from '../../fixtures'
