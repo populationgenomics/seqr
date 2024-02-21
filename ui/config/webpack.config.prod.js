@@ -37,7 +37,7 @@ const cssFilename = '[name].[contenthash:8].css';
 
 const htmlPluginOptions = {
   inject: true,
-  template: path.resolve('./app.html'), // Load a custom template
+  template: path.resolve('./index.html'), // Load a custom template
   minify: {
     removeComments: true,
     collapseWhitespace: true,
@@ -181,7 +181,7 @@ module.exports = {
     new CleanWebpackPlugin(),
 
     new HtmlWebpackPlugin(Object.assign({}, {
-      filename: 'app.html',
+      filename: 'index.html',
       chunks: ['app'],
     }, htmlPluginOptions)),
 

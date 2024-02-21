@@ -159,9 +159,9 @@ module.exports = {
     }),
 
     new HtmlWebpackPlugin({
-      filename: 'app.html',
+      filename: 'index.html',
       chunks: ['app', 'devServerClient'],
-      template: path.resolve('./app.html'), // Load a custom template
+      template: path.resolve('./index.html'), // Load a custom template
       inject: true,
     }),
 
