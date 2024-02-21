@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import TextFieldView from './TextFieldView'
 
 const userCanEdit = (note, user) => (

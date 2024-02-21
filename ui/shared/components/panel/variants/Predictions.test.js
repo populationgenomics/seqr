@@ -3,7 +3,7 @@ import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import configureStore from 'redux-mock-store'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import Predictions from './Predictions'
 import { STATE1, VARIANT, SV_VARIANT } from '../fixtures'
 

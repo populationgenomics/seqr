@@ -4,14 +4,14 @@ import { connect } from 'react-redux'
 import { Link, Route, Switch } from 'react-router-dom'
 import { Popup, Icon } from 'semantic-ui-react'
 
-import { loadFamilyDetails } from 'redux/rootReducer'
+import { loadFamilyDetails } from 'store/rootReducer'
 import {
   getFamiliesByGuid,
   getFamilyDetailsLoading,
   getSortedIndividualsByFamily,
   getGenesById,
   getHasActiveSearchableSampleByFamily,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { FAMILY_DETAIL_FIELDS, getVariantMainGeneId } from 'shared/utils/constants'
 import { Error404 } from 'shared/components/page/Errors'
 import Family from 'shared/components/panel/family/Family'

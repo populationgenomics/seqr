@@ -5,7 +5,7 @@ import { FormSpy } from 'react-final-form'
 import { Form } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { getLocusListsIsLoading } from 'redux/selectors'
+import { getLocusListsIsLoading } from 'store/selectors'
 import { Dropdown } from 'shared/components/form/Inputs'
 import { formatPanelAppItems } from 'shared/utils/panelAppUtils'
 import { LocusListsLoader, LocusListItemsLoader } from 'shared/components/LocusListLoader'

@@ -12,8 +12,8 @@ import {
 } from 'pedigreejs/es/pedigree'
 import { copy_dataset as copyPedigreeDataset, messages as pedigreeMessages } from 'pedigreejs/es/pedigree_utils'
 
-import { getIndividualsByFamily } from 'redux/selectors'
-import { openModal } from 'redux/utils/modalReducer'
+import { getIndividualsByFamily } from 'store/selectors'
+import { openModal } from 'store/utils/modalReducer'
 import { INDIVIDUAL_FIELD_CONFIGS, INDIVIDUAL_FIELD_SEX, AFFECTED } from 'shared/utils/constants'
 import { snakecaseToTitlecase } from 'shared/utils/stringUtils'
 import FormWrapper from '../../form/FormWrapper'

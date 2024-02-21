@@ -10,7 +10,7 @@ import {
   getFamiliesByGuid,
   getAnalysisGroupsByGuid,
   getProjectDatasetTypes,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { Multiselect, ButtonRadioGroup } from 'shared/components/form/Inputs'
 import { ProjectFilter } from 'shared/components/panel/search/ProjectsField'
 import { SOLVED_FAMILY_STATUS_OPTIONS } from 'shared/utils/constants'

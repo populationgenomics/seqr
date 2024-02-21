@@ -1,6 +1,6 @@
 import { connect } from 'react-redux'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import { BaseSemanticInput, BooleanCheckbox } from 'shared/components/form/Inputs'
 import LoadReportTable from 'shared/components/table/LoadReportTable'
 import { FAMILY_ANALYSIS_STATUS_LOOKUP, VARIANT_METADATA_COLUMNS } from 'shared/utils/constants'

@@ -7,7 +7,7 @@ import StateChangeForm from 'shared/components/form/StateChangeForm'
 import { Select } from 'shared/components/form/Inputs'
 import TextFieldView from 'shared/components/panel/view-fields/TextFieldView'
 import { camelcaseToTitlecase, toSnakecase } from 'shared/utils/stringUtils'
-import { updateIndividual } from 'redux/rootReducer'
+import { updateIndividual } from 'store/rootReducer'
 
 import {
   CASE_REVIEW_STATUS_MORE_INFO_NEEDED,

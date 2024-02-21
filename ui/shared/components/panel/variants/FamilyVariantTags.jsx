@@ -5,7 +5,7 @@ import { NavLink } from 'react-router-dom'
 import { Icon, Popup, Table, Label } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { updateVariantNote, updateVariantTags } from 'redux/rootReducer'
+import { updateVariantNote, updateVariantTags } from 'store/rootReducer'
 import {
   getFamiliesByGuid,
   getVariantTagNotesByFamilyVariants,
@@ -14,7 +14,7 @@ import {
   getVariantId,
   getMmeSubmissionsByGuid,
   getGenesById,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { DISCOVERY_CATEGORY_NAME, MME_TAG_NAME } from 'shared/utils/constants'
 import VariantClassify from './VariantClassify'
 import PopupWithModal from '../../PopupWithModal'

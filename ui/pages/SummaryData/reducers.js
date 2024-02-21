@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux'
 
-import { loadingReducer, createSingleValueReducer, createSingleObjectReducer } from 'redux/utils/reducerFactories'
-import { RECEIVE_DATA, REQUEST_SAVED_VARIANTS } from 'redux/utils/reducerUtils'
+import { loadingReducer, createSingleValueReducer, createSingleObjectReducer } from 'store/utils/reducerFactories'
+import { RECEIVE_DATA, REQUEST_SAVED_VARIANTS } from 'store/utils/reducerUtils'
 import { SHOW_ALL, SORT_BY_XPOS } from 'shared/utils/constants'
 import { HttpRequestHelper } from 'shared/utils/httpRequestHelper'
 

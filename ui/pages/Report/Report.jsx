@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Route, Switch } from 'react-router-dom'
 
-import { getUser } from 'redux/selectors'
+import { getUser } from 'store/selectors'
 import { Error404, Error401 } from 'shared/components/page/Errors'
 
 import Anvil from './components/Anvil'

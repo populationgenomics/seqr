@@ -7,8 +7,8 @@ import {
   REQUEST_SAVED_SEARCHES,
   REQUEST_SEARCHED_VARIANTS,
   RECEIVE_SEARCHED_VARIANTS,
-} from 'redux/utils/reducerUtils'
-import { loadingReducer, createSingleObjectReducer } from 'redux/utils/reducerFactories'
+} from 'store/utils/reducerUtils'
+import { loadingReducer, createSingleObjectReducer } from 'store/utils/reducerFactories'
 import { HttpRequestHelper, getUrlQueryString } from 'shared/utils/httpRequestHelper'
 
 // action creators and reducers in one file as suggested by https://github.com/erikras/ducks-modular-redux

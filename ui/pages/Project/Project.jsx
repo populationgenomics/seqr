@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Route, Switch } from 'react-router-dom'
 import { Loader } from 'semantic-ui-react'
 
-import { getProjectDetailsIsLoading } from 'redux/selectors'
+import { getProjectDetailsIsLoading } from 'store/selectors'
 import { Error404 } from 'shared/components/page/Errors'
 import { loadCurrentProject, unloadProject } from './reducers'
 import { getCurrentProject } from './selectors'

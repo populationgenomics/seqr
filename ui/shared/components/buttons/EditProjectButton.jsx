@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 
-import { updateProject } from 'redux/rootReducer'
+import { updateProject } from 'store/rootReducer'
 import UpdateButton from './UpdateButton'
 import {
   EDITABLE_PROJECT_FIELDS,

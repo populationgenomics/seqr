@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
-import { getUser, getProjectsByGuid } from 'redux/selectors'
+import { getUser, getProjectsByGuid } from 'store/selectors'
 import { ProjectEllipsisMenuComponent } from './ProjectEllipsisMenu'
 
 import { STATE1 } from '../fixtures'

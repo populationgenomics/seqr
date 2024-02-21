@@ -6,7 +6,7 @@ import { Grid, Icon, Popup, Loader, Dimmer } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 
-import { getUser, getElasticsearchEnabled } from 'redux/selectors'
+import { getUser, getElasticsearchEnabled } from 'store/selectors'
 import DataLoader from 'shared/components/DataLoader'
 import { VerticalSpacer } from 'shared/components/Spacers'
 import UpdateButton from 'shared/components/buttons/UpdateButton'

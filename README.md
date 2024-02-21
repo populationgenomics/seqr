@@ -95,4 +95,4 @@ Then visit https://localhost:3000 in your browser to access the hot-reloadable v
 ### Common errors
 
 - `Error occured while trying to proxy to: localhost:3000`: You didn't start the Python backend server.
-- `TemplateDoesNotExist at / app.html`: then it might say something like: `/Users/${USER}/source/seqr/ui/dist/app.html (Source does not exist)`, you'll need to make sure the `app.html` file is available in `ui/dist/`.
+- `TemplateDoesNotExist at / index.html`: then it might say something like: `/Users/${USER}/source/seqr/ui/dist/index.html (Source does not exist)`, you'll need to make sure the `index.html` file is available in `ui/dist/`.

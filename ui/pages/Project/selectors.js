@@ -23,7 +23,7 @@ import {
   getVariantTagsByGuid, getUserOptionsByUsername, getSamplesByFamily, getNotesByFamilyType,
   getSamplesGroupedByProjectGuid, getVariantTagNotesByFamilyVariants, getPhenotypeGeneScoresByIndividual,
   getRnaSeqDataByIndividual,
-} from 'redux/selectors'
+} from 'store/selectors'
 
 import {
   SORT_BY_FAMILY_NAME,

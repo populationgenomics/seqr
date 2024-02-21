@@ -5,7 +5,7 @@ import { FormSpy } from 'react-final-form'
 import styled from 'styled-components'
 import { Header, List, Grid } from 'semantic-ui-react'
 
-import { getElasticsearchEnabled } from 'redux/selectors'
+import { getElasticsearchEnabled } from 'store/selectors'
 import { ButtonLink } from 'shared/components/StyledComponents'
 import { configuredField } from 'shared/components/form/FormHelpers'
 import { Select } from 'shared/components/form/Inputs'

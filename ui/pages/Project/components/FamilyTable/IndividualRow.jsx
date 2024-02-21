@@ -26,8 +26,8 @@ import {
   INDIVIDUAL_FIELD_AFFECTED, INDIVIDUAL_FIELD_FEATURES, INDIVIDUAL_FIELD_LOOKUP,
 } from 'shared/utils/constants'
 
-import { updateIndividual } from 'redux/rootReducer'
-import { getSamplesByGuid, getMmeSubmissionsByGuid } from 'redux/selectors'
+import { updateIndividual } from 'store/rootReducer'
+import { getSamplesByGuid, getMmeSubmissionsByGuid } from 'store/selectors'
 import { HPO_FORM_FIELDS } from '../HpoTerms'
 import {
   CASE_REVIEW_STATUS_MORE_INFO_NEEDED, CASE_REVIEW_STATUS_OPTIONS, CASE_REVIEW_TABLE_NAME, INDIVIDUAL_DETAIL_FIELDS,

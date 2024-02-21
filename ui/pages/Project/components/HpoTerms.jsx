@@ -12,8 +12,8 @@ import DataLoader from 'shared/components/DataLoader'
 import { ButtonLink } from 'shared/components/StyledComponents'
 import { VerticalSpacer } from 'shared/components/Spacers'
 
-import { loadHpoTerms } from 'redux/rootReducer'
-import { getHpoTermsByParent, getHpoTermsIsLoading } from 'redux/selectors'
+import { loadHpoTerms } from 'store/rootReducer'
+import { getHpoTermsByParent, getHpoTermsIsLoading } from 'store/selectors'
 import { snakecaseToTitlecase } from 'shared/utils/stringUtils'
 
 const ScrollingTab = styled(Tab).attrs({ menu: { attached: true } })`

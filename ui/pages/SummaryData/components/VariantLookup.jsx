@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Grid, Header } from 'semantic-ui-react'
 
-import { RECEIVE_DATA } from 'redux/utils/reducerUtils'
+import { RECEIVE_DATA } from 'store/utils/reducerUtils'
 import { QueryParamsEditor } from 'shared/components/QueryParamEditor'
 import StateDataLoader from 'shared/components/StateDataLoader'
 import FormWrapper from 'shared/components/form/FormWrapper'

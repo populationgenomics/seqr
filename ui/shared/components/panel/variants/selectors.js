@@ -17,7 +17,7 @@ import {
   getVariantTagsByGuid, getVariantNotesByGuid, getSavedVariantsByGuid, getAnalysisGroupsByGuid, getGenesById, getUser,
   getFamiliesByGuid, getProjectsByGuid, getIndividualsByGuid, getRnaSeqDataByIndividual,
   getPhenotypeGeneScoresByIndividual,
-} from 'redux/selectors'
+} from 'store/selectors'
 
 export const getIndividualGeneDataByFamilyGene = createSelector(
   getIndividualsByGuid,

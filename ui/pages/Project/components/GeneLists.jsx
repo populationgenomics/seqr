@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { Dimmer, Loader, Popup } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 
-import { getLocusListsByGuid } from 'redux/selectors'
+import { getLocusListsByGuid } from 'store/selectors'
 import { LocusListsLoader } from 'shared/components/LocusListLoader'
 import LocusListDetailPanel from 'shared/components/panel/genes/LocusListDetail'
 import LocusListTables from 'shared/components/table/LocusListTables'

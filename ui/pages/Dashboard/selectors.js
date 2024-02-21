@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect'
 
-import { getProjectsByGuid, getProjectCategoriesByGuid } from 'redux/selectors'
+import { getProjectsByGuid, getProjectCategoriesByGuid } from 'store/selectors'
 import { SHOW_ALL, SHOW_DEMO } from './constants'
 
 export const getProjectFilter = state => state.projectsTableState.filter

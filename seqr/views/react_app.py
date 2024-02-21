@@ -36,7 +36,7 @@ def no_login_main_app(request, *args, **kwargs):
 
 
 def render_app_html(request, additional_json=None, include_user=True, status=200):
-    html = loader.render_to_string('app.html')
+    html = loader.render_to_string('index.html')
 
     app_js_script = re.search('static/app-(.*)\.js', html)
     if app_js_script:

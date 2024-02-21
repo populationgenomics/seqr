@@ -6,8 +6,8 @@ import { Menu, Header, Dropdown } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { updateUser } from 'redux/rootReducer'
-import { getUser } from 'redux/selectors'
+import { updateUser } from 'store/rootReducer'
+import { getUser } from 'store/selectors'
 import { USER_NAME_FIELDS, GOOGLE_LOGIN_URL, FEATURE_UPDATES_PATH } from 'shared/utils/constants'
 import UpdateButton from '../buttons/UpdateButton'
 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import { connect } from 'react-redux'
 
-import { updateLocusList } from 'redux/rootReducer'
+import { updateLocusList } from 'store/rootReducer'
 
 import { LocusListItemsLoader } from '../LocusListLoader'
 import UpdateButton from './UpdateButton'

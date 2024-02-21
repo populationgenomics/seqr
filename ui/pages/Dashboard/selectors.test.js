@@ -1,4 +1,4 @@
-import { getProjectsByGuid } from 'redux/selectors'
+import { getProjectsByGuid } from 'store/selectors'
 
 import { createProjectFilter, getVisibleProjects } from './selectors'
 import { STATE1 } from './fixtures'

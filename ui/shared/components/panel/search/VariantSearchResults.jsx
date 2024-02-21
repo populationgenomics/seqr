@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { Grid, Message, Button } from 'semantic-ui-react'
 import styled from 'styled-components'
 
-import { loadSearchedVariants, unloadSearchResults } from 'redux/rootReducer'
+import { loadSearchedVariants, unloadSearchResults } from 'store/rootReducer'
 import {
   getDisplayVariants,
   getSearchedVariantsIsLoading,
@@ -12,7 +12,7 @@ import {
   getTotalVariantsCount,
   getVariantSearchDisplay,
   getSearchedVariantExportConfig,
-} from 'redux/selectors'
+} from 'store/selectors'
 import { VARIANT_SEARCH_SORT_FIELD, VARIANT_PAGINATION_FIELD } from '../../../utils/constants'
 import DataLoader from '../../DataLoader'
 import { QueryParamsEditor } from '../../QueryParamEditor'

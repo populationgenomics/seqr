@@ -1,7 +1,7 @@
 import React from 'react'
 import { shallow, configure } from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
-import { getProjectCategoriesByGuid } from 'redux/selectors'
+import { getProjectCategoriesByGuid } from 'store/selectors'
 import { FilterSelectorComponent } from './FilterSelector'
 import { SHOW_ALL } from '../constants'
 import { STATE1 } from '../fixtures'

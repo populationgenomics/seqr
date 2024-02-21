@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Popup } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 
-import { getAnalysisGroupIsLoading } from 'redux/selectors'
+import { getAnalysisGroupIsLoading } from 'store/selectors'
 import DataLoader from 'shared/components/DataLoader'
 import { HelpIcon } from 'shared/components/StyledComponents'
 import { compareObjects } from 'shared/utils/sortUtils'
