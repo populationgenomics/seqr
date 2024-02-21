@@ -65,9 +65,9 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
-        node-version: 16
+        node-version: 20
     - name: Build UI
       run: |
         pushd ui
@@ -85,12 +85,12 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14]
+        node-version: [20]
 
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
