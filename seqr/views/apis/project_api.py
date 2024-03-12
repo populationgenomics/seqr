@@ -305,6 +305,17 @@ def project_mme_submisssions(request, project_guid):
     })
 
 
+@service_account_access
+def get_samples_by_guid(request, project_guid):
+    project = get_project_and_check_permissions(project_guid, request.user)
+    is_analyst = user_is_analyst(request.user)
+
+    sample_models = Sample.objects.filter(individual__family__project__in=[project])
+    return create_json_response({
+        'samplesByGuid': get_json_for_samples(sample_models, project_guid=project_guid, skip_nested=True, is_analyst=is_analyst)
+    })
+
+
 def _add_tag_type_counts(project, project_variant_tags):
     family_tag_type_counts = defaultdict(dict)
     note_tag_type = {
