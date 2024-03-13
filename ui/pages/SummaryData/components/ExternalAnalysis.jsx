@@ -17,7 +17,7 @@ const UPLOAD_FIELDS = [
     component: Select,
     options: [
       ...FAMILY_ANALYSED_BY_DATA_TYPES.map(([value, text]) => ({ value, text })),
-      { value: 'AIP' },
+      { value: 'AIP' }, { value: 'AIP-hpo' },
     ],
     validate: validators.required,
   },

@@ -22,7 +22,7 @@ from seqr.utils.search.utils import get_variants_for_variant_ids
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.json_to_orm_utils import create_model_from_json
 from seqr.views.utils.orm_to_json_utils import get_json_for_matchmaker_submissions, get_json_for_saved_variants,\
-    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPE
+    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPES
 from seqr.views.utils.permissions_utils import analyst_required, user_is_analyst, get_project_guids_user_can_view, \
     login_and_policies_required, get_project_and_check_permissions, get_internal_projects
 from seqr.views.utils.anvil_metadata_utils import parse_anvil_metadata, FAMILY_ROW_TYPE, SUBJECT_ROW_TYPE, DISCOVERY_ROW_TYPE
@@ -147,8 +147,8 @@ def bulk_update_family_external_analysis(request):
     data_type = request_json['dataType']
     family_upload_data = load_uploaded_file(request_json['familiesFile']['uploadedFileId'])
 
-    if data_type == AIP_TAG_TYPE:
-        return _load_aip_data(family_upload_data, request.user)
+    if data_type in AIP_TAG_TYPES:
+        return _load_aip_data(family_upload_data, request.user, data_type)
 
     header = [col.split()[0].lower() for col in family_upload_data[0]]
     if not ('project' in header and 'family' in header):
@@ -182,7 +182,7 @@ def bulk_update_family_external_analysis(request):
     })
 
 
-def _load_aip_data(data: dict, user: User):
+def _load_aip_data(data: dict, user: User, aip_tag_name: str):
     category_map = data['metadata']['categories']
     results = data['results']
 
@@ -210,7 +210,7 @@ def _load_aip_data(data: dict, user: User):
     if new_variants:
         saved_variant_map.update(_search_new_saved_variants(new_variants, user))
 
-    aip_tag_type = VariantTagType.objects.get(name=AIP_TAG_TYPE, project=None)
+    aip_tag_type = VariantTagType.objects.get(name=aip_tag_name, project=None)
     existing_tags = {
         tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
             variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
