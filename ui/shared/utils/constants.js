@@ -1221,18 +1221,18 @@ const VARIANT_SORT_OPTONS = [
     text: 'Last AIP Category',
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestAipCatagoryDate = (tag) => {
-        const aipMetadata = tagsByGuid[tag.tagGuid]?.aipMetadata;
+        const aipMetadata = tagsByGuid[tag.tagGuid]?.aipMetadata
         if (aipMetadata) {
-          const dates = Object.values(aipMetadata).map(data => data.date);
-          return dates.sort().reverse()[0] || '';
+          const dates = Object.values(aipMetadata).map(data => data.date)
+          return dates.sort().reverse()[0] || ''
         }
         return '';
-      };
+      }
 
-      const latestDateA = getLatestAipCatagoryDate(a);
-      const latestDateB = getLatestAipCatagoryDate(b);
+      const latestDateA = getLatestAipCatagoryDate(a)
+      const latestDateB = getLatestAipCatagoryDate(b)
 
-      return latestDateB.localeCompare(latestDateA);
+      return latestDateB.localeCompare(latestDateA)
     },
   },
 ]
