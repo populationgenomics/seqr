@@ -434,7 +434,7 @@ def _format_functional_tags(tags):
     return tags
 
 
-AIP_TAG_TYPES = ['AIP', 'AIP-hpo']
+AIP_TAG_TYPES = ['AIP', 'AIP-permissive', 'AIP-restrictive']
 def _format_variant_tags(tags):
     for tag in tags:
         if tag['name'] in AIP_TAG_TYPES and tag['metadata']:
