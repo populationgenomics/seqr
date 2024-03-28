@@ -1060,6 +1060,7 @@ const SORT_BY_EIGEN = 'EIGEN'
 const SORT_BY_MPC = 'MPC'
 const SORT_BY_PRIMATE_AI = 'PRIMATE_AI'
 const SORT_BY_TAGGED_DATE = 'TAGGED_DATE'
+const SORT_BY_AIP_DATE = 'AIP_CATEGORY_DATE'
 const SORT_BY_SIZE = 'SIZE'
 
 export const getPermissionedHgmdClass = (variant, user, familiesByGuid, projectByGuid) => (
@@ -1214,6 +1215,25 @@ const VARIANT_SORT_OPTONS = [
     ).localeCompare(
       a.tagGuids.map(tagGuid => (tagsByGuid[tagGuid] || {}).lastModifiedDate).sort()[a.tagGuids.length - 1] || '',
     ),
+  },
+  {
+    value: SORT_BY_AIP_DATE,
+    text: 'Last AIP Category',
+    comparator: (a, b, genesById, tagsByGuid) => {
+      const getLatestAipCatagoryDate = (tag) => {
+        const aipMetadata = tagsByGuid[tag.tagGuid]?.aipMetadata;
+        if (aipMetadata) {
+          const dates = Object.values(aipMetadata).map(data => data.date);
+          return dates.sort().reverse()[0] || '';
+        }
+        return '';
+      };
+
+      const latestDateA = getLatestAipCatagoryDate(a);
+      const latestDateB = getLatestAipCatagoryDate(b);
+
+      return latestDateB.localeCompare(latestDateA);
+    },
   },
 ]
 const VARIANT_SEARCH_SORT_OPTONS = VARIANT_SORT_OPTONS.slice(1, VARIANT_SORT_OPTONS.length - 1)
