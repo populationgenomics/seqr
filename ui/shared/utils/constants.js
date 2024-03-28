@@ -1218,9 +1218,11 @@ const VARIANT_SORT_OPTONS = [
   },
   {
     value: SORT_BY_AIP_DATE,
-    text: 'Last AIP Category',
+    text: 'Last AIP Category Added',
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestAipCatagoryDate = (tag) => {
+        // For each Tag with a aipMetadata object, get the date that most recent
+        // aip category was added to the variant.
         const aipMetadata = tagsByGuid[tag.tagGuid]?.aipMetadata
         if (aipMetadata) {
           const dates = Object.values(aipMetadata).map(data => data.date)
