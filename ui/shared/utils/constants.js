@@ -1226,7 +1226,7 @@ const VARIANT_SORT_OPTONS = [
           const dates = Object.values(aipMetadata).map(data => data.date)
           return dates.sort().reverse()[0] || ''
         }
-        return '';
+        return ''
       }
 
       const latestDateA = getLatestAipCatagoryDate(a)
