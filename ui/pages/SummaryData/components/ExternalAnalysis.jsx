@@ -29,7 +29,7 @@ const UPLOAD_FIELDS = [
         Drag-drop or click here to upload analysed families
         <br />
         <br />
-        File should include a &quot;Project&quot; and a &quot;Family&quot; column OR be valid AIP JSON
+        File should include a &quot;Project&quot; and a &quot;Family&quot; column OR be valid AIP JSON.
       </div>
     ),
     validate: validateUploadedFile,
