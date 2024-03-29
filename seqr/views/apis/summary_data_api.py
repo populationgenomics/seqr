@@ -478,11 +478,11 @@ def _load_aip_full_report_data(data: dict, user: User):
 
     # Add the aip_permissive tag to all variants
     aip_tag_type = VariantTagType.objects.get(name='AIP-permissive', project=None)
-    num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False):
+    num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
 
     # Add the aip_restrictive tag to all variants
     aip_tag_type = VariantTagType.objects.get(name='AIP-restrictive', project=None)
-    num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True):
+    num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
 
     summary_message = f'Loaded {num_new} new ({num_new_restrictive} restrictive) and {num_updated} updated ({num_updated_restrictive} restrictive) AIP tags for {len(family_id_map)} families'
     safe_post_to_slack(
