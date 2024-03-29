@@ -466,6 +466,8 @@ def _load_aip_full_report_data(data: dict, user: User):
                 all_variant_ids.add(variant_id)
 
     # Get a map of the saved variants that are already in the database.
+    print('family_id_map', family_id_map)
+    print('all_variant_ids', all_variant_ids)
     saved_variant_map = {
         (v.family_id, v.variant_id): v
         for v in SavedVariant.objects.filter(family_id__in=family_id_map.values(), variant_id__in=all_variant_ids)
