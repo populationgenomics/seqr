@@ -495,7 +495,7 @@ def _load_aip_full_report_data(data: dict, user: User):
     })
 
 
-def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive = False):
+def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False):
     existing_tags = {
         tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
             variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
@@ -509,7 +509,7 @@ def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_
     for key, variant_result in family_variant_data.items():
         if restrictive:
             # Skip if the variant if if does not have a HPO match.
-            if not any(hpo_match for hpo_match in variant_result['panels'] )
+            if not any(hpo_match for hpo_match in variant_result['panels']):
                 continue
         metadata = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
         metadata['First Seen'] = {'name': 'First Seen', 'date': variant_result['first_seen']}
