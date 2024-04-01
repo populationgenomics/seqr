@@ -20,15 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: "google-cloud-auth"
-        name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - name: gcloud auth
+        uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ""
-          service_account: ""
-
+          project_id: seqr-308602
+          credentials_json: ${{ secrets.GCP_DEPLOY_KEY }}
+      
       - name: gcloud setup
         uses: google-github-actions/setup-gcloud@v2
+        with: 
+          project_id: seqr-308602
 
       - name: gcloud docker auth
         run: |
