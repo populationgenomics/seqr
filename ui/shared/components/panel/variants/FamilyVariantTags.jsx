@@ -80,7 +80,13 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
         {tag.aipMetadata ? (
           <NoBorderTable basic="very" compact="very">
             <Table.Body>
-              {Object.entries(tag.aipMetadata).filter(e => e[0] !== 'removed').map(aipCategoryRow)}
+              {tag.aipMetadata.first_seen && [
+                <Table.Row key='First Tagged'>
+                  <Table.HeaderCell content='First Tagged' />
+                  <Table.Cell disabled content={`(${new Date(tag.aipMetadata.first_seen.date).toLocaleDateString()})`} />
+                </Table.Row>
+              ]}
+              {Object.entries(tag.aipMetadata).filter(e => e[0] !== 'removed' && e[0] !== 'first_seen').map(aipCategoryRow)}
               {tag.aipMetadata.removed && [
                 <Table.Row key="removedHeader"><Table.HeaderCell colSpan={2} content="Removed Categories" /></Table.Row>,
                 ...Object.entries(tag.aipMetadata.removed).map(aipCategoryRow),

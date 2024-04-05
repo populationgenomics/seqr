@@ -18,11 +18,11 @@ from seqr.views.utils.file_utils import load_uploaded_file
 from seqr.utils.communication_utils import safe_post_to_slack
 from seqr.utils.gene_utils import get_genes
 from seqr.utils.middleware import ErrorsWarningsException
-from seqr.utils.search.utils import get_variants_for_variant_ids
+from seqr.utils.search.utils import get_variants_for_variant_ids, InvalidSearchException
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.json_to_orm_utils import create_model_from_json
 from seqr.views.utils.orm_to_json_utils import get_json_for_matchmaker_submissions, get_json_for_saved_variants,\
-    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPE
+    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPES
 from seqr.views.utils.permissions_utils import analyst_required, user_is_analyst, get_project_guids_user_can_view, \
     login_and_policies_required, get_project_and_check_permissions, get_internal_projects
 from seqr.views.utils.anvil_metadata_utils import parse_anvil_metadata, FAMILY_ROW_TYPE, SUBJECT_ROW_TYPE, DISCOVERY_ROW_TYPE
@@ -147,8 +147,11 @@ def bulk_update_family_external_analysis(request):
     data_type = request_json['dataType']
     family_upload_data = load_uploaded_file(request_json['familiesFile']['uploadedFileId'])
 
-    if data_type == AIP_TAG_TYPE:
-        return _load_aip_data(family_upload_data, request.user)
+    if data_type in AIP_TAG_TYPES:
+        return _load_aip_data(family_upload_data, request.user, data_type)
+
+    if data_type == 'CPG: Full AIP report':
+        return _load_aip_full_report_data(family_upload_data, request.user)
 
     header = [col.split()[0].lower() for col in family_upload_data[0]]
     if not ('project' in header and 'family' in header):
@@ -182,7 +185,7 @@ def bulk_update_family_external_analysis(request):
     })
 
 
-def _load_aip_data(data: dict, user: User):
+def _load_aip_data(data: dict, user: User, aip_tag_name: str):
     category_map = data['metadata']['categories']
     results = data['results']
 
@@ -210,7 +213,7 @@ def _load_aip_data(data: dict, user: User):
     if new_variants:
         saved_variant_map.update(_search_new_saved_variants(new_variants, user))
 
-    aip_tag_type = VariantTagType.objects.get(name=AIP_TAG_TYPE, project=None)
+    aip_tag_type = VariantTagType.objects.get(name=aip_tag_name, project=None)
     existing_tags = {
         tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
             variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
@@ -246,7 +249,7 @@ def _load_aip_data(data: dict, user: User):
 FamilyVariantKey = tuple[int, str]
 
 
-def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User):
+def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User, warnings=None):
     family_ids = set()
     variant_families = defaultdict(list)
     for family_id, variant_id in family_variant_ids:
@@ -254,11 +257,20 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
         variant_families[variant_id].append(family_id)
     families_by_id = {f.id: f for f in Family.objects.filter(id__in=family_ids)}
 
-    search_variants_by_id = {
-        v['variantId']: v for v in get_variants_for_variant_ids(
-            families=families_by_id.values(), variant_ids=variant_families.keys(), user=user,
-        )
-    }
+    try:
+        search_variants_by_id = {
+            v['variantId']: v for v in get_variants_for_variant_ids(
+                families=families_by_id.values(), variant_ids=variant_families.keys(), user=user,
+            )
+        }
+    except InvalidSearchException as e:
+        if warnings:
+            # If all new variants are from families that are not in the search backend
+            search_variants_by_id = {}
+            warnings.append(f'WARNING: {e}')
+        else:
+            raise
+
 
     new_variants = []
     missing = defaultdict(list)
@@ -276,9 +288,13 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
 
     if missing:
         missing_summary = [f'{family} ({", ".join(sorted(variant_ids))})' for family, variant_ids in missing.items()]
-        raise ErrorsWarningsException([
-            f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
-        ])
+
+        if warnings is not None:
+            warnings.append(f'Unable to find the following family\'s variants in the search backend: {missing_summary}')
+        else:
+            raise ErrorsWarningsException([
+                f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
+            ])
 
     saved_variants = SavedVariant.bulk_create(user, new_variants)
     return {(v.family_id, v.variant_id): v for v in saved_variants}
@@ -307,9 +323,10 @@ def _set_aip_tags(key: FamilyVariantKey, metadata: dict[str, dict], support_var_
     variant_genes = set(variant.saved_variant_json['transcripts'].keys())
     support_vars = []
     for support_id in support_var_ids:
-        support_v = saved_variant_map[(key[0], support_id)]
-        if variant_genes.intersection(set(support_v.saved_variant_json['transcripts'].keys())):
-            support_vars.append(support_v)
+        if (key[0], support_id) in saved_variant_map:
+            support_v = saved_variant_map[(key[0], support_id)]
+            if variant_genes.intersection(set(support_v.saved_variant_json['transcripts'].keys())):
+                support_vars.append(support_v)
     if support_vars:
         variants = [variant] + support_vars
         variant_id_key = tuple(sorted([v.id for v in variants]))
@@ -416,3 +433,111 @@ def _get_airtable_collaborator_names(user, collaborator_ids):
         collaborator_id: collaborator_map.get(collaborator_id, {}).get('CollaboratorID')
         for collaborator_id in collaborator_ids
     }
+
+
+def _load_aip_full_report_data(data: dict, user: User):
+    '''
+        Version of _load_aip_data that ingests a full AIP report.
+
+        - Adds both the AIP-permissive and AIP-restrictive tags
+          depending on the presence of HPO matches in the variant.
+        - Adds the First Seen metadata field to the tags.
+
+    '''
+    category_map = data['metadata']['categories']
+    results = data['results']
+    warnings = []
+
+    projects = Project.objects.filter(guid__in=data['metadata']['projects'])
+
+    individual_ids = [individual['metadata']['ext_id'] for individual in results.values()]
+    family_id_map = defaultdict(list)
+    all_family_ids = set()
+    for individual_id, family_id in Individual.objects.filter(
+        family__project__in=projects, individual_id__in=individual_ids,
+    ).values_list('individual_id', 'family_id'):
+        family_id_map[individual_id].append(family_id)
+        all_family_ids.add(family_id)
+
+    missing_individuals = set(individual_ids) - set(family_id_map.keys())
+    if missing_individuals:
+        raise ErrorsWarningsException([f'Unable to find the following individuals: {", ".join(sorted(missing_individuals))}'])
+
+    all_variant_ids = set()
+    family_variant_data = {}
+    for sg_id, individual_aip_results in results.items():
+        individual_id = results[sg_id]['metadata']['ext_id']
+        family_ids = family_id_map[individual_id]
+        for family_id in family_ids:
+            for variant_result in individual_aip_results['variants']:
+                variant_id = variant_result['var_data']['info']['seqr_link']
+                family_variant_data[(family_id, variant_id)] = variant_result
+                all_variant_ids.add(variant_id)
+
+    # Get a map of the saved variants that are already in the database.
+    saved_variant_map = {
+        (v.family_id, v.variant_id): v
+        for v in SavedVariant.objects.filter(family_id__in=all_family_ids, variant_id__in=all_variant_ids)
+    }
+
+    # If the variant has not been "saved" before, find it in the search backend and save it.
+    new_variants = set(family_variant_data.keys()) - set(saved_variant_map.keys())
+    if new_variants:
+        new_variants_from_search = _search_new_saved_variants(new_variants, user, warnings)
+        saved_variant_map.update(new_variants_from_search)
+
+    # Add the aip_permissive tag to all variants
+    aip_tag_type = VariantTagType.objects.get(name='AIP-permissive', project=None)
+    num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
+
+    # Add the aip_restrictive tag to selected variants
+    aip_restrictive_tag_type = VariantTagType.objects.get(name='AIP-restrictive', project=None)
+    num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_restrictive_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
+
+    summary_message = f'Loaded {num_new} new ({num_new_restrictive} restrictive) and {num_updated} updated ({num_updated_restrictive} restrictive) AIP tags for {len(family_id_map)} families'
+    safe_post_to_slack(
+        SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL,
+        f'{summary_message}:\n```{", ".join(sorted(family_id_map.keys()))}```',
+    )
+
+    return create_json_response({
+        'info': [summary_message],
+        'warnings': warnings,
+    })
+
+
+def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False):
+    existing_tags = {
+        tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
+            variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
+        ).annotate(saved_variant_ids=ArrayAgg('saved_variants__id', ordering='id'))
+    }
+
+    # Add/update a metadata field on each tags containing the AIP results that will be displayed.
+    today = datetime.now().strftime('%Y-%m-%d')
+    update_tags = []
+    num_new = 0
+
+    for key, variant_result in family_variant_data.items():
+        if restrictive:
+            # Skip if the variant if if does not have a HPO match.
+            if not any(hpo_match for hpo_match in variant_result['panels'].values()):
+                continue
+
+        metadata = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
+        metadata['first_seen'] = {'name': 'First Seen', 'date': variant_result['first_seen']}
+
+        if key not in saved_variant_map:
+            continue
+
+        updated_tag = _set_aip_tags(
+            key, metadata, variant_result['support_vars'], saved_variant_map, existing_tags, aip_tag_type, user,
+        )
+        if updated_tag:
+            update_tags.append(updated_tag)
+        else:
+            num_new += 1
+
+    VariantTag.bulk_update_models(user, update_tags, ['metadata'])
+
+    return num_new, len(update_tags)
