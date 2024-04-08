@@ -7,6 +7,7 @@ from django.db.models import CharField, F, Value
 from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf
 import json
 from random import randint
+from typing import Optional
 
 from matchmaker.matchmaker_utils import get_mme_gene_phenotype_ids_for_submissions, parse_mme_features, \
     get_mme_metrics, get_hpo_terms_by_id
@@ -252,7 +253,7 @@ def _load_aip_data(data: dict, user: User, aip_tag_name: str):
 FamilyVariantKey = tuple[int, str]
 
 
-def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User, warnings: list[str] | None = None):
+def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User, warnings: Optional[list[str]] = None):
     """
     Retrieve all variants from the search backend and create SavedVariants if they do not already exist.
 
