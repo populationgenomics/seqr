@@ -462,7 +462,7 @@ def _load_aip_full_report_data(data: dict, user: User):
     projects = Project.objects.filter(guid__in=data['metadata']['projects'])
     if not projects:
         raise ErrorsWarningsException([
-            f'Unable to find seqr with GUIDs = {data['metadata']['projects']} '
+            f"Unable to find seqr with GUIDs = {data['metadata']['projects']}"
         ])
 
     # Get a map of the family_ids associated with each individual in the report.
