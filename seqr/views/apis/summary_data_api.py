@@ -141,6 +141,9 @@ def hpo_summary_data(request, hpo_id):
     return create_json_response({'data': list(data)})
 
 
+AIP_INGEST_FULL_REPORT_DESC = 'CPG: Full AIP report'
+
+
 @analyst_required
 def bulk_update_family_external_analysis(request):
     request_json = json.loads(request.body)
@@ -150,7 +153,7 @@ def bulk_update_family_external_analysis(request):
     if data_type in AIP_TAG_TYPES:
         return _load_aip_data(family_upload_data, request.user, data_type)
 
-    if data_type == 'CPG: Full AIP report':
+    if data_type == AIP_INGEST_FULL_REPORT_DESC:
         return _load_aip_full_report_data(family_upload_data, request.user)
 
     header = [col.split()[0].lower() for col in family_upload_data[0]]
@@ -249,7 +252,13 @@ def _load_aip_data(data: dict, user: User, aip_tag_name: str):
 FamilyVariantKey = tuple[int, str]
 
 
-def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User, warnings=None):
+def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user: User, warnings: list[str] | None = None):
+    """
+    Retrieve all variants from the search backend and create SavedVariants if they do not already exist.
+
+    The optional argument "warnings" is a list that will be populated with any errors resulting
+    from expected families or variants not found in the search backend.
+    """
     family_ids = set()
     variant_families = defaultdict(list)
     for family_id, variant_id in family_variant_ids:
@@ -257,23 +266,20 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
         variant_families[variant_id].append(family_id)
     families_by_id = {f.id: f for f in Family.objects.filter(id__in=family_ids)}
 
-    if warnings is not None:
-        try:
-            search_variants_by_id = {
-                v['variantId']: v for v in get_variants_for_variant_ids(
-                    families=families_by_id.values(), variant_ids=variant_families.keys(), user=user,
-                )
-            }
-        except InvalidSearchException as e:
-            # If all new variants are from families that are not in the search backend
-            search_variants_by_id = {}
-            warnings.append(f'WARNING: {e}')
-    else:
+    try:
         search_variants_by_id = {
             v['variantId']: v for v in get_variants_for_variant_ids(
                 families=families_by_id.values(), variant_ids=variant_families.keys(), user=user,
             )
         }
+
+    except InvalidSearchException as e:
+        # If all new variants are from families that are not in the search backend
+        if warnings is None:
+            raise e
+
+        search_variants_by_id = {}
+        warnings.append(str(e))
 
     new_variants = []
     missing = defaultdict(list)
@@ -454,6 +460,10 @@ def _load_aip_full_report_data(data: dict, user: User):
     # This endpoint does not let us specify the project, so we are going to add a list
     # of target projects into the report.
     projects = Project.objects.filter(guid__in=data['metadata']['projects'])
+    if not projects:
+        raise ErrorsWarningsException([
+            f'Unable to find seqr with GUIDs = {data['metadata']['projects']} '
+        ])
 
     # Get a map of the family_ids associated with each individual in the report.
     # A given individual may be in multiple projects.
@@ -468,7 +478,10 @@ def _load_aip_full_report_data(data: dict, user: User):
 
     missing_individuals = set(individual_ids) - set(family_id_map.keys())
     if missing_individuals:
-        raise ErrorsWarningsException([f'Unable to find the following individuals: {", ".join(sorted(missing_individuals))}'])
+        raise ErrorsWarningsException([
+            f'Unable to find the following individuals: {", ".join(sorted(missing_individuals))} '
+            f'when searching in the project/s: {", ".join(projects.values_list("name", flat=True))}',
+        ])
 
     # Make a dict of (family_id, variant_id) -> AIP prediction for variant.
     # Adds the variant multiple times if the family is in multiple projects.
@@ -499,7 +512,7 @@ def _load_aip_full_report_data(data: dict, user: User):
     aip_tag_type = VariantTagType.objects.get(name='AIP-permissive', project=None)
     num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
 
-    # Add the aip_restrictive tag to all variants
+    # Add the aip_restrictive tag to qualifying variants
     aip_restrictive_tag_type = VariantTagType.objects.get(name='AIP-restrictive', project=None)
     num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_restrictive_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
 
