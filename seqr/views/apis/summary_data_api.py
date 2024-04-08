@@ -292,12 +292,11 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
     if missing:
         missing_summary = [f'{family} ({", ".join(sorted(variant_ids))})' for family, variant_ids in missing.items()]
 
-        if warnings is not None:
-            warnings.append(f'Unable to find the following family\'s variants in the search backend: {missing_summary}')
-        else:
+        if warnings is None:
             raise ErrorsWarningsException([
                 f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
             ])
+        warnings.append(f'Unable to find the following family\'s variants in the search backend: {missing_summary}')
 
     saved_variants = SavedVariant.bulk_create(user, new_variants)
     return {(v.family_id, v.variant_id): v for v in saved_variants}
