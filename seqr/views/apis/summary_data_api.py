@@ -438,7 +438,7 @@ def _get_airtable_collaborator_names(user, collaborator_ids):
 
 
 def _load_aip_full_report_data(data: dict, user: User):
-    '''
+    """
         Version of _load_aip_data that ingests a full AIP report rather than the
         cut down "seqr" format.
 
@@ -446,7 +446,7 @@ def _load_aip_full_report_data(data: dict, user: User):
           depending on the presence of HPO matches in the variant.
         - Adds the First Seen metadata field to the tags.
 
-    '''
+    """
     category_map = data['metadata']['categories']
     results = data['results']
     warnings = []
