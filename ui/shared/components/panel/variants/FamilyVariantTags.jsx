@@ -67,16 +67,22 @@ const aipCategoryRow = ([key, { name, date }]) => (
   </li>
 )
 
-const aipMetaList = (key, name, value) => (
-  <div key={key}>
-    <b>{name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</b>
-    <ul>
-      {value.map(item => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  </div>
-)
+const aipMetaList = (key, name, value) => {
+  if (value.length === 0) {
+    return null
+  }
+
+  return (
+    <div key={key}>
+      <b>{name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</b>
+      <ul>
+        {value.map(item => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
   <Popup
@@ -92,11 +98,8 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
           <div>
             <div>
               <b>Fist Tagged:</b>
+              <HorizontalSpacer width={5} />
               {tag.aipMetadata.first_tagged}
-            </div>
-            <div>
-              <b>Independent Tag:</b>
-              {tag.aipMetadata.independent ? 'Yes' : 'No'}
             </div>
             <div>
               <b>Categories:</b>
@@ -113,7 +116,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
               </div>
             )}
             {tag.aipMetadata.reasons && (
-              aipMetaList('moi', 'MOI', tag.aipMetadata.reasons)
+              aipMetaList('moi', 'Tagged MOI', tag.aipMetadata.reasons)
             )}
             {tag.aipMetadata.support_vars && (
               aipMetaList('support_vars', 'Supporting Variants', tag.aipMetadata.support_vars)
