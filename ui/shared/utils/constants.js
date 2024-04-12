@@ -1236,7 +1236,7 @@ const VARIANT_SORT_OPTONS = [
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestAipCatagoryDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => Object.values(metadata.categories || {})
+        const dates = (aipMetadata || []).map(metadata => Object.values(metadata?.categories || {})
           .map(data => data.date)).flat()
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
