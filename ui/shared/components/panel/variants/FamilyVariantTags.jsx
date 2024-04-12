@@ -95,32 +95,33 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
             <Table.Body>
               <Table.Row key="removedHeader">
                 <Table.HeaderCell colSpan={2} content="Removed Categories" />
-              </Table.Row>,
+              </Table.Row>
               {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
 
               {tag.aipMetadata.removed && [
                 <Table.Row key="removedHeader">
                   <Table.HeaderCell colSpan={2} content="Removed Categories" />
-                </Table.Row>,
+                </Table.Row>
                 ...Object.entries(tag.aipMetadata.removed).map(aipCategoryRow),
               ]}
 
-              <Table.Row key="fistTaggedHeader"><Table.HeaderCell colSpan={2} content="First Tagged" /></Table.Row>,
+              <Table.Row key="fistTaggedHeader"><Table.HeaderCell colSpan={2} content="First Tagged" /></Table.Row>
               <Table.Row key="fistTagged">
                 <Table.HeaderCell content="First Tagged" />
                 <Table.Cell disabled content={`(${new Date(tag.aipMetadata.first_tagged).toLocaleDateString()})`} />
               </Table.Row>
 
-              <Table.Row key="hpoMatchHeader"><Table.HeaderCell colSpan={2} content="Phenotype Match" /></Table.Row>,
+              <Table.Row key="hpoMatchHeader"><Table.HeaderCell colSpan={2} content="Phenotype Match" /></Table.Row>
               {tag.aipMetadata.panels && Object.entries(tag.aipMetadata.panels).map(([key, value]) => {
                 if (value.length > 0) {
-                  return aipMetaRow([key, key, value]);
+                  return aipMetaRow([key, key, value])
                 }
+                return null
               })}
 
               <Table.Row key="metaHeader">
                 <Table.HeaderCell colSpan={2} content="Meta"/>
-              </Table.Row>,
+              </Table.Row>
               <Table.Row key="independent">
                 <Table.HeaderCell content="Independent Tag"/>
                 <Table.Cell disabled content={tag.aipMetadata.independent} />
