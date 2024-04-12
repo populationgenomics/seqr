@@ -67,6 +67,19 @@ const aipCategoryRow = ([key, { name, date }]) => (
   </Table.Row>
 )
 
+const aipMetaRow = ([key, name, value ]) => (
+  <Table.Row key={key}>
+    <Table.HeaderCell content={name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />
+    <Table.Cell>
+      <ul>
+        {value.map((item, index) => (
+        <li kevaluey={index}>{item}</li>
+        ))}
+      </ul>
+    </Table.Cell>
+  </Table.Row>
+)
+
 export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
   <Popup
     position="top right"
@@ -80,12 +93,42 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
         {tag.aipMetadata ? (
           <NoBorderTable basic="very" compact="very">
             <Table.Body>
-              {Object.entries(tag.aipMetadata).filter(e => e[0] !== 'removed' && e[0] !== 'first_seen').map(aipCategoryRow)}
-              {Object.entries(tag.aipMetadata).filter(e => e[0] === 'first_seen').map(aipCategoryRow)}
+              <Table.Row key="removedHeader"><Table.HeaderCell colSpan={2} content="Removed Categories" /></Table.Row>,
+              {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
+
               {tag.aipMetadata.removed && [
                 <Table.Row key="removedHeader"><Table.HeaderCell colSpan={2} content="Removed Categories" /></Table.Row>,
                 ...Object.entries(tag.aipMetadata.removed).map(aipCategoryRow),
               ]}
+
+              <Table.Row key="fistTaggedHeader"><Table.HeaderCell colSpan={2} content="First Tagged" /></Table.Row>,
+              <Table.Row key="fistTagged">
+                <Table.HeaderCell content="First Tagged" />
+                <Table.Cell disabled content={`(${new Date(tag.aipMetadata.first_tagged).toLocaleDateString()})`} />
+              </Table.Row>
+
+              <Table.Row key="hpoMatchHeader"><Table.HeaderCell colSpan={2} content="Phenotype Match" /></Table.Row>,
+              {tag.aipMetadata.panels && Object.entries(tag.aipMetadata.panels).map(([key, value]) => {
+                if (value.length > 0) {
+                  aipMetaRow([key, key, value ])
+                }
+              })}
+
+              <Table.Row key='metaHeader'><Table.HeaderCell colSpan={2} content='Meta' /></Table.Row>,
+              <Table.Row key='independent'>
+                <Table.HeaderCell content='Independent Tag' />
+                <Table.Cell disabled content={tag.aipMetadata.independent} />
+              </Table.Row>
+              {tag.aipMetadata.reasons && (
+                  aipMetaRow(['moi', 'MOI', tag.aipMetadata.reasons ])
+              )}
+              {tag.aipMetadata.support_vars && (
+                  aipMetaRow(['support_vars', 'Support Vars', tag.aipMetadata.support_vars ])
+              )}
+              {tag.aipMetadata.labels && (
+                  aipMetaRow(['labels', 'Labels', tag.aipMetadata.supplabelsort_vars ])
+              )}
+
             </Table.Body>
           </NoBorderTable>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}

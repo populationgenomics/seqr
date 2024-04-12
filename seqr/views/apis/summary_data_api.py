@@ -228,7 +228,7 @@ def _load_aip_data(data: dict, user: User, aip_tag_name: str):
     update_tags = []
     num_new = 0
     for key, pred in family_variant_data.items():
-        metadata = {category: {'name': category_map[category], 'date': today} for category in pred['categories']}
+        metadata = {'categories':{category: {'name': category_map[category], 'date': today} for category in pred['categories']}}
         updated_tag = _set_aip_tags(
             key, metadata, pred['support_vars'], saved_variant_map, existing_tags, aip_tag_type, user,
         )
@@ -317,9 +317,14 @@ def _set_aip_tags(key: FamilyVariantKey, metadata: dict[str, dict], support_var_
     updated_tag = None
     if existing_tag:
         existing_metadata = json.loads(existing_tag.metadata or '{}')
-        metadata = {k: existing_metadata.get(k, v) for k, v in metadata.items()}
-        removed = {k: v for k, v in existing_metadata.get('removed', {}).items() if k not in metadata}
-        removed.update({k: v for k, v in existing_metadata.items() if k not in metadata})
+
+        # If existing metadata holds catagories at the top level, move them to the categories field.
+        if 'categories' not in existing_metadata:
+            existing_metadata['categories'] = {k: v for k, v in existing_metadata.items() if k != 'removed'}
+
+        metadata['categories'] = {k: existing_metadata['categories'].get(k, v) for k, v in metadata.items()}
+        removed = {k: v for k, v in existing_metadata.get('removed', {}).items() if k not in metadata['categories']}
+        removed.update({k: v for k, v in existing_metadata['categories'].items() if k not in metadata['categories']})
         if removed:
             metadata['removed'] = removed
         existing_tag.metadata = json.dumps(metadata)
@@ -547,12 +552,22 @@ def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_
             if not any(hpo_match for hpo_match in variant_result['panels'].values()):
                 continue
 
-        metadata = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
-        metadata['first_seen'] = {'name': 'First Seen', 'date': variant_result['first_seen']}
-
         # Skip if the variant is not in the saved map.
         if key not in saved_variant_map:
             continue
+
+        # Copy selected metadata fields from the AIP results to the tag metadata.
+        metadata = {}
+        for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars']:
+            metadata[k] = variant_result[k]
+
+        if restrictive:
+            metadata['first_tagged'] = variant_result.get('first_seen_restrictive', variant_result['first_seen'])
+        else:
+            metadata['first_tagged'] = variant_result['first_seen']
+
+        # Add the categories using the date of ingest as the date.
+        metadata['categories'] = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
 
         updated_tag = _set_aip_tags(
             key, metadata, variant_result['support_vars'], saved_variant_map, existing_tags, aip_tag_type, user,
