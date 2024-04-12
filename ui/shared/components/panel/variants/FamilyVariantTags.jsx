@@ -85,19 +85,19 @@ const aipMetaList = (key, name, value) => {
   )
 }
 
-const aipHpoList = (phenotypes) => {
-  if (Object.values(phenotypes).every(array => array.length === 0)) {
+const aipHpoList = (panels) => {
+  if (Object.values(panels).every(array => array.length === 0)) {
     return null
   }
 
   return (
     <div>
-      {Object.entries(phenotypes).map(([key, values]) => (
+      {Object.entries(panels).map(([key, values]) => (
         <li>
           {key}
           <ul>
-            {values.map(phenotype => (
-              <li key={phenotype}>{phenotype}</li>
+            {values.map(panel => (
+              <li key={panel}>{panel}</li>
             ))}
           </ul>
         </li>
@@ -147,7 +147,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
               aipMetaList('labels', 'Labels', tag.aipMetadata.labels)
             )}
             {tag.aipMetadata.labels && (
-              aipHpoList(tag.aipMetadata.phenotypes)
+              aipHpoList(tag.aipMetadata.panels)
             )}
           </div>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}
