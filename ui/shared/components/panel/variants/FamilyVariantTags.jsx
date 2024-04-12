@@ -62,7 +62,8 @@ const AIP_TAG = 'AIP'
 
 const aipCategoryRow = ([key, { name, date }]) => (
   <li key={key}>
-    {`${key} - ${name}:`}
+    {`${key} - ${name}`}
+    <HorizontalSpacer width={5} />
     {`(${new Date(date).toLocaleDateString()})`}
   </li>
 )
@@ -80,6 +81,27 @@ const aipMetaList = (key, name, value) => {
           <li key={item}>{item}</li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+const aipHpoList = (phenotypes) => {
+  if (Object.values(phenotypes).every(array => array.length === 0)) {
+    return null
+  }
+
+  return (
+    <div>
+      {Object.entries(phenotypes).map(([key, values]) => (
+        <li>
+          {key}
+          <ul>
+            {values.map(phenotype => (
+              <li key={phenotype}>{phenotype}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
     </div>
   )
 }
@@ -123,6 +145,9 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
             )}
             {tag.aipMetadata.labels && (
               aipMetaList('labels', 'Labels', tag.aipMetadata.labels)
+            )}
+            {tag.aipMetadata.labels && (
+              aipHpoList(tag.aipMetadata.phenotypes)
             )}
           </div>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}
