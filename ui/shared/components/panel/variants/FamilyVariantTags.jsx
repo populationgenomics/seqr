@@ -61,25 +61,21 @@ const DEPRECATED_MME_TAG = 'seqr MME (old)'
 const AIP_TAG = 'AIP'
 
 const aipCategoryRow = ([key, { name, date }]) => (
-  <Table.Row key={key}>
-    <Table.HeaderCell content={`${key} - ${name} `} />
-    <Table.Cell disabled content={`(${new Date(date).toLocaleDateString()})`} />
-  </Table.Row>
+  <li key={key}>
+    {`${key} - ${name}:`}
+    {`(${new Date(date).toLocaleDateString()})`}
+  </li>
 )
 
-const aipMetaRow = ([key, name, value]) => (
-  <Table.Row key={key}>
-    <Table.HeaderCell content={name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />
-    <Table.Cell>
-      {value && value.length > 0 ? (
-        <ul>
-          {value.map(item => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ) : null}
-    </Table.Cell>
-  </Table.Row>
+const aipMetaList = (key, name, value) => (
+  <div key={key}>
+    <b>{name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</b>
+    <ul>
+      {value.map(item => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  </div>
 )
 
 export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
@@ -93,53 +89,39 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
     content={
       <div>
         {tag.aipMetadata ? (
-          <NoBorderTable basic="very" compact="very">
-            <Table.Body>
-              <Table.Row key="removedHeader">
-                <Table.HeaderCell colSpan={2} content="Removed Categories" />
-              </Table.Row>
-              {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
-
-              {tag.aipMetadata.removed && [
-                <Table.Row key="removedHeader">
-                  <Table.HeaderCell colSpan={2} content="Removed Categories" />
-                </Table.Row>,
-                ...Object.entries(tag.aipMetadata.removed).map(aipCategoryRow),
-              ]}
-
-              <Table.Row key="fistTaggedHeader"><Table.HeaderCell colSpan={2} content="First Tagged" /></Table.Row>
-              <Table.Row key="fistTagged">
-                <Table.HeaderCell content="First Tagged" />
-                <Table.Cell disabled content={`(${new Date(tag.aipMetadata.first_tagged).toLocaleDateString()})`} />
-              </Table.Row>
-
-              <Table.Row key="hpoMatchHeader"><Table.HeaderCell colSpan={2} content="Phenotype Match" /></Table.Row>
-              {tag.aipMetadata.panels && Object.entries(tag.aipMetadata.panels).map(([key, value]) => {
-                if (value.length > 0) {
-                  return aipMetaRow([key, key, value])
-                }
-                return null
-              })}
-
-              <Table.Row key="metaHeader">
-                <Table.HeaderCell colSpan={2} content="Meta" />
-              </Table.Row>
-              <Table.Row key="independent">
-                <Table.HeaderCell content="Independent Tag" />
-                <Table.Cell disabled content={tag.aipMetadata.independent} />
-              </Table.Row>
-              {tag.aipMetadata.reasons && (
-                aipMetaRow(['moi', 'MOI', tag.aipMetadata.reasons])
-              )}
-              {tag.aipMetadata.support_vars && (
-                aipMetaRow(['support_vars', 'Support Vars', tag.aipMetadata.support_vars])
-              )}
-              {tag.aipMetadata.labels && (
-                aipMetaRow(['labels', 'Labels', tag.aipMetadata.supplabelsort_vars])
-              )}
-
-            </Table.Body>
-          </NoBorderTable>
+          <div>
+            <div>
+              <b>Fist Tagged:</b>
+              {tag.aipMetadata.first_tagged}
+            </div>
+            <div>
+              <b>Independent Tag:</b>
+              {tag.aipMetadata.independent ? 'Yes' : 'No'}
+            </div>
+            <div>
+              <b>Categories:</b>
+              <ul>
+                {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
+              </ul>
+            </div>
+            {tag.aipMetadata && tag.aipMetadata.removed && (
+              <div>
+                <b>Removed Categories:</b>
+                <ul>
+                  {Object.entries(tag.aipMetadata.removed).map(aipCategoryRow)}
+                </ul>
+              </div>
+            )}
+            {tag.aipMetadata.reasons && (
+              aipMetaList('moi', 'MOI', tag.aipMetadata.reasons)
+            )}
+            {tag.aipMetadata.support_vars && (
+              aipMetaList('support_vars', 'Supporting Variants', tag.aipMetadata.support_vars)
+            )}
+            {tag.aipMetadata.labels && (
+              aipMetaList('labels', 'Labels', tag.aipMetadata.labels)
+            )}
+          </div>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}
         {tag.metadata && !hideMetadata && (
           <div>
