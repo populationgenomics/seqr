@@ -92,16 +92,22 @@ const aipHpoList = (panels) => {
 
   return (
     <div>
-      {Object.entries(panels).map(([key, values]) => (
-        <li>
-          {key}
-          <ul>
-            {values.map(panel => (
-              <li key={panel}>{panel}</li>
-            ))}
-          </ul>
-        </li>
-      ))}
+      <b>Phenotype Matches:</b>
+      {Object.entries(panels).map(([key, values]) => {
+        if (values.length === 0) {
+          return null
+        }
+        return (
+          <li>
+            {key}
+            <ul>
+              {values.map(panel => (
+                <li key={panel}>{panel}</li>
+              ))}
+            </ul>
+          </li>
+        )
+      })}
     </div>
   )
 }
