@@ -76,11 +76,9 @@ const aipMetaList = (key, name, value) => {
   return (
     <div key={key}>
       <b>{name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</b>
-      <ul>
-        {value.map(item => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+      {value.map(item => (
+        <li key={item}>{item}</li>
+      ))}
     </div>
   )
 }
@@ -147,16 +145,12 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
             </div>
             <div>
               <b>Categories:</b>
-              <ul>
-                {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
-              </ul>
+              {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
             </div>
             {tag.aipMetadata && tag.aipMetadata.removed && (
               <div>
                 <b>Removed Categories:</b>
-                <ul>
-                  {Object.entries(tag.aipMetadata.removed).map(aipCategoryRow)}
-                </ul>
+                {Object.entries(tag.aipMetadata.removed).map(aipCategoryRow)}
               </div>
             )}
             {tag.aipMetadata.reasons && (
