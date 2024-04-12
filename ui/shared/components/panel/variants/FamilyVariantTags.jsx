@@ -119,7 +119,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
         {tag.aipMetadata ? (
           <div>
             <div>
-              <b>Fist Tagged:</b>
+              <b>First Tagged:</b>
               <HorizontalSpacer width={5} />
               {tag.aipMetadata.first_tagged}
             </div>
