@@ -1221,13 +1221,13 @@ const VARIANT_SORT_OPTONS = [
     value: SORT_BY_AIP_FIRST_TAGGED,
     text: 'AIP: Last Tagged',
     comparator: (a, b, genesById, tagsByGuid) => {
-      const getAipFirstSeenDate = (variant) => {
+      const getAipFirstTaggedDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => metadata?.first_seen?.date || '')
+        const dates = (aipMetadata || []).map(metadata => metadata?.first_seen || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
-      return getAipFirstSeenDate(b).localeCompare(getAipFirstSeenDate(a))
+      return getAipFirstTaggedDate(b).localeCompare(getAipFirstTaggedDate(a))
     },
   },
   {
@@ -1236,7 +1236,8 @@ const VARIANT_SORT_OPTONS = [
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestAipCatagoryDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => Object.values(metadata || {}).map(data => data.date)).flat()
+        const dates = (aipMetadata || []).map(metadata => Object.values(metadata.categories || {})
+          .map(data => data.date)).flat()
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
