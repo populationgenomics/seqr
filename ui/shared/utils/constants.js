@@ -1223,7 +1223,7 @@ const VARIANT_SORT_OPTONS = [
     comparator: (a, b, genesById, tagsByGuid) => {
       const getAipFirstTaggedDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => metadata?.first_seen || '')
+        const dates = (aipMetadata || []).map(metadata => metadata?.first_tagged || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
