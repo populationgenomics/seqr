@@ -93,19 +93,35 @@ const aipHpoList = (panels) => {
   return (
     <div>
       <b>Phenotype Matches:</b>
-      {Object.entries(panels).map(([key, values]) => {
-        if (values.length === 0) {
+      {Object.entries(panels).map(([matchClass, matches]) => {
+        if (matches.matches === 0) {
           return null
         }
+
+        let label
+        switch (matchClass) {
+          case 'matched':
+            label = 'Matched Panel'
+            break
+          case 'forced':
+            label = 'Cohort Panel'
+            break
+          case 'gene_level':
+            label = 'Gene Specific Match'
+            break
+          default:
+            label = ''
+        }
+
         return (
-          <li>
-            {key}
-            <ul>
-              {values.map(panel => (
-                <li key={panel}>{panel}</li>
-              ))}
-            </ul>
-          </li>
+          matches.map(match => (
+            <li key={match}>
+              {label}
+              :
+              <HorizontalSpacer width={5} />
+              {match}
+            </li>
+          ))
         )
       })}
     </div>
