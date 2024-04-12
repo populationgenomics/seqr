@@ -120,10 +120,10 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
               })}
 
               <Table.Row key="metaHeader">
-                <Table.HeaderCell colSpan={2} content="Meta"/>
+                <Table.HeaderCell colSpan={2} content="Meta" />
               </Table.Row>
               <Table.Row key="independent">
-                <Table.HeaderCell content="Independent Tag"/>
+                <Table.HeaderCell content="Independent Tag" />
                 <Table.Cell disabled content={tag.aipMetadata.independent} />
               </Table.Row>
               {tag.aipMetadata.reasons && (
