@@ -71,11 +71,13 @@ const aipMetaRow = ([key, name, value]) => (
   <Table.Row key={key}>
     <Table.HeaderCell content={name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />
     <Table.Cell>
-      <ul>
-        {value.map((item, index) => (
-          <li kevaluey={index}>{item}</li>
-        ))}
-      </ul>
+      {value.length > 0 ? (
+        <ul>
+          {value.map(item => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
     </Table.Cell>
   </Table.Row>
 )
@@ -85,7 +87,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
     position="top right"
     size="tiny"
     trigger={trigger}
-    header={title || (tag.aipMetadata ? 'Categories' : 'Tagged by')}
+    header={title || (tag.aipMetadata ? 'AIP results' : 'Tagged by')}
     hoverable
     flowing
     content={
