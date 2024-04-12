@@ -101,7 +101,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
               {tag.aipMetadata.removed && [
                 <Table.Row key="removedHeader">
                   <Table.HeaderCell colSpan={2} content="Removed Categories" />
-                </Table.Row>
+                </Table.Row>,
                 ...Object.entries(tag.aipMetadata.removed).map(aipCategoryRow),
               ]}
 
