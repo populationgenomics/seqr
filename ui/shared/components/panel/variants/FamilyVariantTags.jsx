@@ -71,7 +71,7 @@ const aipMetaRow = ([key, name, value]) => (
   <Table.Row key={key}>
     <Table.HeaderCell content={name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />
     <Table.Cell>
-      {value.length > 0 ? (
+      {value && value.length > 0 ? (
         <ul>
           {value.map(item => (
             <li key={item}>{item}</li>
