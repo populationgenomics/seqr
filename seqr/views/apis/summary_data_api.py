@@ -322,7 +322,7 @@ def _set_aip_tags(key: FamilyVariantKey, metadata: dict[str, dict], support_var_
         if 'categories' not in existing_metadata:
             existing_metadata['categories'] = {k: v for k, v in existing_metadata.items() if k != 'removed'}
 
-        metadata['categories'] = {k: existing_metadata['categories'].get(k, v) for k, v in metadata.items()}
+        metadata['categories'] = {k: existing_metadata['categories'].get(k, v) for k, v in metadata['categories'].items()}
         removed = {k: v for k, v in existing_metadata.get('removed', {}).items() if k not in metadata['categories']}
         removed.update({k: v for k, v in existing_metadata['categories'].items() if k not in metadata['categories']})
         if removed:
