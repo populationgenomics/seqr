@@ -13,6 +13,7 @@ jobs:
   trivy-prod:
     name: Trivy check
     runs-on: ubuntu-latest
+    environment: trivy
     env:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
@@ -55,6 +56,7 @@ jobs:
   trivy-dev:
     name: Trivy DEV check
     runs-on: ubuntu-latest
+    environment: trivy
     env:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
