@@ -7,7 +7,9 @@ from settings import REDIS_SERVICE_HOSTNAME, REDIS_SERVICE_PORT, DEPLOYMENT_TYPE
 logger = logging.getLogger(__name__)
 
 def get_escaped_redis_key(cache_key: str) -> str:
-    return f'{DEPLOYMENT_TYPE}:{cache_key}'
+    if DEPLOYMENT_TYPE:
+        return f'{DEPLOYMENT_TYPE}:{cache_key}'
+    return cache_key
 
 def safe_redis_get_json(cache_key):
     try:
