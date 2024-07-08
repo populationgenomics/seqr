@@ -19,8 +19,6 @@ jobs:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-prod
-    permissions:
-      actions: write
 
     steps:
       # - uses: actions/checkout@v2
@@ -64,8 +62,6 @@ jobs:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-staging
-    permissions:
-      actions: write
 
     steps:
       # - uses: actions/checkout@v2
