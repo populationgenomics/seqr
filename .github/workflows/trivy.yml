@@ -1,14 +1,14 @@
-
 name: trivy
 on:
   # runs on default branch
   workflow_dispatch:
   schedule:
-    - cron:  '0 22 * * 0' # each Monday at 9am AEST+10 / 10am AEDT+11
+    - cron: '0 22 * * 0' # each Monday at 9am AEST+10 / 10am AEDT+11
 
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 jobs:
   trivy-prod:
@@ -19,15 +19,17 @@ jobs:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-prod
+    permissions:
+      actions: write
 
     steps:
       # - uses: actions/checkout@v2
-      - id: "google-cloud-auth"
-        name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - id: 'google-cloud-auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: "projects/1021400127367/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
-          service_account: "github-trivy-workflow@seqr-308602.iam.gserviceaccount.com"
+          workload_identity_provider: 'projects/1021400127367/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-trivy-workflow@seqr-308602.iam.gserviceaccount.com'
 
       - name: gcloud docker auth
         run: |
@@ -48,7 +50,7 @@ jobs:
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results-prod.sarif'
-          
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
@@ -62,15 +64,17 @@ jobs:
       # BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       DOCKER_IMAGE: australia-southeast1-docker.pkg.dev/seqr-308602/seqr-project/seqr:gcloud-staging
+    permissions:
+      actions: write
 
     steps:
       # - uses: actions/checkout@v2
-      - id: "google-cloud-auth"
-        name: "Authenticate to Google Cloud"
-        uses: "google-github-actions/auth@v2"
+      - id: 'google-cloud-auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: "projects/1021400127367/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
-          service_account: "github-trivy-workflow@seqr-308602.iam.gserviceaccount.com"
+          workload_identity_provider: 'projects/1021400127367/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-trivy-workflow@seqr-308602.iam.gserviceaccount.com'
 
       - name: gcloud docker auth
         run: |
@@ -91,7 +95,7 @@ jobs:
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results-dev.sarif'
-          
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
