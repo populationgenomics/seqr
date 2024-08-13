@@ -145,6 +145,7 @@ const FAMILY_STATUS_SOLVED_KNOWN_GENE_KNOWN_PHENOTYPE = 'S_kgfp'
 const FAMILY_STATUS_SOLVED_KNOWN_GENE_DIFFERENT_PHENOTYPE = 'S_kgdp'
 const FAMILY_STATUS_SOLVED_NOVEL_GENE = 'S_ng'
 const FAMILY_STATUS_EXTERNAL_SOLVE = 'ES'
+const FAMILY_STATUS_PROBABLE_SOLVE = 'PB'
 const FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_KNOWN_PHENOTYPE = 'Sc_kgfp'
 const FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_DIFFERENT_PHENOTYPE = 'Sc_kgdp'
 const FAMILY_STATUS_STRONG_CANDIDATE_NOVEL_GENE = 'Sc_ng'
@@ -164,6 +165,7 @@ export const SELECTABLE_FAMILY_ANALYSIS_STATUS_OPTIONS = [
   { value: FAMILY_STATUS_SOLVED_KNOWN_GENE_DIFFERENT_PHENOTYPE, color: '#4CAF50', name: 'Solved - gene linked to different phenotype' },
   { value: FAMILY_STATUS_SOLVED_NOVEL_GENE, color: '#4CAF50', name: 'Solved - novel gene' },
   { value: FAMILY_STATUS_EXTERNAL_SOLVE, color: '#146917', name: 'External Solve' },
+  { value: FAMILY_STATUS_PROBABLE_SOLVE, color: '#ACD657', name: 'Probably Solved' },
   { value: FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_KNOWN_PHENOTYPE, color: '#CDDC39', name: 'Strong candidate - known gene for phenotype' },
   { value: FAMILY_STATUS_STRONG_CANDIDATE_KNOWN_GENE_DIFFERENT_PHENOTYPE, color: '#CDDC39', name: 'Strong candidate - gene linked to different phenotype' },
   { value: FAMILY_STATUS_STRONG_CANDIDATE_NOVEL_GENE, color: '#CDDC39', name: 'Strong candidate - novel gene' },
@@ -380,14 +382,14 @@ export const INDIVIDUAL_FIELD_CONFIGS = {
     label: 'Sex',
     format: sex => SEX_LOOKUP[sex],
     width: 3,
-    description: 'Male or Female, leave blank if unknown',
+    description: 'Male, Female, or Unknown',
     formFieldProps: { component: RadioGroup, options: SEX_OPTIONS },
   },
   [INDIVIDUAL_FIELD_AFFECTED]: {
     label: 'Affected Status',
     format: affected => AFFECTED_LOOKUP[affected],
     width: 4,
-    description: 'Affected or Unaffected, leave blank if unknown',
+    description: 'Affected, Unaffected, or Unknown',
     formFieldProps: { component: RadioGroup, options: AFFECTED_OPTIONS },
   },
   [INDIVIDUAL_FIELD_NOTES]: { label: 'Notes', format: stripMarkdown, description: 'free-text notes related to this individual' },
@@ -511,6 +513,7 @@ const CLINVAR_MIN_RISK_PATHOGENICITY = 'likely_risk_allele'
 const CLINVAR_PATHOGENICITIES = [
   'pathogenic',
   'pathogenic/likely_pathogenic',
+  'pathogenic/likely_pathogenic/established_risk_allele',
   'pathogenic/likely_pathogenic/likely_risk_allele',
   'pathogenic/likely_risk_allele',
   'likely_pathogenic',
@@ -1042,6 +1045,7 @@ export const REVIEW_TAG_NAME = 'Review'
 export const KNOWN_GENE_FOR_PHENOTYPE_TAG_NAME = 'Known gene for phenotype'
 export const DISCOVERY_CATEGORY_NAME = 'CMG Discovery Tags'
 export const MME_TAG_NAME = 'MME Submission'
+export const GREGOR_FINDING_TAG_NAME = 'GREGoR Finding'
 
 export const SORT_BY_FAMILY_GUID = 'FAMILY_GUID'
 export const SORT_BY_XPOS = 'XPOS'
@@ -1060,8 +1064,9 @@ const SORT_BY_EIGEN = 'EIGEN'
 const SORT_BY_MPC = 'MPC'
 const SORT_BY_PRIMATE_AI = 'PRIMATE_AI'
 const SORT_BY_TAGGED_DATE = 'TAGGED_DATE'
-const SORT_BY_AIP_DATE = 'AIP_CATEGORY_DATE'
-const SORT_BY_AIP_FIRST_TAGGED = 'AIP_FIRST_TAGGED'
+const SORT_BY_TALOS_DATE = 'TALOS_CATEGORY_DATE'
+const SORT_BY_TALOS_FIRST_TAGGED = 'TALOS_FIRST_TAGGED'
+const SORT_BY_TALOS_PHENO_DATE = 'TALOS_PHENO_DATE'
 const SORT_BY_SIZE = 'SIZE'
 
 export const getPermissionedHgmdClass = (variant, user, familiesByGuid, projectByGuid) => (
@@ -1218,35 +1223,47 @@ const VARIANT_SORT_OPTONS = [
     ),
   },
   {
-    value: SORT_BY_AIP_FIRST_TAGGED,
-    text: 'AIP: Last Tagged',
+    value: SORT_BY_TALOS_FIRST_TAGGED,
+    text: 'TALOS: Date first Tagged',
     comparator: (a, b, genesById, tagsByGuid) => {
-      const getAipFirstTaggedDate = (variant) => {
+      const getTalosFirstTaggedDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
         const dates = (aipMetadata || []).map(metadata => metadata?.first_tagged || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
-      return getAipFirstTaggedDate(b).localeCompare(getAipFirstTaggedDate(a))
+      return getTalosFirstTaggedDate(b).localeCompare(getTalosFirstTaggedDate(a))
     },
   },
   {
-    value: SORT_BY_AIP_DATE,
-    text: 'AIP: Evidence Last Updated',
+    value: SORT_BY_TALOS_DATE,
+    text: 'TALOS: Date Evidence Updated',
     comparator: (a, b, genesById, tagsByGuid) => {
-      const getLatestAipCatagoryDate = (variant) => {
+      const getLatestTalosCatagoryDate = (variant) => {
         const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => Object.values(metadata?.categories || {})
-          .map(data => data.date)).flat()
+        const dates = (aipMetadata || []).map(metadata => metadata?.evidence_last_updated || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
-      return getLatestAipCatagoryDate(b).localeCompare(getLatestAipCatagoryDate(a))
+      return getLatestTalosCatagoryDate(b).localeCompare(getLatestTalosCatagoryDate(a))
+    },
+  },
+  {
+    value: SORT_BY_TALOS_PHENO_DATE,
+    text: 'TALOS: Date Phenotype Match Fist Found',
+    comparator: (a, b, genesById, tagsByGuid) => {
+      const getLatestTalosPhenoDate = (variant) => {
+        const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
+        const dates = (aipMetadata || []).map(metadata => metadata?.date_of_phenotype_match || '')
+        return dates.filter(date => date !== null).sort().reverse()[0] || ''
+      }
+
+      return getLatestTalosPhenoDate(b).localeCompare(getLatestTalosPhenoDate(a))
     },
   },
 ]
-// CPG: AIP related sorting must be excluded from VARIANT_SEARCH_SORT_OPTONS
-const VARIANT_SEARCH_SORT_OPTONS = VARIANT_SORT_OPTONS.slice(1, VARIANT_SORT_OPTONS.length - 3)
+// CPG: TALOS related sorting must be excluded from VARIANT_SEARCH_SORT_OPTONS
+const VARIANT_SEARCH_SORT_OPTONS = VARIANT_SORT_OPTONS.slice(1, VARIANT_SORT_OPTONS.length - 4)
 
 export const VARIANT_SORT_LOOKUP = VARIANT_SORT_OPTONS.reduce(
   (acc, opt) => ({
@@ -1349,6 +1366,7 @@ export const SPLICE_AI_FIELD = 'splice_ai'
 
 const rangeSourceLink = <a href="https://pubmed.ncbi.nlm.nih.gov/36413997" target="_blank" rel="noreferrer">36413997</a>
 const PRED_COLOR_MAP = ['green', 'olive', 'grey', 'yellow', 'red', '#8b0000']
+const REVERSE_PRED_COLOR_MAP = [...PRED_COLOR_MAP].reverse()
 
 export const ORDERED_PREDICTOR_FIELDS = [
   { field: 'cadd', group: CODING_IN_SILICO_GROUP, thresholds: [0.151, 22.8, 25.3, 28.1, undefined], min: 1, max: 99, fieldTitle: 'CADD', requiresCitation: true },
@@ -1364,17 +1382,17 @@ export const ORDERED_PREDICTOR_FIELDS = [
     infoTitle: 'Predicted Consequence',
     fieldTitle: 'SpliceAI',
     getHref: ({ chrom, pos, ref, alt, genomeVersion }) => (
-      `https://spliceailookup.broadinstitute.org/#variant=${chrom}-${pos}-${ref}-${alt}&hg=${genomeVersion}&distance=1000&mask=1`
+      `https://spliceailookup.broadinstitute.org/#variant=${chrom}-${pos}-${ref}-${alt}&hg=${genomeVersion}&distance=1000&mask=0`
     ),
   },
   { field: 'primate_ai', group: MISSENSE_IN_SILICO_GROUP, thresholds: [undefined, 0.484, 0.79, 0.867, undefined], fieldTitle: 'PrimateAI', requiresCitation: true },
   { field: 'eigen', group: CODING_IN_SILICO_GROUP, thresholds: [undefined, undefined, 1, 2, undefined], max: 99 },
   { field: 'dann', displayOnly: true, thresholds: [undefined, undefined, 0.93, 0.96, undefined] },
   { field: 'strvctvre', group: SV_IN_SILICO_GROUP, thresholds: [undefined, undefined, 0.5, 0.75, undefined] },
-  { field: 'polyphen', group: MISSENSE_IN_SILICO_GROUP, indicatorMap: POLYPHEN_MAP, fieldTitle: 'PolyPhen', requiresCitation: true },
-  { field: 'sift', group: MISSENSE_IN_SILICO_GROUP, indicatorMap: INDICATOR_MAP, fieldTitle: 'SIFT', requiresCitation: true },
+  { field: 'polyphen', group: MISSENSE_IN_SILICO_GROUP, thresholds: [undefined, 0.114, 0.978, 0.999, undefined], indicatorMap: POLYPHEN_MAP, fieldTitle: 'PolyPhen', requiresCitation: true },
+  { field: 'sift', reverseThresholds: true, thresholds: [undefined, 0, 0.002, 0.081, undefined], group: MISSENSE_IN_SILICO_GROUP, indicatorMap: INDICATOR_MAP, fieldTitle: 'SIFT', requiresCitation: true },
   { field: 'mut_taster', group: MISSENSE_IN_SILICO_GROUP, indicatorMap: MUTTASTER_MAP, fieldTitle: 'MutTaster' },
-  { field: 'fathmm', group: MISSENSE_IN_SILICO_GROUP, indicatorMap: FATHMM_MAP, fieldTitle: 'FATHMM', requiresCitation: true },
+  { field: 'fathmm', reverseThresholds: true, thresholds: [undefined, -5.041, -4.14, 3.32, undefined], group: MISSENSE_IN_SILICO_GROUP, indicatorMap: FATHMM_MAP, fieldTitle: 'FATHMM', requiresCitation: true },
   { field: 'apogee', thresholds: [undefined, undefined, 0.5, 0.5, undefined] },
   {
     field: 'gnomad_noncoding',
@@ -1390,7 +1408,7 @@ export const ORDERED_PREDICTOR_FIELDS = [
 
 export const coloredIcon = color => React.createElement(color.startsWith('#') ? ColoredIcon : Icon, { name: 'circle', size: 'small', color })
 export const predictionFieldValue = (
-  predictions, { field, thresholds, indicatorMap, infoField, infoTitle },
+  predictions, { field, thresholds, reverseThresholds, indicatorMap, infoField, infoTitle },
 ) => {
   let value = predictions[field]
   if (value === null || value === undefined) {
@@ -1399,21 +1417,22 @@ export const predictionFieldValue = (
 
   const infoValue = predictions[infoField]
 
-  if (thresholds) {
-    value = parseFloat(value).toPrecision(3)
-    const color = PRED_COLOR_MAP.find(
+  const floatValue = parseFloat(value)
+  if (thresholds && !(indicatorMap && Number.isNaN(floatValue))) {
+    value = floatValue.toPrecision(3)
+    const color = (reverseThresholds ? REVERSE_PRED_COLOR_MAP : PRED_COLOR_MAP).find(
       (clr, i) => (thresholds[i - 1] || thresholds[i]) &&
         (thresholds[i - 1] === undefined || value >= thresholds[i - 1]) &&
         (thresholds[i] === undefined || value < thresholds[i]),
     )
-    return { value, color, infoValue, infoTitle, thresholds }
+    return { value, color, infoValue, infoTitle, thresholds, reverseThresholds }
   }
 
   return indicatorMap[value[0]] || indicatorMap[value]
 }
-export const predictorColorRanges = (thresholds, requiresCitation) => (
+export const predictorColorRanges = (thresholds, requiresCitation, reverseThresholds) => (
   <div>
-    {PRED_COLOR_MAP.map((c, i) => {
+    {(reverseThresholds ? REVERSE_PRED_COLOR_MAP : PRED_COLOR_MAP).map((c, i) => {
       const prevUndefined = thresholds[i - 1] === undefined
       let range
       if (thresholds[i] === undefined) {
@@ -1480,10 +1499,10 @@ export const VARIANT_EXPORT_DATA = [
   { header: 'revel', getVal: variant => (variant.predictions || {}).revel },
   { header: 'eigen', getVal: variant => (variant.predictions || {}).eigen },
   { header: 'splice_ai', getVal: variant => (variant.predictions || {}).splice_ai },
-  { header: 'polyphen', getVal: variant => (POLYPHEN_MAP[(variant.predictions || {}).polyphen] || {}).value },
-  { header: 'sift', getVal: variant => (INDICATOR_MAP[(variant.predictions || {}).sift] || {}).value },
+  { header: 'polyphen', getVal: variant => (POLYPHEN_MAP[(variant.predictions || {}).polyphen] || {}).value || (variant.predictions || {}).polyphen },
+  { header: 'sift', getVal: variant => (INDICATOR_MAP[(variant.predictions || {}).sift] || {}).value || (variant.predictions || {}).sift },
   { header: 'muttaster', getVal: variant => (MUTTASTER_MAP[(variant.predictions || {}).mut_taster] || {}).value },
-  { header: 'fathmm', getVal: variant => (INDICATOR_MAP[(variant.predictions || {}).fathmm] || {}).value },
+  { header: 'fathmm', getVal: variant => (INDICATOR_MAP[(variant.predictions || {}).fathmm] || {}).value || (variant.predictions || {}).fathmm },
   { header: 'rsid', getVal: variant => variant.rsid },
   { header: 'hgvsc', getVal: variant => getVariantMainTranscript(variant).hgvsc },
   { header: 'hgvsp', getVal: variant => getVariantMainTranscript(variant).hgvsp },

@@ -1,9 +1,9 @@
 from collections import defaultdict
 from datetime import datetime
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
-from django.db.models import CharField, F, Value
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import CharField, F, Q, Value
 from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf
 import json
 from random import randint
@@ -21,13 +21,12 @@ from seqr.utils.gene_utils import get_genes
 from seqr.utils.middleware import ErrorsWarningsException
 from seqr.utils.search.utils import get_variants_for_variant_ids, InvalidSearchException
 from seqr.views.utils.json_utils import create_json_response
-from seqr.views.utils.json_to_orm_utils import create_model_from_json
 from seqr.views.utils.orm_to_json_utils import get_json_for_matchmaker_submissions, get_json_for_saved_variants,\
     add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPES
 from seqr.views.utils.permissions_utils import analyst_required, user_is_analyst, get_project_guids_user_can_view, \
     login_and_policies_required, get_project_and_check_permissions, get_internal_projects
-from seqr.views.utils.anvil_metadata_utils import parse_anvil_metadata, FAMILY_ROW_TYPE, SUBJECT_ROW_TYPE, DISCOVERY_ROW_TYPE
-from seqr.views.utils.variant_utils import get_variants_response, parse_saved_variant_json, DISCOVERY_CATEGORY
+from seqr.views.utils.anvil_metadata_utils import parse_anvil_metadata, FAMILY_ROW_TYPE, SUBJECT_ROW_TYPE, SAMPLE_ROW_TYPE, DISCOVERY_ROW_TYPE
+from seqr.views.utils.variant_utils import get_variants_response, bulk_create_tagged_variants, DISCOVERY_CATEGORY
 from settings import SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL
 
 MAX_SAVED_VARIANTS = 10000
@@ -142,7 +141,7 @@ def hpo_summary_data(request, hpo_id):
     return create_json_response({'data': list(data)})
 
 
-AIP_INGEST_FULL_REPORT_DESC = 'CPG: Full AIP report'
+AIP_INGEST_FULL_REPORT_DESC = 'CPG: Full Talos report'
 
 
 @analyst_required
@@ -165,8 +164,10 @@ def bulk_update_family_external_analysis(request):
     family_db_id_lookup = {
         (f['project__name'], f['family_id']): f['id'] for f in Family.objects.annotate(
             project_family=Concat('project__name', 'family_id', output_field=CharField())
-        ).filter(project_family__in=[f'{project}{family}' for project, family in requested_families])
-        .values('id', 'family_id', 'project__name')
+        ).filter(
+            project_family__in=[f'{project}{family}' for project, family in requested_families],
+            project__guid__in=get_project_guids_user_can_view(request.user),
+        ).values('id', 'family_id', 'project__name')
     }
 
     warnings = []
@@ -200,7 +201,6 @@ def _load_aip_data(data: dict, user: User, aip_tag_name: str):
     if missing_individuals:
         raise ErrorsWarningsException([f'Unable to find the following individuals: {", ".join(sorted(missing_individuals))}'])
 
-    all_variant_ids = set()
     family_variant_data = {}
     for family_id, variant_pred in results.items():
         family_variant_data.update({
@@ -237,9 +237,7 @@ def _load_aip_data(data: dict, user: User, aip_tag_name: str):
         else:
             num_new += 1
 
-    VariantTag.bulk_update_models(user, update_tags, ['metadata'])
-
-    summary_message = f'Loaded {num_new} new and {len(update_tags)} updated AIP tags for {len(family_id_map)} families'
+    summary_message = f'Loaded {num_new} new and {num_updated} updated AIP tags for {len(family_id_map)} families'
     safe_post_to_slack(
         SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL,
         f'{summary_message}:\n```{", ".join(sorted(family_id_map.keys()))}```',
@@ -289,10 +287,7 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
         for family_id in family_ids:
             family = families_by_id[family_id]
             if family.guid in variant['familyGuids']:
-                create_json, update_json = parse_saved_variant_json(variant, family)
-                variant_model = SavedVariant(**create_json, **update_json)
-                variant_model.guid = f'SV{str(variant_model)}'[:SavedVariant.MAX_GUID_SIZE]
-                new_variants.append(variant_model)
+                new_variants[(family_id, variant_id)] = variant
             else:
                 missing[family.family_id].append(variant_id)
 
@@ -429,7 +424,7 @@ def individual_metadata(request, project_guid):
 
     hpo_name_map = {hpo.hpo_id: hpo.name for hpo in HumanPhenotypeOntology.objects.filter(hpo_id__in=all_features)}
     for row_key, row in rows_by_subject_family_id.items():
-        row.update(family_rows_by_id[row_key[1]])
+        row.update({k: v for k, v in family_rows_by_id[row_key[1]].items() if k not in row})
         row['num_saved_variants'] = row.get('num_saved_variants', 0)
         for hpo_key in ['hpo_present', 'hpo_absent']:
             features = row.pop(hpo_key)
@@ -449,12 +444,131 @@ def _get_airtable_collaborator_names(user, collaborator_ids):
     }
 
 
+@login_and_policies_required
+def family_metadata(request, project_guid):
+    projects, _ = _get_metadata_projects(request, project_guid)
+
+    families_by_id = {}
+    family_individuals = defaultdict(dict)
+
+    def _add_row(row, family_id, row_type):
+        if row_type == FAMILY_ROW_TYPE:
+            families_by_id[family_id] = row
+        elif row_type == SUBJECT_ROW_TYPE:
+            family_individuals[family_id][row['participant_id']] = row
+        elif row_type == SAMPLE_ROW_TYPE:
+            family_individuals[family_id][row['participant_id']].update(row)
+        elif row_type == DISCOVERY_ROW_TYPE:
+            family = families_by_id[family_id]
+            if 'inheritance_models' not in family:
+                family.update({'genes': set(), 'inheritance_models': set()})
+            family['genes'].update({v.get('gene') or v.get('sv_name') or v.get('gene_id') or '' for v in row})
+            family['inheritance_models'].update({v['variant_inheritance'] for v in row})
+
+    parse_anvil_metadata(
+        projects, user=request.user, add_row=_add_row, omit_airtable=True, include_metadata=True, include_no_individual_families=True)
+
+    for family_id, f in families_by_id.items():
+        individuals_by_id = family_individuals[family_id]
+        proband = next((i for i in individuals_by_id.values() if i['proband_relationship'] == 'Self'), None)
+        individuals_ids = set(individuals_by_id.keys())
+        known_ids = {}
+        if proband:
+            known_ids = {
+                'proband_id': proband['participant_id'],
+                'paternal_id': proband['paternal_id'],
+                'maternal_id': proband['maternal_id'],
+            }
+            f.update(known_ids)
+            individuals_ids -= set(known_ids.values())
+
+        sorted_samples = sorted(individuals_by_id.values(), key=lambda x: x.get('date_data_generation', ''))
+        earliest_sample = next((s for s in [proband or {}] + sorted_samples if s.get('date_data_generation')), {})
+
+        inheritance_models = f.pop('inheritance_models', [])
+        f.update({
+            'individual_count': len(individuals_by_id),
+            'other_individual_ids':  '; '.join(sorted(individuals_ids)),
+            'family_structure': _get_family_structure(len(individuals_by_id), sum(1 for id in known_ids.values() if id)),
+            'data_type': earliest_sample.get('data_type'),
+            'date_data_generation': earliest_sample.get('date_data_generation'),
+            'genes': '; '.join(sorted(f.get('genes', []))),
+            'actual_inheritance': 'unknown' if inheritance_models == {'unknown'} else ';'.join(
+                sorted([i for i in inheritance_models if i != 'unknown'])),
+        })
+
+    return create_json_response({'rows': list(families_by_id.values())})
+
+
+FAMILY_STRUCTURES = {
+    1: 'singleton',
+    2: 'duo',
+    3: 'trio',
+    4: 'quad',
+}
+
+
+def _get_family_structure(num_individuals, num_known_individuals):
+    if (num_individuals and num_known_individuals == num_individuals) or (
+            num_known_individuals in {0, 3} and num_individuals == num_known_individuals + 1):
+        return FAMILY_STRUCTURES[num_individuals]
+    return 'other'
+
+
+@login_and_policies_required
+def variant_metadata(request, project_guid):
+    projects, _ = _get_metadata_projects(request, project_guid)
+
+    individuals = Individual.objects.filter(
+        family__project__in=projects, family__savedvariant__varianttag__variant_tag_type__category=DISCOVERY_CATEGORY,
+    ).distinct().annotate(
+        data_types=ArrayAgg('sample__sample_type', distinct=True, filter=Q(sample__isnull=False))
+    )
+
+    families_by_id = {}
+    participant_mme = {}
+    variant_rows = []
+
+    def _add_row(row, family_id, row_type):
+        if row_type == FAMILY_ROW_TYPE:
+            families_by_id[family_id] = row
+        elif row_type == SUBJECT_ROW_TYPE:
+            participant_mme[row['participant_id']] = row.get('MME', {})
+        elif row_type == DISCOVERY_ROW_TYPE:
+            family = families_by_id[family_id]
+            for variant in row:
+                del variant['gene_ids']
+                variant_rows.append({
+                    'MME': variant.pop('variantId') in participant_mme[variant['participant_id']].get('variant_ids', []),
+                    'phenotype_contribution': 'Full',
+                    **family,
+                    **variant,
+                })
+
+    parse_anvil_metadata(
+        projects,
+        user=request.user,
+        individual_samples={i: None for i in individuals},
+        individual_data_types={i.individual_id: i.data_types for i in individuals},
+        add_row=_add_row,
+        variant_json_fields=['clinvar', 'variantId'],
+        mme_values={'variant_ids': ArrayAgg('matchmakersubmissiongenes__saved_variant__saved_variant_json__variantId')},
+        include_metadata=True,
+        include_mondo=True,
+        omit_airtable=True,
+        proband_only_variants=True,
+        include_parent_mnvs=True,
+    )
+
+    return create_json_response({'rows': variant_rows})
+
+
 def _load_aip_full_report_data(data: dict, user: User):
     """
         Version of _load_aip_data that ingests a full AIP report rather than the
         cut down "seqr" format.
 
-        - Adds both the AIP-permissive and AIP-restrictive tags
+        - Adds both the Talos-permissive and Talos-restrictive tags
           depending on the presence of HPO matches in the variant.
         - Adds the First Seen metadata field to the tags.
 
@@ -515,11 +629,11 @@ def _load_aip_full_report_data(data: dict, user: User):
         saved_variant_map.update(new_variants_from_search)
 
     # Add the aip_permissive tag to all variants
-    aip_tag_type = VariantTagType.objects.get(name='AIP-permissive', project=None)
+    aip_tag_type = VariantTagType.objects.get(name='Talos-permissive', project=None)
     num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
 
     # Add the aip_restrictive tag to qualifying variants
-    aip_restrictive_tag_type = VariantTagType.objects.get(name='AIP-restrictive', project=None)
+    aip_restrictive_tag_type = VariantTagType.objects.get(name='Talos-restrictive', project=None)
     num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_restrictive_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
 
     summary_message = f'Loaded {num_new} new ({num_new_restrictive} restrictive) and {num_updated} updated ({num_updated_restrictive} restrictive) AIP tags for {len(family_id_map)} families'
@@ -558,13 +672,9 @@ def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_
 
         # Copy selected metadata fields from the AIP results to the tag metadata.
         metadata = {}
-        for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars']:
+        for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
+                  'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged']:
             metadata[k] = variant_result[k]
-
-        if restrictive:
-            metadata['first_tagged'] = variant_result.get('first_seen_restrictive', variant_result['first_seen'])
-        else:
-            metadata['first_tagged'] = variant_result['first_seen']
 
         # Add the categories using the date of ingest as the date.
         metadata['categories'] = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}

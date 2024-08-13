@@ -15,7 +15,7 @@ import {
   getMmeSubmissionsByGuid,
   getGenesById,
 } from 'redux/selectors'
-import { DISCOVERY_CATEGORY_NAME, MME_TAG_NAME } from 'shared/utils/constants'
+import { DISCOVERY_CATEGORY_NAME, MME_TAG_NAME, GREGOR_FINDING_TAG_NAME } from 'shared/utils/constants'
 import VariantClassify from './VariantClassify'
 import PopupWithModal from '../../PopupWithModal'
 import { HorizontalSpacer } from '../../Spacers'
@@ -58,7 +58,8 @@ const VARIANT_NOTE_FIELDS = [{
 }]
 
 const DEPRECATED_MME_TAG = 'seqr MME (old)'
-const AIP_TAG = 'AIP'
+const AIP_TAG_TYPE = 'AIP'
+const NO_EDIT_TAG_TYPES = [AIP_TAG_TYPE, GREGOR_FINDING_TAG_NAME]
 
 const aipCategoryRow = ([key, { name, date }]) => (
   <li key={key}>
@@ -90,7 +91,7 @@ const aipHpoList = (panels) => {
 
   return (
     <div>
-      <b>Phenotype Matches:</b>
+      <b>Gene Panel Matches:</b>
       {Object.entries(panels).map(([matchClass, matches]) => {
         if (matches.matches === 0) {
           return null
@@ -103,9 +104,6 @@ const aipHpoList = (panels) => {
             break
           case 'forced':
             label = 'Cohort Panel'
-            break
-          case 'gene_level':
-            label = 'Gene Specific Match'
             break
           default:
             label = ''
@@ -131,7 +129,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
     position="top right"
     size="tiny"
     trigger={trigger}
-    header={title || (tag.aipMetadata ? 'AIP results' : 'Tagged by')}
+    header={title || (tag.aipMetadata ? 'Talos results' : 'Tagged by')}
     hoverable
     flowing
     content={
@@ -142,6 +140,16 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
               <b>First Tagged:</b>
               <HorizontalSpacer width={5} />
               {tag.aipMetadata.first_tagged}
+            </div>
+            <div>
+              <b>Evidence Updated:</b>
+              <HorizontalSpacer width={5} />
+              {tag.aipMetadata.evidence_last_updated}
+            </div>
+            <div>
+              <b>Phenotype match first identified:</b>
+              <HorizontalSpacer width={5} />
+              {tag.aipMetadata.date_of_phenotype_match}
             </div>
             <div>
               <b>Categories:</b>
@@ -164,6 +172,9 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
             )}
             {tag.aipMetadata.labels && (
               aipHpoList(tag.aipMetadata.panels)
+            )}
+            {tag.aipMetadata.labels && (
+              aipMetaList('gene-hpo', 'Matched Gene Phenotypes', tag.aipMetadata.phenotype_labels)
             )}
           </div>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}
@@ -356,7 +367,7 @@ const FamilyVariantTags = React.memo(({
               tagOptions={projectTagTypes}
               displayMetadata
               disabledTagType={DEPRECATED_MME_TAG}
-              noEditTagType={AIP_TAG}
+              noEditTagTypes={NO_EDIT_TAG_TYPES}
               onSubmit={dispatchUpdateFamilyVariantTags}
             />
             <HorizontalSpacer width={5} />
