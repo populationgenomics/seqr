@@ -280,7 +280,7 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
         search_variants_by_id = {}
         warnings.append(str(e))
 
-    new_variants = []
+    new_variants = {}
     missing = defaultdict(list)
     for variant_id, family_ids in variant_families.items():
         variant = search_variants_by_id.get(variant_id) or {'familyGuids': []}
