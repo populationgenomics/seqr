@@ -95,7 +95,7 @@ const REFERENCE_URLS = [
     baseUrl: `${BASE_REFERENCE_URL}`,
     path: {
       37: 's3/igv.broadinstitute.org/genomes/seq/hg19/cytoBand.txt',
-      38: 'gs/cpg-common-main/references/igv_org_genomes/hg38/cytoBandIdeo.txt.gz',
+      38: 'gs/cpg-common-main/references/igv_org_genomes/hg38/annotations/cytoBandIdeo.txt.gz',
     },
   },
   {
