@@ -80,8 +80,8 @@ export const IGV_OPTIONS = {
 const BASE_REFERENCE_URL = '/api/igv_genomes'
 
 const REFERENCE_URLS = [
-  # Accessing some reference files from the s3/igv.org.genomes URLs has caused issues
-  # So we access them via CPG cloud storage instead (cytoBand, alias, Refseq)
+  // Accessing some reference files from the s3/igv.org.genomes URLs has caused issues
+  // So we access them via CPG cloud storage instead (cytoBand, alias, Refseq)
   {
     key: 'fastaURL',
     baseUrl: BASE_REFERENCE_URL,
