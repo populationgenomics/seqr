@@ -80,8 +80,6 @@ export const IGV_OPTIONS = {
 const BASE_REFERENCE_URL = '/api/igv_genomes'
 
 const REFERENCE_URLS = [
-  // Accessing some reference files from the s3/igv.org.genomes URLs has caused issues
-  // So we access them via CPG cloud storage instead (cytoBand, alias, Refseq)
   {
     key: 'fastaURL',
     baseUrl: BASE_REFERENCE_URL,
@@ -92,18 +90,18 @@ const REFERENCE_URLS = [
   },
   {
     key: 'cytobandURL',
-    baseUrl: `${BASE_REFERENCE_URL}`,
+    baseUrl: `${BASE_REFERENCE_URL}/s3`,
     path: {
-      37: 's3/igv.broadinstitute.org/genomes/seq/hg19/cytoBand.txt',
-      38: 'gs/cpg-common-main/references/igv_org_genomes/hg38/annotations/cytoBandIdeo.txt.gz',
+      37: 'igv.broadinstitute.org/genomes/seq/hg19/cytoBand.txt',
+      38: 'igv.org.genomes/hg38/annotations/cytoBandIdeo.txt.gz',
     },
   },
   {
     key: 'aliasURL',
-    baseUrl: `${BASE_REFERENCE_URL}`,
+    baseUrl: `${BASE_REFERENCE_URL}/s3/igv.org.genomes`,
     path: {
-      37: 's3/igv.org.genomes/hg19/hg19_alias.tab',
-      38: 'gs/cpg-common-main/references/igv_org_genomes/hg38/hg38_alias.tab',
+      37: 'hg19/hg19_alias.tab',
+      38: 'hg38/hg38_alias.tab',
     },
   },
 ]
@@ -123,10 +121,10 @@ const REFERENCE_TRACKS = [
   {
     name: 'Refseq',
     indexPostfix: 'tbi',
-    baseUrl: `${BASE_REFERENCE_URL}`,
+    baseUrl: `${BASE_REFERENCE_URL}/s3/igv.org.genomes`,
     path: {
-      37: 's3/igv.org.genomes/hg19/refGene.sorted.txt.gz',
-      38: 'gs/cpg-common-main/references/igv_org_genomes/hg38/refGene.sorted.txt.gz',
+      37: 'hg19/refGene.sorted.txt.gz',
+      38: 'hg38/refGene.sorted.txt.gz',
     },
     format: 'refgene',
     visibilityWindow: -1,
