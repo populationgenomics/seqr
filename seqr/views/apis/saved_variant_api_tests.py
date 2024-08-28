@@ -25,10 +25,12 @@ COMPOUND_HET_1_GUID = 'SV0059956_11560662_f019313_1'
 COMPOUND_HET_2_GUID = 'SV0059957_11562437_f019313_1'
 GENE_GUID_2 = 'ENSG00000197530'
 
+VARIANT_TAG_RESPONSE_KEYS = {
+    'variantTagsByGuid', 'variantNotesByGuid', 'variantFunctionalDataByGuid', 'savedVariantsByGuid',
+}
 SAVED_VARIANT_RESPONSE_KEYS = {
-    'variantTagsByGuid', 'variantNotesByGuid', 'variantFunctionalDataByGuid', 'savedVariantsByGuid', 'familiesByGuid',
+    *VARIANT_TAG_RESPONSE_KEYS, 'familiesByGuid', 'omimIntervals',
     'genesById', 'locusListsByGuid', 'rnaSeqData', 'mmeSubmissionsByGuid', 'transcriptsById', 'phenotypeGeneScores',
-    'omimIntervals',
 }
 
 COMPOUND_HET_3_JSON = {
@@ -103,6 +105,7 @@ CREATE_VARIANT_JSON = {
     'projectGuid': 'R0001_1kg',
     'familyGuids': ['F000001_1', 'F000002_2'],
     'variantId': '2-61413835-AAAG-A',
+    'CAID': None,
 }
 
 CREATE_VARIANT_REQUEST_BODY = {
@@ -234,6 +237,10 @@ class SavedVariantAPITest(object):
         # get variants with no tags for whole project
         response = self.client.get('{}?includeNoteVariants=true'.format(url))
         self.assertEqual(response.status_code, 200)
+        no_families_response_keys = {*SAVED_VARIANT_RESPONSE_KEYS}
+        no_families_response_keys.remove('familiesByGuid')
+        no_families_response_keys.remove('transcriptsById')
+        self.assertSetEqual(set(response.json().keys()), no_families_response_keys)
         variants = response.json()['savedVariantsByGuid']
         self.assertSetEqual(set(variants.keys()), {COMPOUND_HET_1_GUID, COMPOUND_HET_2_GUID})
         self.assertListEqual(variants[COMPOUND_HET_1_GUID]['tagGuids'], [])
@@ -265,14 +272,12 @@ class SavedVariantAPITest(object):
         response = self.client.get(url.replace(PROJECT_GUID, 'R0003_test'))
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        response_keys = {*SAVED_VARIANT_RESPONSE_KEYS}
-        response_keys.remove('familiesByGuid')
-        self.assertSetEqual(set(response_json.keys()), response_keys)
+        self.assertSetEqual(set(response_json.keys()), no_families_response_keys)
 
         self.assertSetEqual(
             set(response_json['savedVariantsByGuid'].keys()),
             {'SV0000006_1248367227_r0003_tes', 'SV0000007_prefix_19107_DEL_r00'})
-        self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000135953', 'ENSG00000223972', 'ENSG00000240361'})
+        self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000135953', 'ENSG00000240361'})
         self.assertDictEqual(response_json['omimIntervals'], {'3': {
             'chrom': '1',
             'start': 249044482,
@@ -327,6 +332,17 @@ class SavedVariantAPITest(object):
         self.assertListEqual(variants['SV0000002_1248367227_r0390_100']['discoveryTags'], discovery_tags)
         self.assertListEqual(variants['SV0000002_1248367227_r0390_100']['familyGuids'], ['F000002_2'])
         self.assertEqual(set(response_json['familiesByGuid'].keys()), {'F000001_1', 'F000002_2', 'F000012_12'})
+
+        # Test empty project
+        empty_project_url = url.replace(PROJECT_GUID, 'R0002_empty')
+        response = self.client.get(empty_project_url)
+        self.assertEqual(response.status_code, 200)
+        empty_response = {k: {} for k in VARIANT_TAG_RESPONSE_KEYS}
+        self.assertDictEqual(response.json(), empty_response)
+
+        response = self.client.get(f'{empty_project_url}?loadProjectTagTypes=true&loadFamilyContext=true')
+        self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(response.json(), empty_response)
 
     def test_create_saved_variant(self):
         create_saved_variant_url = reverse(create_saved_variant_handler)
@@ -408,9 +424,7 @@ class SavedVariantAPITest(object):
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
-        self.assertSetEqual(set(response_json.keys()), {
-            'variantTagsByGuid', 'variantNotesByGuid', 'variantFunctionalDataByGuid', 'savedVariantsByGuid', 'genesById',
-        })
+        self.assertSetEqual(set(response_json.keys()), {*VARIANT_TAG_RESPONSE_KEYS, 'genesById'})
         self.assertEqual(len(response_json['savedVariantsByGuid']), 1)
         variant_guid = next(iter(response_json['savedVariantsByGuid']))
 
@@ -904,7 +918,7 @@ class SavedVariantAPITest(object):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(response.json(), {'error': 'Unable to find the following variant(s): not_variant'})
 
-    @mock.patch('seqr.views.utils.variant_utils.MAX_VARIANTS_FETCH', 3)
+    @mock.patch('seqr.views.utils.variant_utils.MAX_VARIANTS_FETCH', 2)
     @mock.patch('seqr.utils.search.utils.es_backend_enabled')
     @mock.patch('seqr.views.apis.saved_variant_api.logger')
     @mock.patch('seqr.views.utils.variant_utils.get_variants_for_variant_ids')
@@ -923,12 +937,12 @@ class SavedVariantAPITest(object):
         self.assertDictEqual(
             response.json(),
             {'SV0000002_1248367227_r0390_100': None, 'SV0000001_2103343353_r0390_100': None,
-            'SV0059957_11562437_f019313_1': None, 'SV0059956_11560662_f019313_1': None}
+            'SV0059956_11560662_f019313_1': None}
         )
 
         families = [Family.objects.get(guid='F000001_1'), Family.objects.get(guid='F000002_2')]
         mock_get_variants.assert_has_calls([
-            mock.call(families, ['1-1562437-G-C', '1-248367227-TC-T', '1-46859832-G-A'], user=self.manager_user, user_email=None),
+            mock.call(families, ['1-248367227-TC-T', '1-46859832-G-A'], user=self.manager_user, user_email=None),
             mock.call(families, ['21-3343353-GAGA-G'], user=self.manager_user, user_email=None),
         ])
         mock_logger.error.assert_not_called()
@@ -992,66 +1006,68 @@ def assert_no_list_ws_has_al(self, acl_call_count):
 # Test for permissions from AnVIL only
 # class AnvilSavedVariantAPITest(AnvilAuthenticationTestCase, SavedVariantAPITest):
 #     fixtures = ['users', 'social_auth', '1kg_project', 'reference_data']
-#
+
 #     def test_saved_variant_data(self, *args):
 #         super(AnvilSavedVariantAPITest, self).test_saved_variant_data(*args)
 #         self.mock_list_workspaces.assert_called_with(self.analyst_user)
 #         self.mock_get_ws_access_level.assert_called_with(
+#             mock.ANY, 'ext-data', 'empty')
+#         self.mock_get_ws_access_level.assert_any_call(
 #             mock.ANY, 'my-seqr-billing', 'anvil-1kg project n\u00e5me with uni\u00e7\u00f8de')
-#         self.assertEqual(self.mock_get_ws_access_level.call_count, 14)
+#         self.assertEqual(self.mock_get_ws_access_level.call_count, 17)
 #         self.mock_get_groups.assert_has_calls([mock.call(self.collaborator_user), mock.call(self.analyst_user)])
-#         self.assertEqual(self.mock_get_groups.call_count, 10)
+#         self.assertEqual(self.mock_get_groups.call_count, 11)
 #         self.mock_get_ws_acl.assert_not_called()
 #         self.mock_get_group_members.assert_not_called()
-#
+
 #     def test_create_saved_variant(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_saved_variant()
 #         assert_no_list_ws_has_al(self, 4)
-#
+
 #     def test_create_saved_sv_variant(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_saved_sv_variant()
 #         assert_no_list_ws_has_al(self, 2)
-#
+
 #     def test_create_saved_compound_hets(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_saved_compound_hets()
 #         assert_no_list_ws_has_al(self, 2)
-#
+
 #     def test_create_update_and_delete_variant_note(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_update_and_delete_variant_note()
 #         assert_no_list_ws_has_al(self, 8)
-#
+
 #     def test_create_partially_saved_compound_het_variant_note(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_partially_saved_compound_het_variant_note()
 #         assert_no_list_ws_has_al(self, 2)
-#
+
 #     def test_create_update_and_delete_compound_hets_variant_note(self):
 #         super(AnvilSavedVariantAPITest, self).test_create_update_and_delete_compound_hets_variant_note()
 #         assert_no_list_ws_has_al(self, 7)
-#
+
 #     def test_update_variant_tags(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_variant_tags()
 #         assert_no_list_ws_has_al(self, 4)
-#
+
 #     def test_update_variant_functional_data(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_variant_functional_data()
 #         assert_no_list_ws_has_al(self, 2)
-#
+
 #     def test_update_compound_hets_variant_tags(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_compound_hets_variant_tags()
 #         assert_no_list_ws_has_al(self, 3)
-#
+
 #     def test_update_compound_hets_variant_functional_data(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_compound_hets_variant_functional_data()
 #         assert_no_list_ws_has_al(self, 3)
-#
+
 #     def test_update_saved_variant_json(self, *args):
 #         super(AnvilSavedVariantAPITest, self).test_update_saved_variant_json(*args)
 #         assert_no_list_ws_has_al(self, 3)
-#
+
 #     def test_update_variant_main_transcript(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_variant_main_transcript()
 #         assert_no_list_ws_has_al(self, 2)
-#
+
 #     def test_update_variant_acmg_classification(self):
 #         super(AnvilSavedVariantAPITest, self).test_update_variant_acmg_classification()
 #         assert_no_list_ws_has_al(self, 2)

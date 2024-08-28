@@ -10,7 +10,7 @@ asgiref==3.7.1
     #   django
 build==0.10.0
     # via pip-tools
-certifi==2023.5.7
+certifi==2024.7.4
     # via
     #   -c requirements.txt
     #   requests
@@ -22,7 +22,7 @@ click==8.1.3
     # via pip-tools
 coverage==5.1
     # via -r requirements-dev.in
-django==3.2.25
+django==4.2.15
     # via
     #   -c requirements.txt
     #   django-appconf
@@ -55,7 +55,7 @@ pyyaml==6.0
     # via responses
 rcssmin==1.1.1
     # via django-compressor
-requests==2.31.0
+requests==2.32.2
     # via
     #   -c requirements.txt
     #   responses
@@ -68,9 +68,15 @@ sqlparse==0.5.0
     #   -c requirements.txt
     #   django
     #   django-debug-toolbar
-types-pyyaml==6.0.12.10
+toml==0.10.2
     # via responses
-urllib3==1.26.16
+tomli==2.0.1
+    # via
+    #   build
+    #   pyproject-hooks
+types-toml==0.10.8.5
+    # via responses
+urllib3==1.26.19
     # via
     #   -c requirements.txt
     #   requests

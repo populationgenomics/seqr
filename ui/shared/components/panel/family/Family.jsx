@@ -12,7 +12,7 @@ import OptionFieldView from '../view-fields/OptionFieldView'
 import ListFieldView from '../view-fields/ListFieldView'
 import NoteListFieldView from '../view-fields/NoteListFieldView'
 import SingleFieldView from '../view-fields/SingleFieldView'
-import TagFieldView from '../view-fields/TagFieldView'
+import TagFieldView, { TagFieldDisplay } from '../view-fields/TagFieldView'
 import TextFieldView from '../view-fields/TextFieldView'
 import { InlineHeader } from '../../StyledComponents'
 import {
@@ -26,13 +26,16 @@ import {
   FAMILY_FIELD_SUCCESS_STORY_TYPE,
   FAMILY_FIELD_FIRST_SAMPLE,
   FAMILY_FIELD_NAME_LOOKUP,
+  FAMILY_FIELD_DISCOVERY_MONDO_ID,
   FAMILY_FIELD_OMIM_NUMBERS,
   FAMILY_FIELD_PMIDS, FAMILY_FIELD_DESCRIPTION, FAMILY_FIELD_SUCCESS_STORY, FAMILY_NOTES_FIELDS,
-  FAMILY_FIELD_CODED_PHENOTYPE, FAMILY_FIELD_INTERNAL_NOTES, FAMILY_FIELD_INTERNAL_SUMMARY,
-  FAMILY_FIELD_ANALYSIS_GROUPS, FAMILY_FIELD_MONDO_ID,
+  FAMILY_FIELD_CODED_PHENOTYPE, FAMILY_FIELD_INTERNAL_NOTES, FAMILY_FIELD_INTERNAL_SUMMARY, FAMILY_EXTERNAL_DATA_LOOKUP,
+  FAMILY_FIELD_ANALYSIS_GROUPS, FAMILY_FIELD_MONDO_ID, FAMILY_FIELD_EXTERNAL_DATA, FAMILY_EXTERNAL_DATA_OPTIONS,
 } from '../../../utils/constants'
 import { FirstSample, AnalystEmailDropdown, AnalysedBy, AnalysisGroups, analysisStatusIcon } from './FamilyFields'
 import FamilyLayout from './FamilyLayout'
+
+const FAMILY_NAME_FIELD_PROPS = { label: 'Name' }
 
 const ASSIGNED_ANALYST_EDIT_FIELDS = [
   {
@@ -58,6 +61,15 @@ const getNoteField = noteType => ({
   submitArgs: { noteType, nestedField: 'note' },
   ...BASE_NOTE_FIELD,
 })
+
+const MONDO_FIELD = {
+  component: SingleFieldView,
+  fieldDisplay: value => (
+    <a target="_blank" rel="noreferrer" href={`http://purl.obolibrary.org/obo/MONDO_${value.replace('MONDO:', '')}`}>
+      {value}
+    </a>
+  ),
+}
 
 const FAMILY_FIELD_RENDER_LOOKUP = {
   [FAMILY_FIELD_ANALYSIS_GROUPS]: {
@@ -89,6 +101,13 @@ const FAMILY_FIELD_RENDER_LOOKUP = {
       <AnalysedBy analysedByList={analysedByList} compact={compact} familyGuid={familyGuid} />
     ),
   },
+  [FAMILY_FIELD_EXTERNAL_DATA]: {
+    internal: true,
+    component: TagFieldView,
+    tagOptions: FAMILY_EXTERNAL_DATA_OPTIONS,
+    simplifiedValue: true,
+    fieldDisplay: value => <TagFieldDisplay displayFieldValues={value} tagLookup={FAMILY_EXTERNAL_DATA_LOOKUP} />,
+  },
   [FAMILY_FIELD_SUCCESS_STORY_TYPE]: {
     internal: true,
     component: TagFieldView,
@@ -104,13 +123,13 @@ const FAMILY_FIELD_RENDER_LOOKUP = {
   },
   [FAMILY_FIELD_CODED_PHENOTYPE]: { component: SingleFieldView, canEdit: true },
   [FAMILY_FIELD_MONDO_ID]: {
-    component: SingleFieldView,
+    ...MONDO_FIELD,
     canEdit: true,
-    fieldDisplay: value => (
-      <a target="_blank" rel="noreferrer" href={`http://purl.obolibrary.org/obo/MONDO_${value.replace('MONDO:', '')}`}>
-        {value}
-      </a>
-    ),
+  },
+  [FAMILY_FIELD_DISCOVERY_MONDO_ID]: {
+    ...MONDO_FIELD,
+    internal: true,
+    canEditFamily: ({ discoveryTags }) => discoveryTags?.length > 0,
   },
   [FAMILY_FIELD_OMIM_NUMBERS]: {
     canEditFamily: ({ postDiscoveryOmimOptions }) => Object.keys(postDiscoveryOmimOptions || {}).length > 0,
@@ -190,8 +209,8 @@ class Family extends React.PureComponent {
       values => dispatchUpdateFamily({ ...values, ...submitArgs }) : dispatchUpdateFamily
     return React.createElement(component || TextFieldView, {
       key: field.id,
-      isEditable: !disableEdit && (
-        canEdit || (canEditFamily && canEditFamily(family)) || (!disableInternalEdit && internal)),
+      isEditable: !disableEdit && (canEditFamily ? canEditFamily(family) :
+        (canEdit || (!disableInternalEdit && internal))),
       isPrivate: internal,
       fieldName: compact ? null : name,
       field: field.id,
@@ -204,25 +223,38 @@ class Family extends React.PureComponent {
     })
   }
 
+  familyHeader = () => {
+    const { family, showFamilyPageLink } = this.props
+    const content = showFamilyPageLink ?
+      <Link to={`/project/${family.projectGuid}/family_page/${family.familyGuid}`}>{family.displayName}</Link> :
+      family.displayName
+    return <InlineHeader size="small" content={content} />
+  }
+
   render() {
     const {
       project, family, fields, rightContent, compact, useFullWidth, disablePedigreeZoom, disableEdit,
-      showFamilyPageLink, annotation, hidePedigree, toggleDetails,
+      annotation, hidePedigree, toggleDetails, updateFamily: dispatchUpdateFamily,
     } = this.props
 
     if (!family) {
       return <div>Family Not Found</div>
     }
 
+    const isEditable = !disableEdit && project.canEdit
+
     let leftContent = null
     if (!hidePedigree) {
       const familyHeader = (
-        <InlineHeader
-          key="name"
-          size="small"
-          content={showFamilyPageLink ?
-            <Link to={`/project/${family.projectGuid}/family_page/${family.familyGuid}`}>{family.displayName}</Link> :
-            family.displayName}
+        <BaseFieldView
+          field="familyId"
+          idField="familyGuid"
+          initialValues={family}
+          fieldDisplay={this.familyHeader}
+          isEditable={isEditable && !!project.workspaceName && !project.isAnalystProject}
+          formFieldProps={FAMILY_NAME_FIELD_PROPS}
+          modalTitle={`Edit Family ${family.displayName}`}
+          onSubmit={dispatchUpdateFamily}
         />
       )
       leftContent = (
@@ -239,7 +271,7 @@ class Family extends React.PureComponent {
                 key="pedigree"
                 family={family}
                 disablePedigreeZoom={disablePedigreeZoom}
-                isEditable={!disableEdit && project.canEdit}
+                isEditable={isEditable}
               />
             </span>
           )}

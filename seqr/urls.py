@@ -8,7 +8,8 @@ from seqr.views.status import status_view
 from seqr.views.apis.dataset_api import add_variants_dataset_handler, sa_add_variants_dataset
 from settings import ENABLE_DJANGO_DEBUG_TOOLBAR, MEDIA_ROOT, API_LOGIN_REQUIRED_URL, LOGIN_URL, DEBUG, \
     API_POLICY_REQUIRED_URL
-from django.conf.urls import url, include
+from django.conf.urls import include
+from django.urls import re_path, path
 from django.contrib import admin
 from django.views.generic.base import RedirectView
 import django.views.static
@@ -128,24 +129,27 @@ from seqr.views.apis.data_manager_api import elasticsearch_status, upload_qc_pip
     validate_callset, get_loaded_projects, load_data
 from seqr.views.apis.report_api import \
     anvil_export, \
+    family_metadata, \
+    variant_metadata, \
     gregor_export, \
     seqr_stats
 from seqr.views.apis.summary_data_api import success_story, saved_variants_page, mme_details, hpo_summary_data, \
-    bulk_update_family_external_analysis, individual_metadata, family_metadata, variant_metadata
+    bulk_update_family_external_analysis, individual_metadata, send_vlm_email
 from seqr.views.apis.superuser_api import get_all_users
 
 from seqr.views.apis.awesomebar_api import awesomebar_autocomplete_handler
 from seqr.views.apis.auth_api import login_required_error, login_view, logout_view, policies_required_error
 from seqr.views.apis.igv_api import fetch_igv_track, receive_igv_table_handler, update_individual_igv_sample, \
     igv_genomes_proxy, receive_bulk_igv_table_handler, sa_get_igv_updates_required, sa_update_igv_individual
-from seqr.views.apis.analysis_group_api import update_analysis_group_handler, delete_analysis_group_handler
+from seqr.views.apis.analysis_group_api import update_analysis_group_handler, delete_analysis_group_handler, \
+    update_dynamic_analysis_group_handler, delete_dynamic_analysis_group_handler
 from seqr.views.apis.project_api import create_project_handler, update_project_handler, delete_project_handler, \
     project_page_data, project_families, project_overview, project_mme_submisssions, project_individuals, \
     project_analysis_groups, update_project_workspace, project_family_notes, project_collaborators, project_locus_lists, \
     project_samples, project_notifications, mark_read_project_notifications, subscribe_project_notifications
 from seqr.views.apis.project_categories_api import update_project_categories_handler
 from seqr.views.apis.anvil_workspace_api import anvil_workspace_page, create_project_from_workspace, \
-    grant_workspace_access, validate_anvil_vcf, add_workspace_data, get_anvil_vcf_list
+    grant_workspace_access, validate_anvil_vcf, add_workspace_data, get_anvil_vcf_list, get_anvil_igv_options
 from matchmaker.views import external_api
 from seqr.views.utils.file_utils import save_temp_file
 from seqr.views.apis.feature_updates_api import get_feature_updates
@@ -244,6 +248,9 @@ api_endpoints = {
     'project/(?P<project_guid>[^/]+)/analysis_groups/create': update_analysis_group_handler,
     'project/(?P<project_guid>[^/]+)/analysis_groups/(?P<analysis_group_guid>[^/]+)/update': update_analysis_group_handler,
     'project/(?P<project_guid>[^/]+)/analysis_groups/(?P<analysis_group_guid>[^/]+)/delete': delete_analysis_group_handler,
+    'project/(?P<project_guid>[^/]+)/dynamic_analysis_groups/create': update_dynamic_analysis_group_handler,
+    'project/(?P<project_guid>[^/]+)/dynamic_analysis_groups/(?P<analysis_group_guid>[^/]+)/update': update_dynamic_analysis_group_handler,
+    'project/(?P<project_guid>[^/]+)/dynamic_analysis_groups/(?P<analysis_group_guid>[^/]+)/delete': delete_dynamic_analysis_group_handler,
     'project/(?P<project_guid>[^/]+)/update_saved_variant_json': update_saved_variant_json,
     'project/(?P<project_guid>[^/]+)/add_workspace_data': add_workspace_data,
 
@@ -318,6 +325,8 @@ api_endpoints = {
     'upload_temp_file': save_temp_file,
 
     'report/anvil/(?P<project_guid>[^/]+)': anvil_export,
+    'report/family_metadata/(?P<project_guid>[^/]+)': family_metadata,
+    'report/variant_metadata/(?P<project_guid>[^/]+)': variant_metadata,
     'report/gregor': gregor_export,
     'report/seqr_stats': seqr_stats,
 
@@ -340,13 +349,13 @@ api_endpoints = {
     'summary_data/matchmaker': mme_details,
     'summary_data/update_external_analysis': bulk_update_family_external_analysis,
     'summary_data/individual_metadata/(?P<project_guid>[^/]+)': individual_metadata,
-    'summary_data/family_metadata/(?P<project_guid>[^/]+)': family_metadata,
-    'summary_data/variant_metadata/(?P<project_guid>[^/]+)': variant_metadata,
+    'summary_data/send_vlm_email': send_vlm_email,
 
     'create_project_from_workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)/grant_access': grant_workspace_access,
     'create_project_from_workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)/validate_vcf': validate_anvil_vcf,
     'create_project_from_workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)/submit': create_project_from_workspace,
     'create_project_from_workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)/get_vcf_list': get_anvil_vcf_list,
+    'anvil_workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)/get_igv_options': get_anvil_igv_options,
 
     'feature_updates': get_feature_updates,
 
@@ -366,25 +375,26 @@ api_endpoints = {
     'matchmaker/v1/metrics': external_api.mme_metrics_proxy,
 }
 
-urlpatterns = [url('^status', status_view)]
+urlpatterns = [path('status', status_view)]
 
 # anvil workspace
 anvil_workspace_url = 'workspace/(?P<namespace>[^/]+)/(?P<name>[^/]+)'
-urlpatterns += [url("^%(anvil_workspace_url)s$" % locals(), anvil_workspace_page)]
+urlpatterns += [re_path(r"^%(anvil_workspace_url)s$" % locals(), anvil_workspace_page)]
 
 # core react page templates
-urlpatterns += [url("^%(url_endpoint)s$" % locals(), main_app) for url_endpoint in react_app_pages]
-urlpatterns += [url("^%(url_endpoint)s$" % locals(), no_login_main_app) for url_endpoint in no_login_react_app_pages]
+urlpatterns += [re_path(r"^%(url_endpoint)s$" % locals(), main_app) for url_endpoint in react_app_pages]
+urlpatterns += [re_path(r"^%(url_endpoint)s$" % locals(), no_login_main_app) for url_endpoint in no_login_react_app_pages]
 
 # api
 for url_endpoint, handler_function in api_endpoints.items():
-    urlpatterns.append( url("^api/%(url_endpoint)s$" % locals(), handler_function) )
+    urlpatterns.append(re_path(r"^api/%(url_endpoint)s$" % locals(), handler_function))
+
 
 # login/ logout
 urlpatterns += [
-    url('^logout$', logout_view),
-    url(API_LOGIN_REQUIRED_URL.lstrip('/'), login_required_error),
-    url(API_POLICY_REQUIRED_URL.lstrip('/'), policies_required_error),
+    path('logout', logout_view),
+    path(API_LOGIN_REQUIRED_URL.lstrip('/'), login_required_error),
+    path(API_POLICY_REQUIRED_URL.lstrip('/'), policies_required_error),
 ]
 
 handler401 = 'seqr.views.apis.auth_api.app_login_required_error'
@@ -397,12 +407,12 @@ kibana_urls = '^(?:{})'.format('|'.join([
 ]))
 
 urlpatterns += [
-    url(kibana_urls, proxy_to_kibana, name='proxy_to_kibana'),
+    re_path(kibana_urls, proxy_to_kibana, name='proxy_to_kibana'),
 ]
 
 urlpatterns += [
-    url(r'^admin/login/$', RedirectView.as_view(url=LOGIN_URL, permanent=True, query_string=True)),
-    url(r'^admin/', admin.site.urls),
+    re_path(r'^admin/login/$', RedirectView.as_view(url=LOGIN_URL, permanent=True, query_string=True)),
+    re_path(r'^admin/', admin.site.urls),
 ]
 
 # The /media urlpattern is not needed if we are storing static media in a GCS bucket,
@@ -410,23 +420,23 @@ urlpatterns += [
 # instead, set MEDIA_ROOT in settings.py to that local path, and then this urlpattern will be enabled.
 if MEDIA_ROOT:
     urlpatterns += [
-        url(r'^media/(?P<path>.*)$', django.views.static.serve, {
+        re_path(r'^media/(?P<path>.*)$', django.views.static.serve, {
             'document_root': MEDIA_ROOT,
         }),
     ]
 
 urlpatterns += [
-    url('', include('social_django.urls')),
+    path('', include('social_django.urls')),
 ]
 
 if DEBUG:
     urlpatterns += [
-        url(r'^hijack/', include('hijack.urls')),
+        re_path(r'^hijack/', include('hijack.urls')),
     ]
 
 # django debug toolbar
 if ENABLE_DJANGO_DEBUG_TOOLBAR:
     import debug_toolbar
     urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
+        re_path(r'^__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns

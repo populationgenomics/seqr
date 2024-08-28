@@ -14,9 +14,9 @@ from seqr.views.apis.project_api import create_project_handler, delete_project_h
 from seqr.views.utils.terra_api_utils import TerraAPIException, TerraRefreshTokenFailedException
 from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, \
     PROJECT_FIELDS, LOCUS_LIST_FIELDS, PA_LOCUS_LIST_FIELDS, NO_INTERNAL_CASE_REVIEW_INDIVIDUAL_FIELDS, \
-    SAMPLE_FIELDS, FAMILY_FIELDS, INTERNAL_FAMILY_FIELDS, INTERNAL_INDIVIDUAL_FIELDS, INDIVIDUAL_FIELDS, TAG_TYPE_FIELDS, \
-    CASE_REVIEW_FAMILY_FIELDS, FAMILY_NOTE_FIELDS, MATCHMAKER_SUBMISSION_FIELDS, ANALYSIS_GROUP_FIELDS, \
-    EXT_WORKSPACE_NAMESPACE, EXT_WORKSPACE_NAME
+    SAMPLE_FIELDS, SUMMARY_FAMILY_FIELDS, INTERNAL_INDIVIDUAL_FIELDS, INDIVIDUAL_FIELDS, TAG_TYPE_FIELDS, \
+    FAMILY_NOTE_FIELDS, MATCHMAKER_SUBMISSION_FIELDS, ANALYSIS_GROUP_FIELDS, \
+    EXT_WORKSPACE_NAMESPACE, TEST_EMPTY_PROJECT_WORKSPACE, DYNAMIC_ANALYSIS_GROUP_FIELDS
 
 PROJECT_GUID = 'R0001_1kg'
 EMPTY_PROJECT_GUID = 'R0002_empty'
@@ -28,7 +28,7 @@ BASE_CREATE_PROJECT_JSON = {
     'name': 'new_project', 'description': 'new project description', 'genomeVersion': '38', 'isDemo': True,
     'disableMme': True, 'consentCode': 'H',
 }
-WORKSPACE_JSON = {'workspaceName': EXT_WORKSPACE_NAME, 'workspaceNamespace': EXT_WORKSPACE_NAMESPACE}
+WORKSPACE_JSON = {'workspaceName': TEST_EMPTY_PROJECT_WORKSPACE, 'workspaceNamespace': EXT_WORKSPACE_NAMESPACE}
 WORKSPACE_CREATE_PROJECT_JSON = deepcopy(WORKSPACE_JSON)
 WORKSPACE_CREATE_PROJECT_JSON.update(BASE_CREATE_PROJECT_JSON)
 
@@ -73,15 +73,30 @@ class ProjectAPITest(object):
 
         # check that project was created
         new_project = Project.objects.get(name='new_project')
-        self.assertEqual(new_project.description, 'new project description')
-        self.assertEqual(new_project.genome_version, '38')
-        self.assertEqual(new_project.consent_code, 'H')
-        self.assertTrue(new_project.is_demo)
-        self.assertFalse(new_project.is_mme_enabled)
         self.assertEqual(new_project.created_by, self.pm_user)
         self.assertEqual(new_project.projectcategory_set.count(), 0)
         expected_workspace_name = self.CREATE_PROJECT_JSON.get('workspaceName')
-        self.assertEqual(new_project.workspace_name, expected_workspace_name)
+        self.assertDictEqual({k: getattr(new_project, k) for k in new_project._meta.json_fields}, {
+            'guid': mock.ANY,
+            'name': 'new_project',
+            'description': 'new project description',
+            'workspace_namespace': self.CREATE_PROJECT_JSON.get('workspaceNamespace'),
+            'workspace_name': expected_workspace_name,
+            'has_case_review': False,
+            'enable_hgmd': False,
+            'is_demo': True,
+            'all_user_demo': False,
+            'consent_code': 'H',
+            'created_date': mock.ANY,
+            'last_modified_date': mock.ANY,
+            'last_accessed_date': mock.ANY,
+            'genome_version': '38',
+            'is_mme_enabled': False,
+            'mme_contact_institution': 'Broad Center for Mendelian Genomics',
+            'mme_primary_data_owner': 'Samantha Baxter',
+            'mme_contact_url': 'mailto:matchmaker@broadinstitute.org',
+            'vlm_contact_email': 'vlm@broadinstitute.org',
+        })
         self._check_created_project_groups(new_project)
 
         project_guid = new_project.guid
@@ -192,13 +207,13 @@ class ProjectAPITest(object):
         response_json = response.json()
         self.assertSetEqual(set(response_json.keys()), PROJECT_FIELDS)
 
-        self.assertEqual(response_json['workspaceName'], EXT_WORKSPACE_NAME)
+        self.assertEqual(response_json['workspaceName'], TEST_EMPTY_PROJECT_WORKSPACE)
         self.assertEqual(response_json['workspaceNamespace'], EXT_WORKSPACE_NAMESPACE)
         self.assertEqual(response_json['genomeVersion'], '37')
         self.assertNotEqual(response_json['description'], 'updated project description')
 
         project = Project.objects.get(guid=PROJECT_GUID)
-        self.assertEqual(project.workspace_name, EXT_WORKSPACE_NAME)
+        self.assertEqual(project.workspace_name, TEST_EMPTY_PROJECT_WORKSPACE)
         self.assertEqual(project.workspace_namespace, EXT_WORKSPACE_NAMESPACE)
 
     def test_project_page_data(self):
@@ -301,12 +316,14 @@ class ProjectAPITest(object):
             }],
             'WES__SV': [{'familyCounts': {'F000002_2': 3}, 'loadedDate': '2018-02-05'}],
             'WES__MITO': [{'familyCounts': {'F000002_2': 1}, 'loadedDate': '2022-02-05'}],
-            'RNA__SNV_INDEL': [{'familyCounts': {'F000001_1': 3}, 'loadedDate': '2017-02-05'}],
+            'RNA__S': [{'familyCounts': {'F000001_1': 3}, 'loadedDate': '2017-02-05'}],
+            'RNA__T': [{'familyCounts': {'F000001_1': 2}, 'loadedDate': '2017-02-05'}],
+            'RNA__E': [{'familyCounts': {'F000001_1': 1}, 'loadedDate': '2017-02-05'}],
         })
         self.assertEqual(project_response['mmeSubmissionCount'], 1)
         self.assertEqual(project_response['mmeDeletedSubmissionCount'], 0)
 
-        self.assertEqual(len(response_json['samplesByGuid']), 19)
+        self.assertEqual(len(response_json['samplesByGuid']), 16)
         self.assertSetEqual(set(next(iter(response_json['samplesByGuid'].values())).keys()), SAMPLE_FIELDS)
         self.assertDictEqual(response_json['familyTagTypeCounts'],  {
             'F000001_1': {'Review': 1, 'Tier 1 - Novel gene and phenotype': 1, 'MME Submission': 1},
@@ -366,25 +383,43 @@ class ProjectAPITest(object):
 
         family_1 = response_json['familiesByGuid']['F000001_1']
         family_3 = response_json['familiesByGuid']['F000003_3']
+        empty_family = response_json['familiesByGuid']['F000013_13']
         family_fields = {
             'individualGuids', 'discoveryTags', 'caseReviewStatuses', 'caseReviewStatusLastModified', 'hasRequiredMetadata',
-            'parents',
+            'parents', 'hasPhenotypePrioritization', 'hasRna', 'externalData',
         }
-        family_fields.update(FAMILY_FIELDS)
+        family_fields.update(SUMMARY_FAMILY_FIELDS)
         self.assertSetEqual(set(family_1.keys()), family_fields)
+        self.assertSetEqual(set(empty_family.keys()), family_fields)
 
         self.assertEqual(len(family_1['individualGuids']), 3)
         self.assertEqual(len(family_3['individualGuids']), 1)
+        self.assertEqual(len(empty_family['individualGuids']), 0)
         self.assertListEqual(family_1['caseReviewStatuses'], ['A', 'I', 'U'])
         self.assertListEqual(family_3['caseReviewStatuses'], [])
+        self.assertListEqual(empty_family['caseReviewStatuses'], [])
         self.assertEqual(family_1['caseReviewStatusLastModified'], '2017-03-12T22:34:49.964Z')
         self.assertIsNone(family_3['caseReviewStatusLastModified'])
+        self.assertIsNone(empty_family['caseReviewStatusLastModified'])
         self.assertTrue(family_1['hasRequiredMetadata'])
         self.assertFalse(family_3['hasRequiredMetadata'])
+        self.assertFalse(empty_family['hasRequiredMetadata'])
         self.assertListEqual(family_1['parents'], [{'maternalGuid': 'I000003_na19679', 'paternalGuid': 'I000002_na19678'}])
         self.assertListEqual(family_3['parents'], [])
+        self.assertListEqual(empty_family['parents'], [])
+        self.assertEqual(family_1['hasPhenotypePrioritization'], True)
+        self.assertFalse(family_3['hasPhenotypePrioritization'], False)
+        self.assertFalse(empty_family['hasPhenotypePrioritization'], False)
+        self.assertEqual(family_1['hasRna'], True)
+        self.assertFalse(family_3['hasRna'], False)
+        self.assertFalse(empty_family['hasRna'], False)
+        self.assertListEqual(family_1['externalData'], ['M'])
+        self.assertListEqual(family_3['externalData'], [])
+        self.assertListEqual(empty_family['externalData'], [])
+
 
         self.assertListEqual(family_3['discoveryTags'], [])
+        self.assertListEqual(empty_family['discoveryTags'], [])
         self.assertSetEqual({tag['variantGuid'] for tag in family_1['discoveryTags']}, {'SV0000001_2103343353_r0390_100'})
         self.assertSetEqual(
             {tag['variantGuid'] for tag in response_json['familiesByGuid']['F000002_2']['discoveryTags']},
@@ -399,22 +434,6 @@ class ProjectAPITest(object):
         # Test empty project
         empty_url = reverse(project_families, args=[EMPTY_PROJECT_GUID])
         self._check_empty_project(empty_url, response_keys)
-
-        # Test analyst users have internal fields returned
-        self.login_analyst_user()
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-        response_json = response.json()
-        family_fields.update(CASE_REVIEW_FAMILY_FIELDS)
-        internal_fields = deepcopy(family_fields)
-        internal_fields.update(INTERNAL_FAMILY_FIELDS)
-        self.assertSetEqual(set(next(iter(response_json['familiesByGuid'].values())).keys()), internal_fields)
-
-        self.mock_analyst_group.__str__.return_value = ''
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertSetEqual(set(next(iter(response.json()['familiesByGuid'].values())).keys()), family_fields)
 
     def test_project_individuals(self):
         url = reverse(project_individuals, args=[PROJECT_GUID])
@@ -469,7 +488,7 @@ class ProjectAPITest(object):
         response_keys = {'samplesByGuid'}
         self.assertSetEqual(set(response_json.keys()), response_keys)
 
-        self.assertEqual(len(response_json['samplesByGuid']), 20)
+        self.assertEqual(len(response_json['samplesByGuid']), 17)
         self.assertSetEqual(set(next(iter(response_json['samplesByGuid'].values())).keys()), SAMPLE_FIELDS)
 
         # Test empty project
@@ -486,10 +505,20 @@ class ProjectAPITest(object):
         response_json = response.json()
         response_keys = {'analysisGroupsByGuid'}
         self.assertSetEqual(set(response_json.keys()), response_keys)
-        self.assertEqual(len(response_json['analysisGroupsByGuid']), 2)
+        self.assertEqual(len(response_json['analysisGroupsByGuid']), 4)
         self.assertSetEqual(
-            set(next(iter(response_json['analysisGroupsByGuid'].values())).keys()), ANALYSIS_GROUP_FIELDS
+            set(response_json['analysisGroupsByGuid']['AG0000183_test_group'].keys()), ANALYSIS_GROUP_FIELDS
         )
+        self.assertSetEqual(
+            set(response_json['analysisGroupsByGuid']['DAG0000002_my_new_cases'].keys()), DYNAMIC_ANALYSIS_GROUP_FIELDS
+        )
+
+        response = self.client.get(url.replace(PROJECT_GUID, DEMO_PROJECT_GUID))
+        self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(response.json(), {'analysisGroupsByGuid': {'DAG0000001_unsolved': {
+            'analysisGroupGuid': 'DAG0000001_unsolved', 'projectGuid': None, 'name': 'Unsolved',
+            'criteria': {'firstSample': ['SHOW_DATA_LOADED'], 'analysisStatus': ['I', 'P', 'C', 'Rncc', 'Rcpc']},
+        }}})
 
     def test_project_locus_lists(self):
         url = reverse(project_locus_lists, args=[PROJECT_GUID])
@@ -678,8 +707,8 @@ class LocalProjectAPITest(AuthenticationTestCase, ProjectAPITest):
 #     PROJECT_COLLABORATOR_GROUPS = None
 #     HAS_EMPTY_PROJECT = False
 #
-#     def test_create_and_delete_project(self):
-#         super(AnvilProjectAPITest, self).test_create_and_delete_project()
+#     def test_create_and_delete_project(self, *args, **kwargs):
+#         super(AnvilProjectAPITest, self).test_create_and_delete_project(*args, **kwargs)
 #         self.mock_list_workspaces.assert_not_called()
 #         self.mock_get_ws_acl.assert_not_called()
 #         self.mock_get_group_members.assert_not_called()
@@ -688,10 +717,27 @@ class LocalProjectAPITest(AuthenticationTestCase, ProjectAPITest):
 #             mock.call(self.pm_user)])
 #         self.mock_get_ws_access_level.assert_has_calls([
 #             mock.call(self.pm_user, 'bar', 'foo'),
-#             mock.call(self.pm_user, 'my-seqr-billing', 'anvil-no-project-workspace2'),
+#             mock.call(self.pm_user, 'ext-data', 'empty'),
 #         ])
 #
+#     def _assert_expected_airtable_requests(self, mock_airtable_logger):
+#         self.assertEqual(responses.calls[1].request.url, f'{self.AIRTABLE_TRACKING_URL}/recH4SEO1CeoIlOiE')
+#         self.assertEqual(responses.calls[1].request.method, 'PATCH')
+#         self.assertDictEqual(json.loads(responses.calls[1].request.body), {'fields': {'Status': 'Project Deleted'}})
+#
+#         self.assertEqual(responses.calls[2].request.url, f'{self.AIRTABLE_TRACKING_URL}/recSgwrXNkmlIB5eM')
+#         self.assertEqual(responses.calls[2].request.method, 'PATCH')
+#         self.assertDictEqual(json.loads(responses.calls[2].request.body), {'fields': {'Status': 'Project Deleted'}})
+#
+#         mock_airtable_logger.error.assert_called_with(
+#             'Airtable patch "AnVIL Seqr Loading Requests Tracking" error: 400 Client Error: Bad Request for url: http://testairtable/appUelDNM3BnWaR7M/AnVIL%20Seqr%20Loading%20Requests%20Tracking/recH4SEO1CeoIlOiE',
+#             self.pm_user, detail={
+#                 'or_filters': {'Status': ['Loading', 'Loading Requested', 'Available in Seqr']},
+#                 'and_filters': {'AnVIL Project URL': '/project/R0005_new_project/project_page'},
+#                 'update': {'Status': 'Project Deleted'}})
+#
 #     def _check_created_project_groups(self, project):
+#         super()._check_created_project_groups(project)
 #         self.assertIsNone(project.can_edit_group)
 #         self.assertIsNone(project.can_view_group)
 #
@@ -719,7 +765,7 @@ class LocalProjectAPITest(AuthenticationTestCase, ProjectAPITest):
 #         super(AnvilProjectAPITest, self).test_project_overview()
 #         self.mock_list_workspaces.assert_not_called()
 #         self.assert_no_extra_anvil_calls()
-#         self.mock_get_ws_access_level.assert_called_with(self.collaborator_user, 'my-seqr-billing', 'empty')
+#         self.mock_get_ws_access_level.assert_called_with(self.collaborator_user, 'ext-data', 'empty')
 #         self.assertEqual(self.mock_get_ws_access_level.call_count, 4)
 #
 #     def test_project_collaborators(self):

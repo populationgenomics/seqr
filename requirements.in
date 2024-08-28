@@ -1,4 +1,4 @@
-Django<3.3                        # core server-side framework
+Django>=4.2,<4.3                  # core server-side framework
 django-anymail                    # for sending emails using cloud-based mail service providers
 django-csp                        # for setting CSP headers
 django-guardian                   # object-level permissions for database records. Behind a major version due to missing Python 2 support
@@ -27,3 +27,4 @@ google-cloud-storage==1.44.0      # read GCS blobs
 google-cloud-logging==2.6.0      # Improves logging in update_reference_server.py cron script
 feedparser
 markdownify
+tenacity

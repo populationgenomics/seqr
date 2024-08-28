@@ -7,7 +7,7 @@ import responses
 
 from seqr.models import Project, Family, Individual
 from seqr.views.apis.anvil_workspace_api import anvil_workspace_page, create_project_from_workspace, \
-    validate_anvil_vcf, grant_workspace_access, add_workspace_data, get_anvil_vcf_list
+    validate_anvil_vcf, grant_workspace_access, add_workspace_data, get_anvil_vcf_list, get_anvil_igv_options
 from seqr.views.utils.test_utils import AnvilAuthenticationTestCase, AuthenticationTestCase, AirflowTestCase, \
     TEST_WORKSPACE_NAMESPACE, TEST_WORKSPACE_NAME, TEST_WORKSPACE_NAME1, TEST_NO_PROJECT_WORKSPACE_NAME, TEST_NO_PROJECT_WORKSPACE_NAME2
 from seqr.views.utils.terra_api_utils import remove_token, TerraAPIException, TerraRefreshTokenFailedException
@@ -15,17 +15,19 @@ from settings import SEQR_SLACK_ANVIL_DATA_LOADING_CHANNEL, SEQR_SLACK_LOADING_N
 
 LOAD_SAMPLE_DATA = [
     ["Family ID", "Individual ID", "Previous Individual ID", "Paternal ID", "Maternal ID", "Sex", "Affected Status",
-     "Notes", "familyNotes"],
-    ["1", " NA19675_1 ", "NA19675_1 ", "NA19678 ", "", "Female", "Affected", "A affected individual, test1-zsf", ""],
-    ["1", "NA19678", "", "", "", "Male", "Unaffected", "a individual note", ""],
-    ["21", " HG00735", "", "", "", "Unknown", "Unknown", "", "a new family"]]
+     "HPO Terms", "Notes", "familyNotes"],
+    ["1", " NA19675_1 ", "NA19675_1 ", "NA19678 ", "", "Female", "Affected", "HP:0012469 (Infantile spasms); HP:0011675 (Arrhythmia)", "A affected individual, test1-zsf", ""],
+    ["1", "NA19678", "", "", "", "Male", "Unaffected", "", "a individual note", ""],
+    ["21", " HG00735", "", "", "", "Unknown", "Affected", "HP:0001508,HP:0001508", "", "a new family"]]
 
-BAD_SAMPLE_DATA = [["1", "NA19674", "NA19674_1", "NA19678", "NA19679", "Female", "Affected", "A affected individual, test1-zsf", ""]]
-INVALID_ADDED_SAMPLE_DATA = [['22', 'HG00731', 'HG00731', '', '', 'Female', 'Affected', '', '']]
+BAD_SAMPLE_DATA = [["1", "NA19674", "NA19674_1", "NA19678", "NA19679", "Female", "Affected", "", "A affected individual, test1-zsf", ""],
+                   ["1", "NA19681", "", "", "", "Male", "Affected", "HP:0100258", "", ""]]
+INVALID_ADDED_SAMPLE_DATA = [['22', 'HG00731', 'HG00731', '', '', 'Female', 'Affected', 'HP:0011675', '', '']]
 
-MISSING_REQUIRED_SAMPLE_DATA = [["21", "HG00736", "", "", "", "", "", "", ""]]
+MISSING_REQUIRED_SAMPLE_DATA = [["21", "HG00736", "", "", "", "", "", "", "", ""]]
 
-LOAD_SAMPLE_DATA_EXTRA_SAMPLE = LOAD_SAMPLE_DATA + [["1", "NA19679", "", "", "", "Male", "Affected", "", ""]]
+LOAD_SAMPLE_DATA_EXTRA_SAMPLE = LOAD_SAMPLE_DATA + [["1", "NA19679", "", "", "", "Male", "Affected", "HP:0011675", "", ""],
+                                                    ["22", "HG00736", "", "", "", "Unknown", "Unknown", "", "", ""]]
 
 FILE_DATA = [
     '##fileformat=VCFv4.2\n',
@@ -199,27 +201,40 @@ DATA_LINES = [
 #         self.assertEqual(response.url, '/project/R0001_1kg/project_page')
 #         self.mock_get_ws_access_level.assert_not_called()
 
-#     @mock.patch('seqr.views.apis.anvil_workspace_api.logger')
-#     @mock.patch('seqr.views.apis.anvil_workspace_api.time')
-#     @mock.patch('seqr.views.apis.anvil_workspace_api.has_service_account_access')
-#     @mock.patch('seqr.views.apis.anvil_workspace_api.add_service_account')
-#     def test_grant_workspace_access(self, mock_add_service_account, mock_has_service_account, mock_time, mock_logger, mock_utils_logger):
-
-#         # Requesting to load data from a workspace without an existing project
-#         url = reverse(grant_workspace_access,
-#                       args=[TEST_WORKSPACE_NAMESPACE, TEST_NO_PROJECT_WORKSPACE_NAME])
-#         self.check_manager_login(url, login_redirect_url='/login/google-oauth2')
-#         mock_utils_logger.warning.assert_called_with('User does not have sufficient permissions for workspace {}/{}'
-#                                                      .format(TEST_WORKSPACE_NAMESPACE,
-#                                                              TEST_NO_PROJECT_WORKSPACE_NAME),
-#                                                      self.collaborator_user)
-#         self.mock_get_ws_access_level.assert_called_with(self.collaborator_user, TEST_WORKSPACE_NAMESPACE,
-#                                                          TEST_NO_PROJECT_WORKSPACE_NAME)
-
-#         response = self.client.post(url, content_type='application/json', data=json.dumps({}))
+#         # Test bad data path
+#         mock_subprocess.return_value.wait.return_value = -1
+#         mock_subprocess.return_value.stdout = [b'File not found']
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.reason_phrase,
-#                          'Must agree to grant seqr access to the data in the associated workspace.')
+#         self.assertListEqual(response.json()['errors'], ['Data file or path /test_path.vcf.gz is not found.'])
+#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path.vcf.gz', stdout=-1, stderr=-2, shell=True)  # nosec
+#         mock_file_logger.info.assert_has_calls([
+#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf.gz', self.manager_user),
+#             mock.call('File not found', self.manager_user),
+#         ])
+
+#         # Test bad sharded data path
+#         mock_file_logger.reset_mock()
+#         mock_subprocess.return_value.communicate.return_value = b'', b'File not found'
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_SHARDED_DATA_PATH))
+#         self.assertEqual(response.status_code, 400)
+#         self.assertListEqual(response.json()['errors'], ['Data file or path /test_path-*.vcf.gz is not found.'])
+#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path-*.vcf.gz', stdout=-1, stderr=-1, shell=True)  # nosec
+#         mock_file_logger.info.assert_has_calls([
+#             mock.call('==> gsutil ls gs://test_bucket/test_path-*.vcf.gz', self.manager_user),
+#             mock.call('File not found', self.manager_user),
+#         ])
+
+#         # Test empty sharded data path
+#         mock_file_logger.reset_mock()
+#         mock_subprocess.return_value.communicate.return_value = b'\n', b''
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_SHARDED_DATA_PATH))
+#         self.assertEqual(response.status_code, 400)
+#         self.assertListEqual(response.json()['errors'], ['Data file or path /test_path-*.vcf.gz is not found.'])
+#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path-*.vcf.gz', stdout=-1, stderr=-1, shell=True)  # nosec
+#         mock_file_logger.info.assert_has_calls([
+#             mock.call('==> gsutil ls gs://test_bucket/test_path-*.vcf.gz', self.manager_user),
+#         ])
 
 #         # Test adding service account exception
 #         mock_add_service_account.side_effect = TerraAPIException(
@@ -231,17 +246,23 @@ DATA_LINES = [
 #                          'Failed to grant seqr service account access to the workspace {}/{}'
 #                          .format(TEST_WORKSPACE_NAMESPACE, TEST_NO_PROJECT_WORKSPACE_NAME))
 
-#         # Test adding service account never processes
-#         mock_add_service_account.reset_mock(side_effect=True)
-#         mock_add_service_account.return_value = True
-#         mock_has_service_account.return_value = False
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(GRANT_ACCESS_BODY))
+#         # test no header line
+#         mock_subprocess.reset_mock()
+#         mock_subprocess.return_value.wait.return_value = 0
+#         mock_subprocess.return_value.stdout = BASIC_META + DATA_LINES
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
 #         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.json()['error'], 'Failed to grant seqr service account access to the workspace')
-#         mock_has_service_account.assert_called_with(self.manager_user, TEST_WORKSPACE_NAMESPACE,
-#                                                     TEST_NO_PROJECT_WORKSPACE_NAME)
-#         self.assertEqual(mock_has_service_account.call_count, 2)
-#         self.assertEqual(mock_time.sleep.call_count, 2)
+#         self.assertListEqual(response.json()['errors'], ['No header found in the VCF file.'])
+#         mock_subprocess.assert_has_calls([
+#             mock.call('gsutil ls gs://test_bucket/test_path.vcf.gz', stdout=-1, stderr=-2, shell=True),  # nosec
+#             mock.call().wait(),
+#             mock.call('gsutil cat -r 0-65536 gs://test_bucket/test_path.vcf.gz | gunzip -c -q - ',
+#                       stdout=-1, stderr=-2, shell=True),  # nosec
+#         ])
+#         mock_file_logger.info.assert_has_calls([
+#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf.gz', self.manager_user),
+#             mock.call('==> gsutil cat -r 0-65536 gs://test_bucket/test_path.vcf.gz | gunzip -c -q - ', None),
+#         ])
 
 #         # Test valid operation
 #         mock_time.reset_mock()
@@ -279,31 +300,40 @@ DATA_LINES = [
 #                                                              TEST_NO_PROJECT_WORKSPACE_NAME),
 #                                                      self.collaborator_user)
 
-#         # Test missing required fields in the request body
-#         response = self.client.post(url, content_type='application/json', data=json.dumps({}))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertEqual(response.reason_phrase, 'Field(s) "genomeVersion, dataPath" are required')
-#         self.mock_get_ws_access_level.assert_called_with(self.manager_user, TEST_WORKSPACE_NAMESPACE,
-#                                                          TEST_NO_PROJECT_WORKSPACE_NAME,
-#                                                          meta_fields=['workspace.bucketName'])
-
-#         # Test pending loading project
-#         response = self.client.post(url, content_type='application/json', data=json.dumps({**VALIDATE_VCF_BODY, 'genomeVersion': '37'}))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], [
-#             'Project "Empty Project" is awaiting loading. Please wait for loading to complete before requesting additional data loading'
+#         # Test valid operations
+#         mock_subprocess.reset_mock()
+#         mock_file_logger.reset_mock()
+#         mock_subprocess.return_value.stdout = BASIC_META + INFO_META + FORMAT_META + REFERENCE_META + HEADER_LINE + DATA_LINES
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(VALIDATE_VCF_BODY))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertDictEqual(response.json(), VALIDATE_VFC_RESPONSE)
+#         mock_subprocess.assert_has_calls([
+#             mock.call('gsutil ls gs://test_bucket/test_path.vcf', stdout=-1, stderr=-2, shell=True),  # nosec
+#             mock.call().wait(),
+#             mock.call('gsutil cat gs://test_bucket/test_path.vcf', stdout=-1, stderr=-2, shell=True),  # nosec
 #         ])
-#
-#         # Test bad data path
-#         mock_subprocess.return_value.wait.return_value = -1
-#         mock_subprocess.return_value.stdout = [b'File not found']
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], ['Data file or path /test_path.vcf.gz is not found.'])
-#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path.vcf.gz', stdout=-1, stderr=-2, shell=True)
 #         mock_file_logger.info.assert_has_calls([
-#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf.gz', self.manager_user),
-#             mock.call('File not found', self.manager_user),
+#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf', self.manager_user),
+#             mock.call('==> gsutil cat gs://test_bucket/test_path.vcf', None),
+#         ])
+
+#         # Test a valid sharded VCF file path
+#         mock_subprocess.reset_mock()
+#         mock_file_exist_or_list_subproc = mock.MagicMock()
+#         mock_get_header_subproc = mock.MagicMock()
+#         mock_subprocess.side_effect = [mock_file_exist_or_list_subproc, mock_get_header_subproc]
+#         mock_file_exist_or_list_subproc.communicate.return_value = b'gs://test_bucket/test_path-001.vcf.gz\ngs://test_bucket/test_path-102.vcf.gz\n', None
+#         mock_get_header_subproc.stdout = BASIC_META + INFO_META + FORMAT_META + HEADER_LINE + DATA_LINES
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_SHARDED_DATA_PATH))
+#         self.assertEqual(response.status_code, 200)
+#         self.assertEqual(response.json(), {'fullDataPath': 'gs://test_bucket/test_path-*.vcf.gz', 'vcfSamples': ['HG00735', 'NA19675_1', 'NA19678']})
+#         mock_subprocess.assert_has_calls([
+#             mock.call('gsutil ls gs://test_bucket/test_path-*.vcf.gz', stdout=-1, stderr=-1, shell=True),  # nosec
+#             mock.call('gsutil cat -r 0-65536 gs://test_bucket/test_path-001.vcf.gz | gunzip -c -q - ', stdout=-1, stderr=-2, shell=True),  # nosec
+#         ])
+#         mock_file_logger.info.assert_has_calls([
+#             mock.call('==> gsutil ls gs://test_bucket/test_path-*.vcf.gz', self.manager_user),
+#             mock.call('==> gsutil cat -r 0-65536 gs://test_bucket/test_path-001.vcf.gz | gunzip -c -q - ', None),
 #         ])
 
 #         # Test bad sharded data path
@@ -318,38 +348,65 @@ DATA_LINES = [
 #             mock.call('File not found', self.manager_user),
 #         ])
 
-#         # Test empty sharded data path
-#         mock_file_logger.reset_mock()
-#         mock_subprocess.return_value.communicate.return_value = b'\n', b''
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_SHARDED_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], ['Data file or path /test_path-*.vcf.gz is not found.'])
-#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket/test_path-*.vcf.gz', stdout=-1, stderr=-1, shell=True)
-#         mock_file_logger.info.assert_has_calls([
-#             mock.call('==> gsutil ls gs://test_bucket/test_path-*.vcf.gz', self.manager_user),
-#         ])
+#     @mock.patch('seqr.utils.file_utils.logger')
+#     @mock.patch('seqr.utils.file_utils.subprocess.Popen')
+#     def test_get_anvil_igv_options(self, *args):
+#         url = reverse(get_anvil_igv_options, args=[TEST_WORKSPACE_NAMESPACE, TEST_WORKSPACE_NAME1])
+#         expected_options = [
+#             {'name': '/test.bam', 'value': 'gs://test_bucket/test.bam'},
+#             {'name': '/data/test.cram', 'value': 'gs://test_bucket/data/test.cram'},
+#         ]
+#         self._test_get_workspace_files(url, 'igv_options', expected_options, *args)
 
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_BAD_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'],
-#                          ['Invalid VCF file format - file path must end with .vcf or .vcf.gz or .vcf.bgz'])
+#     @mock.patch('seqr.utils.file_utils.logger')
+#     @mock.patch('seqr.utils.file_utils.subprocess.Popen')
+#     def test_get_anvil_vcf_list(self, *args):
+#         url = reverse(get_anvil_vcf_list, args=[TEST_WORKSPACE_NAMESPACE, TEST_WORKSPACE_NAME1])
+#         expected_files = [
+#             '/test.vcf', '/data/test.vcf.gz', '/data/test-101.vcf.gz', '/data/test-102.vcf.gz', '/sharded/test-*.vcf.gz',
+#         ]
+#         self._test_get_workspace_files(url, 'dataPathList', expected_files, *args)
 
-#         # test no header line
+#     def _test_get_workspace_files(self, url, response_key, expected_files, mock_subprocess, mock_file_logger, mock_utils_logger):
+#         self.check_manager_login(url, login_redirect_url='/login/google-oauth2')
+#         mock_utils_logger.warning.assert_called_with('User does not have sufficient permissions for workspace {}/{}'
+#                                                      .format(TEST_WORKSPACE_NAMESPACE, TEST_WORKSPACE_NAME1),
+#                                                      self.collaborator_user)
+
+#         # Test empty bucket
+#         mock_subprocess.return_value.communicate.return_value = b'', None
+#         response = self.client.get(url, content_type='application/json')
+#         self.assertEqual(response.status_code, 200)
+#         self.assertDictEqual(response.json(), {response_key: []})
+#         mock_subprocess.assert_called_with('gsutil ls gs://test_bucket', stdout=-1, stderr=-1, shell=True)  # nosec
+#         mock_file_logger.info.assert_called_with('==> gsutil ls gs://test_bucket', self.manager_user)
+
+#         # Test a valid operation
 #         mock_subprocess.reset_mock()
-#         mock_subprocess.return_value.wait.return_value = 0
-#         mock_subprocess.return_value.stdout = BASIC_META + DATA_LINES
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], ['No header found in the VCF file.'])
+#         mock_file_logger.reset_mock()
+#         mock_subprocess.return_value.communicate.return_value = b'\n'.join([
+#             b'Warning: some packages are out of date',
+#             b'gs://test_bucket/test.vcf', b'gs://test_bucket/test.tsv',
+#             b'gs://test_bucket/test.bam', b'gs://test_bucket/test.bam.bai', b'gs://test_bucket/data/test.cram',
+#             # path with common prefix but not sharded VCFs
+#             b'gs://test_bucket/data/test.vcf.gz', b'gs://test_bucket/data/test-101.vcf.gz',
+#             b'gs://test_bucket/data/test-102.vcf.gz',
+#             # sharded VCFs
+#             b'gs://test_bucket/sharded/test-101.vcf.gz', b'gs://test_bucket/sharded/test-102.vcf.gz',
+#             b'gs://test_bucket/sharded/test-2345.vcf.gz\n'
+#         ]), None
+#         response = self.client.get(url, content_type='application/json')
+#         self.assertEqual(response.status_code, 200)
+#         self.assertDictEqual(response.json(), {response_key: expected_files})
 #         mock_subprocess.assert_has_calls([
-#             mock.call('gsutil ls gs://test_bucket/test_path.vcf.gz', stdout=-1, stderr=-2, shell=True),
-#             mock.call().wait(),
-#             mock.call('gsutil cat -r 0-65536 gs://test_bucket/test_path.vcf.gz | gunzip -c -q - ',
-#                       stdout=-1, stderr=-2, shell=True),
+#             mock.call('gsutil ls gs://test_bucket', stdout=-1, stderr=-1, shell=True),  # nosec
+#             mock.call().communicate(),
+#             mock.call('gsutil ls gs://test_bucket/**', stdout=-1, stderr=-1, shell=True),  # nosec
+#             mock.call().communicate(),
 #         ])
 #         mock_file_logger.info.assert_has_calls([
-#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf.gz', self.manager_user),
-#             mock.call('==> gsutil cat -r 0-65536 gs://test_bucket/test_path.vcf.gz | gunzip -c -q - ', None),
+#             mock.call('==> gsutil ls gs://test_bucket', self.manager_user),
+#             mock.call('==> gsutil ls gs://test_bucket/**', self.manager_user),
 #         ])
 
 #         # test header errors
@@ -360,38 +417,27 @@ DATA_LINES = [
 #             'Missing required VCF header field(s) POS, FILTER, INFO, FORMAT.'
 #         ])
 
-#         # test no samples
-#         mock_subprocess.return_value.stdout = BASIC_META + NO_SAMPLE_HEADER_LINE + DATA_LINES
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], ['No samples found in the provided VCF.'])
+# class LoadAnvilDataAPITest(AirflowTestCase):
+#     fixtures = ['users', 'social_auth', 'reference_data', '1kg_project']
 
-#         # test meta info errors
-#         mock_subprocess.return_value.stdout = BASIC_META + BAD_INFO_META + BAD_FORMAT_META + HEADER_LINE + DATA_LINES
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY_GZ_DATA_PATH))
-#         self.assertEqual(response.status_code, 400)
-#         self.assertListEqual(response.json()['errors'], [
-#             'Missing required FORMAT field(s) GT',
-#             'Incorrect meta Type for FORMAT.GQ - expected "Integer", got "String"',
-#             'Mismatched genome version - VCF metadata indicates GRCh37, GRCH38 provided',
-#         ])
+#     LOADING_PROJECT_GUID = f'P_{TEST_NO_PROJECT_WORKSPACE_NAME}'
+#     ADDITIONAL_REQUEST_COUNT = 1
 
-#         # Test valid operations
-#         mock_subprocess.reset_mock()
-#         mock_file_logger.reset_mock()
-#         mock_subprocess.return_value.stdout = BASIC_META + INFO_META + FORMAT_META + REFERENCE_META + HEADER_LINE + DATA_LINES
-#         response = self.client.post(url, content_type='application/json', data=json.dumps(VALIDATE_VCF_BODY))
-#         self.assertEqual(response.status_code, 200)
-#         self.assertDictEqual(response.json(), VALIDATE_VFC_RESPONSE)
-#         mock_subprocess.assert_has_calls([
-#             mock.call('gsutil ls gs://test_bucket/test_path.vcf', stdout=-1, stderr=-2, shell=True),
-#             mock.call().wait(),
-#             mock.call('gsutil cat gs://test_bucket/test_path.vcf', stdout=-1, stderr=-2, shell=True),
-#         ])
-#         mock_file_logger.info.assert_has_calls([
-#             mock.call('==> gsutil ls gs://test_bucket/test_path.vcf', self.manager_user),
-#             mock.call('==> gsutil cat gs://test_bucket/test_path.vcf', None),
-#         ])
+#     @staticmethod
+#     def _get_dag_variable_overrides(additional_tasks_check):
+#         variables = {
+#             'project': LoadAnvilDataAPITest.LOADING_PROJECT_GUID,
+#             'callset_path': 'test_path.vcf',
+#             'sample_source': 'AnVIL',
+#             'sample_type': 'WES',
+#             'dataset_type': 'SNV_INDEL',
+#         }
+#         if additional_tasks_check:
+#             variables.update({
+#                 'project': PROJECT1_GUID,
+#                 'reference_genome': 'GRCh37',
+#             })
+#         return variables
 
 #        # Test a valid sharded VCF file path
 #        mock_subprocess.reset_mock()
@@ -412,13 +458,41 @@ DATA_LINES = [
 #            mock.call('==> gsutil cat -r 0-65536 gs://test_bucket/test_path-001.vcf.gz | gunzip -c -q - ', None),
 #        ])
 
-#         # Test logged in locally
-#         remove_token(
-#             self.manager_user)  # The user will look like having logged in locally after the access token is removed
-#         response = self.client.post(url)
-#         self.assertEqual(response.status_code, 302)
-#         self.assertEqual(response.url,
-#                          '/login/google-oauth2?next=/api/create_project_from_workspace/my-seqr-billing/anvil-no-project-workspace1/validate_vcf')
+#         patcher = mock.patch('seqr.views.utils.permissions_utils.logger')
+#         self.mock_utils_logger = patcher.start()
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.utils.airtable_utils.logger')
+#         self.mock_airtable_logger = patcher.start()
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.load_uploaded_file')
+#         self.mock_load_file = patcher.start()
+#         self.mock_load_file.return_value = LOAD_SAMPLE_DATA
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.utils.export_utils.mv_file_to_gs')
+#         self.mock_mv_file = patcher.start()
+#         self.mock_mv_file.return_value = True
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.utils.airflow_utils.run_gsutil_with_wait')
+#         self.mock_gsutil = patcher.start()
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.utils.export_utils.TemporaryDirectory')
+#         mock_tempdir = patcher.start()
+#         mock_tempdir.return_value.__enter__.return_value = TEMP_PATH
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.utils.export_utils.open')
+#         self.mock_temp_open = patcher.start()
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.logger')
+#         self.mock_api_logger = patcher.start()
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.datetime')
+#         self.mock_datetime = patcher.start()
+#         self.mock_datetime.now.side_effect = lambda: datetime(2021, 3, 1, 0, 0, 0)
+#         self.addCleanup(patcher.stop)
+#         self.addCleanup(patcher.stop)
+#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.send_html_email')
+#         self.mock_send_email = patcher.start()
+#         self.addCleanup(patcher.stop)
 
 #     @mock.patch('seqr.utils.file_utils.logger')
 #     @mock.patch('seqr.utils.file_utils.subprocess.Popen')
@@ -466,76 +540,35 @@ DATA_LINES = [
 #             mock.call('==> gsutil ls gs://test_bucket/**', self.manager_user),
 #         ])
 
-
-# class LoadAnvilDataAPITest(AirflowTestCase):
-#     fixtures = ['users', 'social_auth', '1kg_project']
-#
-#     LOADING_PROJECT_GUID = f'P_{TEST_NO_PROJECT_WORKSPACE_NAME}'
-#     DAG_NAME = 'v03_pipeline-SNV_INDEL'
-#     ADDITIONAL_REQUEST_COUNT = 1
-#
-#     @staticmethod
-#     def _get_dag_variable_overrides(additional_tasks_check):
-#         variables = {
-#             'project': LoadAnvilDataAPITest.LOADING_PROJECT_GUID,
-#             'callset_path': 'test_path.vcf',
-#             'sample_source': 'AnVIL',
-#             'sample_type': 'WES',
-#         }
-#         if additional_tasks_check:
-#             variables.update({
-#                 'project': PROJECT1_GUID,
-#                 'reference_genome': 'GRCh37',
-#             })
-#         return variables
-#
-#     def setUp(self):
-#         # Set up api responses
-#         responses.add(responses.POST, f'{MOCK_AIRTABLE_URL}/appUelDNM3BnWaR7M/AnVIL%20Seqr%20Loading%20Requests%20Tracking', status=400)
-#         patcher = mock.patch('seqr.views.utils.airtable_utils.AIRTABLE_API_KEY', MOCK_AIRTABLE_KEY)
-#         patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.utils.airtable_utils.AIRTABLE_URL', MOCK_AIRTABLE_URL)
-#         patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.BASE_URL', 'http://testserver/')
-#         patcher.start()
-#         self.addCleanup(patcher.stop)
-#
-#         patcher = mock.patch('seqr.views.utils.permissions_utils.logger')
-#         self.mock_utils_logger = patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.utils.airtable_utils.logger')
-#         self.mock_airtable_logger = patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.load_uploaded_file')
-#         self.mock_load_file = patcher.start()
+#         # Test valid operation
+#         responses.calls.reset()
+#         self.mock_authorized_session.reset_mock()
 #         self.mock_load_file.return_value = LOAD_SAMPLE_DATA
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.utils.export_utils.mv_file_to_gs')
-#         self.mock_mv_file = patcher.start()
-#         self.mock_mv_file.return_value = True
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.utils.export_utils.TemporaryDirectory')
-#         mock_tempdir = patcher.start()
-#         mock_tempdir.return_value.__enter__.return_value = TEMP_PATH
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.utils.export_utils.open')
-#         self.mock_temp_open = patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.logger')
-#         self.mock_api_logger = patcher.start()
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.datetime')
-#         self.mock_datetime = patcher.start()
-#         self.mock_datetime.now.side_effect = lambda: datetime(2021, 3, 1, 0, 0, 0)
-#         self.addCleanup(patcher.stop)
-#         self.addCleanup(patcher.stop)
-#         patcher = mock.patch('seqr.views.apis.anvil_workspace_api.send_html_email')
-#         self.mock_send_email = patcher.start()
-#         self.addCleanup(patcher.stop)
-#
-#         super().setUp()
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY))
+#         self.assertEqual(response.status_code, 200)
+#         project = Project.objects.get(workspace_namespace=TEST_WORKSPACE_NAMESPACE, workspace_name=TEST_NO_PROJECT_WORKSPACE_NAME)
+#         response_json = response.json()
+#         self.assertDictEqual({k: getattr(project, k) for k in project._meta.json_fields}, {
+#             'guid': response_json['projectGuid'],
+#             'name': TEST_NO_PROJECT_WORKSPACE_NAME,
+#             'description': 'A test project',
+#             'workspace_namespace': TEST_WORKSPACE_NAMESPACE,
+#             'workspace_name': TEST_NO_PROJECT_WORKSPACE_NAME,
+#             'has_case_review': False,
+#             'enable_hgmd': False,
+#             'is_demo': False,
+#             'all_user_demo': False,
+#             'consent_code': None,
+#             'created_date': mock.ANY,
+#             'last_modified_date': mock.ANY,
+#             'last_accessed_date': mock.ANY,
+#             'genome_version': '38',
+#             'is_mme_enabled': True,
+#             'mme_contact_institution': 'Broad Center for Mendelian Genomics',
+#             'mme_primary_data_owner': 'Test Manager User',
+#             'mme_contact_url': 'mailto:test_user_manager@test.com',
+#             'vlm_contact_email': 'test_user_manager@test.com',
+#         })
 
 #     @mock.patch('seqr.models.Family._compute_guid', lambda family: f'F_{family.family_id}_{family.project.workspace_name[17:]}')
 #     @mock.patch('seqr.models.Project._compute_guid', lambda project: f'P_{project.name}')
@@ -639,7 +672,12 @@ DATA_LINES = [
 #         self.assertSetEqual(set(response_json['familiesByGuid'].keys()), {'F000001_1', 'F000015_21'})
 #         self.assertEqual(list(response_json['familyNotesByGuid'].keys()), ['FAN000004_21_c_a_new_family'])
 
-#         self._assert_valid_operation(Project.objects.get(guid=PROJECT1_GUID))
+#         # test missing columns
+#         self.mock_load_file.return_value = [['family', 'individual'], ['1', '2']]
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY))
+#         self.assertEqual(response.status_code, 400)
+#         response_json = response.json()
+#         self.assertListEqual(response_json['errors'], ['Missing required columns: Affected, HPO Terms, Sex'])
 
 #         mock_compute_indiv_guid.side_effect = ['I0000021_na19675_1', 'I0000022_na19678', 'I0000023_hg00735']
 #         url = reverse(add_workspace_data, args=[PROJECT2_GUID])
@@ -647,20 +685,25 @@ DATA_LINES = [
 #             url, {'guid': PROJECT2_GUID}, PROJECT2_SAMPLE_DATA, 'GRCh37', REQUEST_BODY_ADD_DATA2,
 #             num_samples=len(PROJECT2_SAMPLES))
 
-#     def _test_errors(self, url, fields, workspace_name):
-#         # Test missing required fields in the request body
-#         response = self.client.post(url, content_type='application/json', data=json.dumps({}))
-#         self.assertEqual(response.status_code, 400)
-#         field_str = ', '.join(fields)
-#         self.assertEqual(response.reason_phrase, f'Field(s) "{field_str}" are required')
-#         self.mock_get_ws_access_level.assert_called_with(self.manager_user, TEST_WORKSPACE_NAMESPACE, workspace_name)
-
-#         # test missing columns
-#         self.mock_load_file.return_value = [['family', 'individual'], ['1', '2']]
+#         # test sample data error
+#         self.mock_load_file.return_value = LOAD_SAMPLE_DATA + BAD_SAMPLE_DATA
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY))
 #         self.assertEqual(response.status_code, 400)
 #         response_json = response.json()
-#         self.assertListEqual(response_json['errors'], ['Missing required columns: Affected, Sex'])
+#         self.assertListEqual(response_json['errors'], [
+#             'NA19674 is affected but has no HPO terms',
+#             'NA19681 has invalid HPO terms: HP:0100258',
+#             'NA19679 is the mother of NA19674 but is not included. Make sure to create an additional record with NA19679 as the Individual ID',
+#         ])
+
+#         # test missing samples
+#         self.mock_load_file.return_value = LOAD_SAMPLE_DATA_EXTRA_SAMPLE
+#         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY))
+#         self.assertEqual(response.status_code, 400)
+#         response_json = response.json()
+#         self.assertEqual(response_json['errors'],
+#                          ['The following samples are included in the pedigree file but are missing from the VCF: NA19679, HG00736',
+#                           'The following families do not have any affected individuals: 22'])
 
 #         self.mock_load_file.return_value = LOAD_SAMPLE_DATA + MISSING_REQUIRED_SAMPLE_DATA
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(REQUEST_BODY))
@@ -685,8 +728,14 @@ DATA_LINES = [
 #         self.assertEqual(response_json['errors'],
 #                          ['The following samples are included in the pedigree file but are missing from the VCF: NA19679'])
 
-#     def _assert_valid_operation(self, project, test_add_data=True):
-#         genome_version = 'GRCh37' if test_add_data else 'GRCh38'
+#         gs_path = f'gs://seqr-datasets/v02/{genome_version}/AnVIL_WES/{project.guid}/base/'
+#         self.mock_mv_file.assert_called_with(
+#             f'{TEMP_PATH}/*', gs_path, self.manager_user
+#         )
+
+#         self.mock_gsutil.assert_called_with(
+#             f'rsync -r {gs_path}', f'gs://seqr-loading-temp/v3.1/{genome_version}/SNV_INDEL/pedigrees/WES/', self.manager_user,
+#         )
 
 #         self.mock_api_logger.error.assert_not_called()
 
@@ -721,29 +770,12 @@ DATA_LINES = [
 #             '\n'.join(['\t'.join(row) for row in [header] + rows])
 #         )
 
-#         self.mock_mv_file.assert_called_with(
-#             f'{TEMP_PATH}/*', f'gs://seqr-datasets/v02/{genome_version}/AnVIL_WES/{project.guid}/base/',
-#             self.manager_user
-#         )
-
-#         self.assert_airflow_calls(additional_tasks_check=test_add_data)
-
-#         # create airtable record
-#         self.assertDictEqual(json.loads(responses.calls[-1].request.body), {'records': [{'fields': {
-#             'Requester Name': 'Test Manager User',
-#             'Requester Email': 'test_user_manager@test.com',
-#             'AnVIL Project URL': f'http://testserver/project/{project.guid}/project_page',
-#             'Initial Request Date': '2021-03-01',
-#             'Number of Samples': 8 if test_add_data else 3,
-#             'Status': 'Loading',
-#         }}]})
-#         self.assertEqual(responses.calls[-1].request.headers['Authorization'], 'Bearer {}'.format(MOCK_AIRTABLE_KEY))
-#
 #         dag_json = {
 #             'projects_to_run': [project.guid],
-#             'callset_paths': ['gs://test_bucket/test_path.vcf'],
+#             'callset_path': 'gs://test_bucket/test_path.vcf',
 #             'sample_source': 'AnVIL',
 #             'sample_type': 'WES',
+#             'dataset_type': 'SNV_INDEL',
 #             'reference_genome': genome_version,
 #         }
 #         sample_summary = '3 new'
@@ -752,14 +784,13 @@ DATA_LINES = [
 #         slack_message = """
 #         *test_user_manager@test.com* requested to load {sample_summary} WES samples ({version}) from AnVIL workspace *my-seqr-billing/{workspace_name}* at
 #         gs://test_bucket/test_path.vcf to seqr project <http://testserver/project/{guid}/project_page|*{project_name}*> (guid: {guid})
-#
-#         Pedigree file has been uploaded to gs://seqr-datasets/v02/{version}/AnVIL_WES/{guid}/base/
-#
-#         DAG {dag_id} is triggered with following:
+
+#         self.assert_airflow_calls(additional_tasks_check=test_add_data)
+
+#         DAG LOADING_PIPELINE is triggered with following:
 #         ```{dag}```
 #     """.format(guid=project.guid, version=genome_version, workspace_name=project.workspace_name,
 #                    project_name=project.name, sample_summary=sample_summary,
-#                dag_id=self.DAG_NAME,
 #                dag=json.dumps(dag_json, indent=4),
 #                )
 #         self.mock_slack.assert_called_with(
@@ -778,28 +809,22 @@ DATA_LINES = [
 
 #         individual_model_data = list(Individual.objects.filter(family__project=project).values(
 #             'family__family_id', 'individual_id', 'mother__individual_id', 'father__individual_id', 'sex', 'affected', 'notes',
+#             'features',
 #         ))
 #         self.assertEqual(len(individual_model_data), 15 if test_add_data else 3)
 #         self.assertIn({
 #             'family__family_id': '21', 'individual_id': 'HG00735', 'mother__individual_id': None,
-#             'father__individual_id': None, 'sex': 'U', 'affected': 'U', 'notes': None,
+#             'father__individual_id': None, 'sex': 'U', 'affected': 'A', 'notes': None, 'features': [{'id': 'HP:0001508'}],
 #         }, individual_model_data)
 #         self.assertIn({
 #             'family__family_id': '1', 'individual_id': 'NA19675_1', 'mother__individual_id': None,
 #             'father__individual_id': 'NA19678', 'sex': 'F', 'affected': 'A', 'notes': 'A affected individual, test1-zsf',
+#             'features': [{'id': 'HP:0011675'}, {'id': 'HP:0012469'}],
 #         }, individual_model_data)
 #         self.assertIn({
 #             'family__family_id': '1', 'individual_id': 'NA19678', 'mother__individual_id': None,
-#             'father__individual_id': None, 'sex': 'M', 'affected': 'N', 'notes': 'a individual note'
+#             'father__individual_id': None, 'sex': 'M', 'affected': 'N', 'notes': 'a individual note', 'features': [],
 #         }, individual_model_data)
-#
-#     def _test_mv_file_and_triggering_dag_exception(self, url, workspace, sample_data, genome_version, request_body, num_samples=None):
-#         # Test saving ID file exception
-#         responses.calls.reset()
-#         self.mock_authorized_session.reset_mock()
-#         self.mock_mv_file.side_effect = Exception('Something wrong while moving the file.')
-#         # Test triggering dag exception
-#         self.set_dag_trigger_error_response()
 
 #         response = self.client.post(url, content_type='application/json', data=json.dumps(request_body))
 #         self.assertEqual(response.status_code, 200)
@@ -837,26 +862,31 @@ DATA_LINES = [
 #         self.mock_send_email.assert_not_called()
 #         self.assert_airflow_calls(trigger_error=True)
 
-#         # Airtable record created with correct status
-#         self.assertDictEqual(json.loads(responses.calls[-1].request.body), {'records': [{'fields': {
-#             'Requester Name': 'Test Manager User',
-#             'Requester Email': 'test_user_manager@test.com',
-#             'AnVIL Project URL': f'http://testserver/project/{project.guid}/project_page',
-#             'Initial Request Date': '2021-03-01',
-#             'Number of Samples': num_samples or len(sample_data),
-#             'Status': 'Loading Requested',
-#         }}]})
+#         self.mock_airflow_logger.error.assert_called_with(
+#             'Uploading Pedigree to Google Storage failed. Errors: Something wrong while moving the file.',
+#             self.manager_user, detail=sample_data)
+#         self.mock_api_logger.error.assert_not_called()
+#         self.mock_airflow_logger.warning.assert_called_with(
+#             'LOADING_PIPELINE DAG is running and cannot be triggered again.', self.manager_user)
+#         self.mock_airtable_logger.error.assert_called_with(
+#             f'Airtable create "AnVIL Seqr Loading Requests Tracking" error: 400 Client Error: Bad Request for url: '
+#             f'{MOCK_AIRTABLE_URL}/appUelDNM3BnWaR7M/AnVIL%20Seqr%20Loading%20Requests%20Tracking', self.manager_user)
 
-#     @mock.patch('seqr.views.apis.anvil_workspace_api.ANVIL_LOADING_DELAY_EMAIL_START_DATE', '2021-06-01')
-#     @responses.activate
-#     def test_create_project_from_workspace_loading_delay_email(self):
-#         url = reverse(create_project_from_workspace, args=[TEST_WORKSPACE_NAMESPACE, TEST_NO_PROJECT_WORKSPACE_NAME])
-#         self.check_manager_login(url, login_redirect_url='/login/google-oauth2')
-
-#         # make sure the task id including the newly created project to avoid infinitely pulling the tasks
-#         self.add_dag_tasks_response([
-#             'R0006_anvil_no_project_workspace', 'R0007_anvil_no_project_workspace', 'R0008_anvil_no_project_workspace'])
-#         self._test_not_yet_email_date(url, REQUEST_BODY)
+#         slack_message_on_failure = """ERROR triggering AnVIL loading for project {guid}: LOADING_PIPELINE DAG is running and cannot be triggered again.
+#
+#         DAG LOADING_PIPELINE should be triggered with following:
+#         ```{dag}```
+#         """.format(
+#             guid=project.guid,
+#             dag=json.dumps({
+#                 'projects_to_run': [project.guid],
+#                 'callset_path': 'gs://test_bucket/test_path.vcf',
+#                 'sample_source': 'AnVIL',
+#                 'sample_type': 'WES',
+#                 'dataset_type': 'SNV_INDEL',
+#                 'reference_genome': genome_version,
+#             }, indent=4),
+#         )
 
 #         # Remove created project to allow future requests
 #         project = Project.objects.get(
