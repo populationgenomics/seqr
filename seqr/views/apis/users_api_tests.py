@@ -59,9 +59,8 @@ class UsersAPITest(object):
         }
         users.update(self.COLLABORATOR_JSON)
         users.pop('analysts@firecloud.org', None)
-        # self.assertEqual(users[ANALYST_USERNAME]['email'], response_json[ANALYST_USERNAME]['email'])
-        self.maxDiff = None
         self.assertDictEqual(response_json, users)
+        return url
 
     def test_get_all_collaborator_options(self):
         url = reverse(get_all_collaborator_options)

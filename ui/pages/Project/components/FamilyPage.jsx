@@ -10,7 +10,7 @@ import {
   getFamilyDetailsLoading,
   getSortedIndividualsByFamily,
   getGenesById,
-  getHasActiveSearchableSampleByFamily,
+  getHasActiveSearchSampleByFamily,
 } from 'redux/selectors'
 import { FAMILY_DETAIL_FIELDS, getVariantMainGeneId } from 'shared/utils/constants'
 import { Error404 } from 'shared/components/page/Errors'
@@ -25,7 +25,7 @@ import {
   getCurrentProject, getFamilyVariantSummaryLoading, getFamilyTagTypeCounts,
 } from '../selectors'
 import IndividualRow from './FamilyTable/IndividualRow'
-import CreateVariantButton from './CreateVariantButton'
+import CreateVariantButtons from './CreateVariantButton'
 import VariantTagTypeBar from './VariantTagTypeBar'
 import RnaSeqResultPage from './RnaSeqResultPage'
 
@@ -86,7 +86,7 @@ const BaseVariantDetail = (
           />
         )}
         <VerticalSpacer height={10} />
-        <CreateVariantButton family={family} />
+        <CreateVariantButtons family={family} />
         <VerticalSpacer height={10} />
         {project.isMmeEnabled && (
           <Link to={`/project/${project.projectGuid}/family_page/${family.familyGuid}/matchmaker_exchange`}>
@@ -112,7 +112,7 @@ BaseVariantDetail.propTypes = {
 const mapVariantDetailStateToProps = (state, ownProps) => ({
   project: getCurrentProject(state),
   genesById: getGenesById(state),
-  hasActiveVariantSample: (getHasActiveSearchableSampleByFamily(state)[ownProps.family.familyGuid] || {}).isSearchable,
+  hasActiveVariantSample: getHasActiveSearchSampleByFamily(state)[ownProps.family.familyGuid],
   loading: getFamilyVariantSummaryLoading(state),
   tagTypeCounts: getFamilyTagTypeCounts(state)[ownProps.family.familyGuid] || {},
 })

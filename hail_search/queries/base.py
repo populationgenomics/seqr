@@ -4,18 +4,17 @@ import hail as hl
 import logging
 import os
 
-from hail_search.constants import AFFECTED, AFFECTED_ID, ALT_ALT, ANNOTATION_OVERRIDE_FIELDS, ANY_AFFECTED, COMP_HET_ALT, \
+from hail_search.constants import AFFECTED_ID, ALT_ALT, ANNOTATION_OVERRIDE_FIELDS, ANY_AFFECTED, COMP_HET_ALT, \
     COMPOUND_HET, GENOME_VERSION_GRCh38, GROUPED_VARIANTS_FIELD, ALLOWED_TRANSCRIPTS, ALLOWED_SECONDARY_TRANSCRIPTS,  HAS_ANNOTATION_OVERRIDE, \
-    HAS_ALT, HAS_REF,INHERITANCE_FILTERS, PATH_FREQ_OVERRIDE_CUTOFF, MALE, RECESSIVE, REF_ALT, REF_REF, UNAFFECTED, \
-    UNAFFECTED_ID, X_LINKED_RECESSIVE, XPOS, OMIM_SORT, UNKNOWN_AFFECTED, UNKNOWN_AFFECTED_ID, FAMILY_GUID_FIELD, GENOTYPES_FIELD, \
-    AFFECTED_ID_MAP
+    HAS_ALT, HAS_REF,INHERITANCE_FILTERS, PATH_FREQ_OVERRIDE_CUTOFF, MALE, RECESSIVE, REF_ALT, REF_REF, \
+    UNAFFECTED_ID, X_LINKED_RECESSIVE, XPOS, OMIM_SORT, FAMILY_GUID_FIELD, GENOTYPES_FIELD, AFFECTED_ID_MAP
 
 DATASETS_DIR = os.environ.get('DATASETS_DIR', '/hail_datasets')
 SSD_DATASETS_DIR = os.environ.get('SSD_DATASETS_DIR', DATASETS_DIR)
 
 # Number of filtered genes at which pre-filtering a table by gene-intervals does not improve performance
 # Estimated based on behavior for several representative gene lists
-MAX_GENE_INTERVALS = 100
+MAX_GENE_INTERVALS = int(os.environ.get('MAX_GENE_INTERVALS', 100))
 
 # Optimal number of entry table partitions, balancing parallelization with partition overhead
 # Experimentally determined based on compound het search performance:
@@ -75,7 +74,6 @@ class BaseHailTableQuery(object):
         'transcripts': {
             'response_key': 'transcripts',
             'empty_array': True,
-            'format_value': lambda value: value.rename({k: _to_camel_case(k) for k in value.keys()}),
             'format_array_values': lambda values, *args: values.group_by(lambda t: t.geneId),
         },
     }
@@ -150,22 +148,30 @@ class BaseHailTableQuery(object):
             for response_key, field in pop_config.items() if field is not None
         })
 
-    def _get_enum_lookup(self, field, subfield):
+    def _get_enum_lookup(self, field, subfield, nested_subfield=None):
         enum_field = self._enums.get(field, {})
         if subfield:
             enum_field = enum_field.get(subfield)
+        if nested_subfield:
+            enum_field = enum_field.get(nested_subfield)
         if enum_field is None:
             return None
         return {v: i for i, v in enumerate(enum_field)}
 
-    def _get_enum_terms_ids(self, field, subfield, terms):
-        enum = self._get_enum_lookup(field, subfield)
+    def _get_enum_terms_ids(self, field, subfield, terms, nested_subfield=None):
+        if not terms:
+            return set()
+        enum = self._get_enum_lookup(field, subfield, nested_subfield=nested_subfield)
         return {enum[t] for t in terms if enum.get(t) is not None}
 
     def _format_enum_response(self, k, enum):
         enum_config = self.ENUM_ANNOTATION_FIELDS.get(k, {})
         value = lambda r: self._format_enum(r, k, enum, ht_globals=self._globals, **enum_config)
         return enum_config.get('response_key', _to_camel_case(k)), value
+
+    @staticmethod
+    def _camelcase_value(value):
+        return value.rename({k: _to_camel_case(k) for k in value.keys()})
 
     @classmethod
     def _format_enum(cls, r, field, enum, empty_array=False, format_array_values=None, **kwargs):
@@ -176,29 +182,33 @@ class BaseHailTableQuery(object):
         if hasattr(value, 'map'):
             if empty_array:
                 value = hl.or_else(value, hl.empty_array(value.dtype.element_type))
-            value = value.map(lambda x: cls._enum_field(field, x, enum, **kwargs))
+            value = value.map(lambda x: cls._enum_field(field, x, enum, **kwargs, format_value=cls._camelcase_value))
             if format_array_values:
                 value = format_array_values(value, r)
             return value
 
         return cls._enum_field(field, value, enum, **kwargs)
 
-    @staticmethod
-    def _enum_field(field_name, value, enum, ht_globals=None, annotate_value=None, format_value=None, drop_fields=None, enum_keys=None, include_version=False, **kwargs):
+    @classmethod
+    def _enum_field(cls, field_name, value, enum, ht_globals=None, annotate_value=None, format_value=None, drop_fields=None, enum_keys=None, include_version=False, **kwargs):
         annotations = {}
         drop = [] + (drop_fields or [])
         value_keys = value.keys()
         for field in (enum_keys or enum.keys()):
             field_enum = enum[field]
+            is_nested_struct = field in value_keys
             is_array = f'{field}_ids' in value_keys
-            value_field = f"{field}_id{'s' if is_array else ''}"
-            drop.append(value_field)
 
-            enum_array = hl.array(field_enum)
-            if is_array:
-                annotations[f'{field}s'] = value[value_field].map(lambda v: enum_array[v])
+            if is_nested_struct:
+                annotations[field] = cls._enum_field(field, value[field], field_enum, format_value=format_value)
             else:
-                annotations[field] = enum_array[value[value_field]]
+                value_field = f"{field}_id{'s' if is_array else ''}"
+                drop.append(value_field)
+                enum_array = hl.array(field_enum)
+                if is_array:
+                    annotations[f'{field}s'] = value[value_field].map(lambda v: enum_array[v])
+                else:
+                    annotations[field] = enum_array[value[value_field]]
 
         if include_version:
             annotations['version'] = ht_globals['versions'][field_name]
@@ -249,7 +259,7 @@ class BaseHailTableQuery(object):
         parsed_intervals = self._parse_intervals(intervals, **kwargs)
         parsed_annotations = self._parse_annotations(annotations, annotations_secondary, **kwargs)
         self.import_filtered_table(
-            *self._parse_sample_data(sample_data), parsed_intervals=parsed_intervals, parsed_annotations=parsed_annotations, **kwargs)
+            *self._parse_sample_data(sample_data), parsed_intervals=parsed_intervals, raw_intervals=intervals, parsed_annotations=parsed_annotations, **kwargs)
 
     @classmethod
     def _get_table_path(cls, path, use_ssd_dir=False):
@@ -274,10 +284,10 @@ class BaseHailTableQuery(object):
 
     def _parse_sample_data(self, sample_data):
         families = set()
-        project_samples = defaultdict(lambda: defaultdict(list))
+        project_samples = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for s in sample_data:
             families.add(s['family_guid'])
-            project_samples[s['project_guid']][s['family_guid']].append(s)
+            project_samples[s['project_guid']][s['sample_type']][s['family_guid']].append(s)
 
         num_families = len(families)
         logger.info(f'Loading {self.DATA_TYPE} data for {num_families} families in {len(project_samples)} projects')
@@ -286,8 +296,13 @@ class BaseHailTableQuery(object):
     def _load_filtered_project_hts(self, project_samples, skip_all_missing=False, n_partitions=MAX_PARTITIONS, **kwargs):
         if len(project_samples) == 1:
             project_guid = list(project_samples.keys())[0]
-            project_ht = self._read_table(f'projects/{project_guid}.ht', use_ssd_dir=True)
-            return self._filter_entries_table(project_ht, project_samples[project_guid], **kwargs)
+            # for variant lookup, project_samples looks like
+            #   {<project_guid>: {<sample_type>: {<family_guid>: True}, <sample_type_2>: {<family_guid_2>: True}}, <project_guid_2>: ...}
+            # for variant search, project_samples looks like
+            #   {<project_guid>: {<sample_type>: {<family_guid>: [<sample_data>, <sample_data>, ...]}, <sample_type_2>: {<family_guid_2>: []} ...}, <project_guid_2>: ...}
+            sample_type = list(project_samples[project_guid].keys())[0]
+            project_ht = self._read_table(f'projects/{sample_type}/{project_guid}.ht', use_ssd_dir=True)
+            return self._filter_entries_table(project_ht, project_samples[project_guid][sample_type], **kwargs)
 
         # Need to chunk tables or else evaluating table globals throws LineTooLong exception
         # However, minimizing number of chunks minimizes number of aggregations/ evals and improves performance
@@ -298,15 +313,13 @@ class BaseHailTableQuery(object):
         project_hts = []
         sample_data = {}
         for project_guid, project_sample_data in project_samples.items():
-            project_ht = self._read_table(
-                f'projects/{project_guid}.ht',
-                use_ssd_dir=True,
-                skip_missing_field='family_entries' if skip_all_missing else None,
-            )
+            sample_type = list(project_sample_data.keys())[0]
+            project_ht = self._read_table(f'projects/{sample_type}/{project_guid}.ht', use_ssd_dir=True)
+
             if project_ht is None:
                 continue
             project_hts.append(project_ht.select_globals('sample_type', 'family_guids', 'family_samples'))
-            sample_data.update(project_sample_data)
+            sample_data.update(project_sample_data[sample_type])
 
             if len(project_hts) >= chunk_size:
                 self._filter_merged_project_hts(
@@ -324,16 +337,17 @@ class BaseHailTableQuery(object):
 
         return ht, comp_het_ht
 
-    def import_filtered_table(self, project_samples, num_families, intervals=None, **kwargs):
+    def import_filtered_table(self, project_samples, num_families, **kwargs):
         if num_families == 1:
             family_sample_data = list(project_samples.values())[0]
-            family_guid = list(family_sample_data.keys())[0]
-            family_ht = self._read_table(f'families/{family_guid}.ht', use_ssd_dir=True)
+            sample_type = list(family_sample_data.keys())[0]
+            family_guid = list(family_sample_data[sample_type].keys())[0]
+            family_ht = self._read_table(f'families/{sample_type}/{family_guid}.ht', use_ssd_dir=True)
             family_ht = family_ht.transmute(family_entries=[family_ht.entries])
             family_ht = family_ht.annotate_globals(
                 family_guids=[family_guid], family_samples={family_guid: family_ht.sample_ids},
             )
-            families_ht, comp_het_families_ht = self._filter_entries_table(family_ht, family_sample_data, **kwargs)
+            families_ht, comp_het_families_ht = self._filter_entries_table(family_ht, family_sample_data[sample_type], **kwargs)
         else:
             families_ht, comp_het_families_ht = self._load_filtered_project_hts(project_samples, **kwargs)
 
@@ -385,11 +399,7 @@ class BaseHailTableQuery(object):
 
         ht, sorted_family_sample_data = self._add_entry_sample_families(ht, sample_data)
 
-        quality_filter = quality_filter or {}
-        if quality_filter.get('vcf_filter'):
-            ht = self._filter_vcf_filters(ht)
-
-        passes_quality_filter = self._get_family_passes_quality_filter(quality_filter, ht=ht, **kwargs)
+        passes_quality_filter = self._get_family_passes_quality_filter(quality_filter, ht, **kwargs)
         if passes_quality_filter is not None:
             ht = ht.annotate(family_entries=ht.family_entries.map(
                 lambda entries: hl.or_missing(passes_quality_filter(entries), entries)
@@ -539,7 +549,9 @@ class BaseHailTableQuery(object):
             is_valid &= unaffected_filter
         return hl.or_missing(is_valid, entries)
 
-    def _get_family_passes_quality_filter(self, quality_filter, **kwargs):
+    def _get_family_passes_quality_filter(self, quality_filter, ht, **kwargs):
+        quality_filter = quality_filter or {}
+
         affected_only = quality_filter.get('affected_only')
         passes_quality_filters = []
         for filter_k, value in quality_filter.items():
@@ -548,10 +560,16 @@ class BaseHailTableQuery(object):
             if field and value:
                 passes_quality_filters.append(self._get_genotype_passes_quality_field(field, value, affected_only))
 
-        if not passes_quality_filters:
+        has_vcf_filter = quality_filter.get('vcf_filter')
+        if not (passes_quality_filters or has_vcf_filter):
             return None
 
-        return lambda entries: entries.all(lambda gt: hl.all([f(gt) for f in passes_quality_filters]))
+        def passes_quality(entries):
+            passes_filters = entries.all(lambda gt: hl.all([f(gt) for f in passes_quality_filters])) if passes_quality_filters else True
+            passes_vcf_filters = self._passes_vcf_filters(ht) if has_vcf_filter else True
+            return passes_filters & passes_vcf_filters
+
+        return passes_quality
 
     @classmethod
     def _get_genotype_passes_quality_field(cls, field, value, affected_only):
@@ -570,8 +588,8 @@ class BaseHailTableQuery(object):
         return passes_quality_field
 
     @staticmethod
-    def _filter_vcf_filters(ht):
-        return ht.filter(hl.is_missing(ht.filters) | (ht.filters.length() < 1))
+    def _passes_vcf_filters(ht):
+        return hl.is_missing(ht.filters) | (ht.filters.length() < 1)
 
     def _parse_variant_keys(self, variant_keys=None, **kwargs):
         return [hl.struct(**{self.KEY_FIELD[0]: key}) for key in (variant_keys or [])]
@@ -616,30 +634,45 @@ class BaseHailTableQuery(object):
 
         raw_intervals = intervals
         if self._should_add_chr_prefix():
-            intervals = [
-                f'[chr{interval.replace("[", "")}' if interval.startswith('[') else f'chr{interval}'
-                for interval in (intervals or [])
-            ]
-
-        if is_x_linked:
-            reference_genome = hl.get_reference(self.GENOME_VERSION)
-            intervals = (intervals or []) + [reference_genome.x_contigs[0]]
+            intervals = [[f'chr{interval[0]}', *interval[1:]] for interval in (intervals or [])]
 
         if len(intervals) > MAX_GENE_INTERVALS and len(intervals) == len(gene_ids or []):
-            return []
+            intervals = self.cluster_intervals(sorted(intervals))
 
         parsed_intervals = [
-            hl.eval(hl.parse_locus_interval(interval, reference_genome=self.GENOME_VERSION, invalid_missing=True))
-            for interval in intervals
+            hl.eval(hl.locus_interval(*interval, reference_genome=self.GENOME_VERSION, invalid_missing=True))
+            for interval in (intervals or [])
         ]
         invalid_intervals = [raw_intervals[i] for i, interval in enumerate(parsed_intervals) if interval is None]
         if invalid_intervals:
-            raise HTTPBadRequest(reason=f'Invalid intervals: {", ".join(invalid_intervals)}')
+            error_interval = ', '.join([f'{chrom}:{start}-{end}' for chrom, start, end in invalid_intervals])
+            raise HTTPBadRequest(reason=f'Invalid intervals: {error_interval}')
+
+        if is_x_linked:
+            reference_genome = hl.get_reference(self.GENOME_VERSION)
+            parsed_intervals.append(
+                hl.eval(hl.parse_locus_interval(reference_genome.x_contigs[0], reference_genome=self.GENOME_VERSION))
+            )
 
         return parsed_intervals
 
+    @classmethod
+    def cluster_intervals(cls, intervals, distance=100000, max_intervals=MAX_GENE_INTERVALS):
+        if len(intervals) <= max_intervals:
+            return intervals
+
+        merged_intervals = [intervals[0]]
+        for chrom, start, end in intervals[1:]:
+            prev_chrom, prev_start, prev_end = merged_intervals[-1]
+            if chrom == prev_chrom and start - prev_end < distance:
+                merged_intervals[-1] = [chrom, prev_start, max(prev_end, end)]
+            else:
+                merged_intervals.append([chrom, start, end])
+
+        return cls.cluster_intervals(merged_intervals, distance=distance+100000, max_intervals=max_intervals)
+
     def _should_add_chr_prefix(self):
-        return True
+        return self.GENOME_VERSION == GENOME_VERSION_GRCh38
 
     def _filter_by_frequency(self, ht, frequencies, pathogenicity):
         frequencies = {k: v for k, v in (frequencies or {}).items() if k in self.POPULATIONS}
@@ -1017,13 +1050,17 @@ class BaseHailTableQuery(object):
             sort_expressions = self._get_sort_expressions(ht, self._sort) + sort_expressions
         return sort_expressions
 
+    @staticmethod
+    def _format_prediction_sort_value(value):
+        return hl.or_else(-hl.float64(value), 0)
+
     def _get_sort_expressions(self, ht, sort):
         if sort in self.SORTS:
             return self.SORTS[sort](ht)
 
         if sort in self.PREDICTION_FIELDS_CONFIG:
             prediction_path = self.PREDICTION_FIELDS_CONFIG[sort]
-            return [hl.or_else(-hl.float64(ht[prediction_path.source][prediction_path.field]), 0)]
+            return [self._format_prediction_sort_value(ht[prediction_path.source][prediction_path.field])]
 
         if sort == OMIM_SORT:
             return self._omim_sort(ht, hl.set(set(self._sort_metadata)))

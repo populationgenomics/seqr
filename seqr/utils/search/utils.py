@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import timedelta
 
-from reference_data.models import GENOME_VERSION_LOOKUP, GENOME_VERSION_GRCh38
+from reference_data.models import GENOME_VERSION_LOOKUP, GENOME_VERSION_GRCh38, GENOME_VERSION_GRCh37
 from seqr.models import Sample, Individual, Project
 from seqr.utils.redis_utils import safe_redis_get_json, safe_redis_set_json
 from seqr.utils.search.constants import XPOS_SORT_KEY, PRIORITIZED_GENE_SORT, RECESSIVE, COMPOUND_HET, \
@@ -72,7 +72,7 @@ def get_search_backend_status():
 
 
 def _get_filtered_search_samples(search_filter, active_only=True):
-    samples = Sample.objects.filter(elasticsearch_index__isnull=False, **search_filter)
+    samples = Sample.objects.filter(**search_filter)
     if active_only:
         samples = samples.filter(is_active=True)
     return samples
@@ -82,7 +82,7 @@ def get_search_samples(projects, active_only=True):
     return _get_filtered_search_samples({'individual__family__project__in': projects}, active_only=active_only)
 
 
-def _get_families_search_data(families, dataset_type=None):
+def _get_families_search_data(families, dataset_type):
     samples = _get_filtered_search_samples({'individual__family__in': families})
     if len(samples) < 1:
         raise InvalidSearchException('No search data found for families {}'.format(
@@ -93,7 +93,11 @@ def _get_families_search_data(families, dataset_type=None):
         if not samples:
             raise InvalidSearchException(f'Unable to search against dataset type "{dataset_type}"')
 
-    projects = Project.objects.filter(family__individual__sample__in=samples).values_list('genome_version', 'name').distinct()
+    return samples
+
+
+def _get_search_genome_version(families):
+    projects = Project.objects.filter(family__in=families).values_list('genome_version', 'name').distinct()
     project_versions = defaultdict(set)
     for genome_version, project_name in projects:
         project_versions[genome_version].add(project_name)
@@ -104,7 +108,7 @@ def _get_families_search_data(families, dataset_type=None):
         raise InvalidSearchException(
             f'Searching across multiple genome builds is not supported. Remove projects with differing genome builds from search: {summary}')
 
-    return samples, next(iter(project_versions.keys()))
+    return next(iter(project_versions.keys()))
 
 
 def delete_search_backend_data(data_id):
@@ -145,31 +149,41 @@ def _get_variants_for_variant_ids(families, variant_ids, user, user_email=None, 
     dataset_type = _variant_ids_dataset_type(parsed_variant_ids.values())
 
     return backend_specific_call(get_es_variants_for_variant_ids, get_hail_variants_for_variant_ids)(
-        *_get_families_search_data(families, dataset_type=dataset_type), parsed_variant_ids, user, user_email=user_email, **kwargs
+        _get_families_search_data(families, dataset_type=dataset_type), _get_search_genome_version(families),
+        parsed_variant_ids, user, user_email=user_email, **kwargs
     )
 
 
-def _variant_lookup(lookup_func, user, variant_id, genome_version=None, cache_key_suffix='', **kwargs):
+def _variant_lookup(lookup_func, user, variant_id, dataset_type, genome_version=None, cache_key_suffix='', **kwargs):
     genome_version = genome_version or GENOME_VERSION_GRCh38
+    _validate_dataset_type_genome_version(dataset_type, genome_version)
     cache_key = f'variant_lookup_results__{variant_id}__{genome_version}__{cache_key_suffix}'
     variant = safe_redis_get_json(cache_key)
     if variant:
         return variant
 
     lookup_func = backend_specific_call(_raise_search_error('Hail backend is disabled'), lookup_func)
-    variant = lookup_func(user, variant_id, genome_version=GENOME_VERSION_LOOKUP[genome_version], **kwargs)
+    variant = lookup_func(user, variant_id, dataset_type, genome_version=GENOME_VERSION_LOOKUP[genome_version], **kwargs)
     safe_redis_set_json(cache_key, variant, expire=timedelta(weeks=2))
     return variant
 
 
-def variant_lookup(*args, **kwargs):
-    return _variant_lookup(hail_variant_lookup, *args, **kwargs)
+def _validate_dataset_type_genome_version(dataset_type, genome_version):
+    if genome_version == GENOME_VERSION_GRCh37 and dataset_type != Sample.DATASET_TYPE_VARIANT_CALLS:
+        raise InvalidSearchException(f'{dataset_type} variants are not available for GRCh37')
+
+
+def variant_lookup(user, parsed_variant_id, **kwargs):
+    dataset_type = DATASET_TYPES_LOOKUP[_variant_ids_dataset_type([parsed_variant_id])][0]
+    return _variant_lookup(hail_variant_lookup, user, parsed_variant_id, **kwargs, dataset_type=dataset_type)
 
 
 def sv_variant_lookup(user, variant_id, families, **kwargs):
-    samples, _ = _get_families_search_data(families, dataset_type=Sample.DATASET_TYPE_SV_CALLS)
+    _get_search_genome_version(families)
+    samples = _get_families_search_data(families, dataset_type=Sample.DATASET_TYPE_SV_CALLS)
     return _variant_lookup(
         hail_sv_variant_lookup, user, variant_id, **kwargs, samples=samples, cache_key_suffix=user,
+        dataset_type=Sample.DATASET_TYPE_SV_CALLS,
     )
 
 
@@ -225,10 +239,14 @@ def query_variants(search_model, sort=XPOS_SORT_KEY, skip_genotype_filter=False,
 def _query_variants(search_model, user, previous_search_results, sort=None, num_results=100, **kwargs):
     search = deepcopy(search_model.variant_search.search)
 
+    families = search_model.families.all()
+    genome_version = _get_search_genome_version(families)
+    _validate_sort(sort, families)
+
     rs_ids = None
     variant_ids = None
     parsed_variant_ids = None
-    genes, intervals, invalid_items = parse_locus_list_items(search.get('locus', {}))
+    genes, intervals, invalid_items = parse_locus_list_items(search.get('locus', {}), genome_version=genome_version)
     if invalid_items:
         raise InvalidSearchException('Invalid genes/intervals: {}'.format(', '.join(invalid_items)))
     if not (genes or intervals):
@@ -249,9 +267,6 @@ def _query_variants(search_model, user, previous_search_results, sort=None, num_
     }
     parsed_search.update(search)
 
-    families = search_model.families.all()
-    _validate_sort(sort, families)
-
     dataset_type, secondary_dataset_type, lookup_dataset_type = _search_dataset_type(parsed_search)
     parsed_search.update({'dataset_type': dataset_type, 'secondary_dataset_type': secondary_dataset_type})
     search_dataset_type = None
@@ -261,7 +276,7 @@ def _query_variants(search_model, user, previous_search_results, sort=None, num_
         elif dataset_type == Sample.DATASET_TYPE_SV_CALLS:
             search_dataset_type = DATASET_TYPE_NO_MITO
 
-    samples, genome_version = _get_families_search_data(families, dataset_type=search_dataset_type)
+    samples = _get_families_search_data(families, dataset_type=search_dataset_type)
     if parsed_search.get('inheritance'):
         samples = _parse_inheritance(parsed_search, samples)
 
@@ -300,11 +315,15 @@ def get_variant_query_gene_counts(search_model, user):
 def _get_gene_aggs_for_cached_variants(previous_search_results):
     gene_aggs = defaultdict(lambda: {'total': 0, 'families': defaultdict(int)})
     for var in previous_search_results['all_results']:
-        gene_id = next((
-            gene_id for gene_id, transcripts in var['transcripts'].items()
-            if any(t['transcriptId'] == var['mainTranscriptId'] for t in transcripts)
-        ), None) if var['mainTranscriptId'] else None
-        if gene_id:
+        # ES only reports breakdown for main transcript gene only, hail backend reports for all genes
+        gene_ids = backend_specific_call(
+            lambda variant_transcripts: next((
+                [gene_id] for gene_id, transcripts in variant_transcripts.items()
+                if any(t['transcriptId'] == var['mainTranscriptId'] for t in transcripts)
+            ), []) if var['mainTranscriptId'] else [],
+            lambda variant_transcripts: variant_transcripts.keys(),
+        )(var['transcripts'])
+        for gene_id in gene_ids:
             gene_aggs[gene_id]['total'] += 1
             for family_guid in var['familyGuids']:
                 gene_aggs[gene_id]['families'][family_guid] += 1

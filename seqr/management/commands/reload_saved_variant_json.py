@@ -1,7 +1,6 @@
 import logging
 from django.core.management.base import BaseCommand
 from django.db.models.query_utils import Q
-from tqdm import tqdm
 from seqr.models import Project
 from seqr.views.utils.variant_utils import update_projects_saved_variant_json
 
@@ -28,6 +27,6 @@ class Command(BaseCommand):
             logging.info("Processing all %s projects" % len(projects))
 
         family_ids = [family_guid] if family_guid else None
-        project_list = [(*project, family_ids) for project in projects.values_list('id', 'name')]
+        project_list = [(*project, family_ids) for project in projects.values_list('id', 'name', 'genome_version')]
         update_projects_saved_variant_json(project_list, user_email='manage_command')
         logger.info("Done")
