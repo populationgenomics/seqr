@@ -94,8 +94,8 @@ class ProjectAPITest(object):
             'is_mme_enabled': False,
             'mme_contact_institution': 'Broad Center for Mendelian Genomics',
             'mme_primary_data_owner': 'Samantha Baxter',
-            'mme_contact_url': 'mailto:matchmaker@broadinstitute.org',
-            'vlm_contact_email': 'vlm@broadinstitute.org',
+            'mme_contact_url': 'mailto:matchmaker@populationgenomics.org.au',
+            'vlm_contact_email': 'vlm@populationgenomics.org.au',
         })
         self._check_created_project_groups(new_project)
 

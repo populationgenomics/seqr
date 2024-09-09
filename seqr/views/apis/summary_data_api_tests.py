@@ -262,8 +262,8 @@ AIRTABLE_COLLABORATOR_RECORDS = {
 }
 
 
-@mock.patch('seqr.views.utils.permissions_utils.safe_redis_get_json', lambda *args: None)
-class SummaryDataAPITest(AirtableTest):
+# @mock.patch('seqr.views.utils.permissions_utils.safe_redis_get_json', lambda *args: None)
+# class SummaryDataAPITest(AirtableTest):
 
 #     @mock.patch('matchmaker.matchmaker_utils.datetime')
 #     def test_mme_details(self, mock_datetime):

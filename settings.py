@@ -374,8 +374,8 @@ MME_DEFAULT_CONTACT_INSTITUTION = 'Broad Center for Mendelian Genomics'
 MME_DEFAULT_CONTACT_EMAIL = 'matchmaker@populationgenomics.org.au'
 MME_DEFAULT_CONTACT_HREF = 'mailto:{}'.format(MME_DEFAULT_CONTACT_EMAIL)
 
-VLM_DEFAULT_CONTACT_EMAIL = 'vlm@broadinstitute.org'
-VLM_SEND_EMAIL = 'vlm-noreply@broadinstitute.org'
+VLM_DEFAULT_CONTACT_EMAIL = 'vlm@populationgenomics.org.au'
+VLM_SEND_EMAIL = 'vlm-noreply@populationgenomics.org.au'
 
 MME_CONFIG_DIR = os.environ.get('MME_CONFIG_DIR', '')
 MME_NODES = {}

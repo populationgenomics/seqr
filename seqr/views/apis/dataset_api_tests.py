@@ -48,7 +48,7 @@ class DatasetAPITest(object):
     @mock.patch('seqr.models.random.randint')
     @mock.patch('seqr.utils.communication_utils.logger')
     @mock.patch('seqr.utils.communication_utils.send_html_email')
-    @mock.patch('seqr.utils.search.add_data_utils.BASE_URL', 'https://seqr.broadinstitute.org/')
+    @mock.patch('seqr.utils.search.add_data_utils.BASE_URL', 'https://seqr.populationgenomics.org.au/')
     @urllib3_responses.activate
     def test_add_variants_dataset(self, mock_send_email, mock_logger, mock_random):
         url = reverse(add_variants_dataset_handler, args=[PROJECT_GUID])
@@ -429,7 +429,7 @@ class DatasetAPITest(object):
             'datasetType': 'SNV_INDEL',
         }))
         self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(response.json(), {'errors': ['Must contain 2 columns: NA19678_1, NA19678, metadata']})
+        self.assertDictEqual(response.json(), {'errors': ['Must contain 2 columns. Received 3 columns on line #1: NA19678_1, NA19678, metadata']})
 
         MOCK_FILE_ITER.side_effect = Exception('Unhandled base exception')
         response = self.client.post(url, content_type='application/json', data=json.dumps({

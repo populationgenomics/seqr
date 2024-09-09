@@ -593,6 +593,7 @@ class VariantSearchAPITest(object):
         response = self.client.post(url, content_type='application/json', data=json.dumps(body))
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
+        self.maxDiff = None
         self.assertDictEqual(response_json, self.EXPECTED_SEARCH_RESPONSE)
         self._assert_expected_results_context(response_json)
         self.assertSetEqual(
@@ -823,26 +824,27 @@ class VariantSearchAPITest(object):
                 'I0_F0_1-10439-AC-A': {
                     'affected': 'N', 'familyGuid': 'F0_1-10439-AC-A', 'features': [],
                     'individualGuid': 'I0_F0_1-10439-AC-A', 'sex': 'F',
-                    'vlmContactEmail': 'test@broadinstitute.org,vlm@broadinstitute.org',
+                    'vlmContactEmail': 'test@populationgenomics.org.au,vlm@populationgenomics.org.au',
                 },
                 'I0_F1_1-10439-AC-A': {
                     'affected': 'A', 'familyGuid': 'F1_1-10439-AC-A', 'individualGuid': 'I0_F1_1-10439-AC-A', 'sex': 'M',
                     'features': [{'category': 'HP:0001626', 'label': '1 terms'}, {'category': 'Other', 'label': '1 terms'}],
-                    'vlmContactEmail': 'seqr-test@gmail.com,test@broadinstitute.org',
+                    'vlmContactEmail': 'seqr-test@gmail.com,test@populationgenomics.org.au',
                 },
                 'I1_F0_1-10439-AC-A': {
                     'affected': 'N', 'familyGuid': 'F0_1-10439-AC-A', 'features': [],
                     'individualGuid': 'I1_F0_1-10439-AC-A', 'sex': 'M',
-                    'vlmContactEmail': 'test@broadinstitute.org,vlm@broadinstitute.org',
+                    'vlmContactEmail': 'test@populationgenomics.org.au,vlm@populationgenomics.org.au',
                 },
                 'I2_F0_1-10439-AC-A': {
                     'affected': 'A', 'familyGuid': 'F0_1-10439-AC-A', 'individualGuid': 'I2_F0_1-10439-AC-A', 'sex': 'F',
                     'features': [{'category': 'HP:0000707', 'label': '1 terms'}, {'category': 'HP:0001626', 'label': '1 terms'}],
-                    'vlmContactEmail': 'test@broadinstitute.org,vlm@broadinstitute.org',
+                    'vlmContactEmail': 'test@populationgenomics.org.au,vlm@populationgenomics.org.au',
                 },
             },
             'variants': [expected_variant],
         }
+        self.maxDiff = None
         self.assertDictEqual(response.json(), expected_body)
         mock_variant_lookup.assert_called_with(self.no_access_user,  ('1', 10439, 'AC', 'A'), genome_version='38')
 
