@@ -50,14 +50,9 @@ def download_file(url, to_dir=tempfile.gettempdir(), verbose=True):
 
 
 def _get_remote_file_size(url):
-    if url.startswith("http"):
-        try:
-            response = requests.head(url, timeout=5)
-        except ConnectionError as e:
-            logger.warning("Connection error: {}. Cannot get remote file size.".format(e))
-            return 0
+    try:
+        response = requests.head(url, timeout=5)
         return int(response.headers.get('Content-Length', '0'))
-    else:
+    except Exception:
         # file size not yet implemented for FTP and other protocols, and HEAD not supported for all http requests
         return 0
-

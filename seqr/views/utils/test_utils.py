@@ -433,7 +433,7 @@ ANVIL_WORKSPACES = [{
 
 ANVIL_GROUPS = {
     'project-managers': ['test_pm_user@test.com'],
-    'Analysts': ['test_pm_user@test.com', 'test_user@broadinstitute.org'],
+    'Analysts': ['test_pm_user@test.com', 'seqr+test_user@populationgenomics.org.au'],
 }
 ANVIL_GROUP_LOOKUP = defaultdict(list)
 for group, users in ANVIL_GROUPS.items():
