@@ -29,6 +29,9 @@ class AuthenticationTestCase(TestCase):
     AUTHENTICATED_USER = 'authenticated'
     NO_POLICY_USER = 'no_policy'
 
+    ES_HOSTNAME = 'testhost'
+    MOCK_AIRTABLE_KEY = ''
+
     super_user = None
     analyst_user = None
     pm_user = None
@@ -40,6 +43,12 @@ class AuthenticationTestCase(TestCase):
     no_policy_user = None
 
     def setUp(self):
+        patcher = mock.patch('seqr.utils.search.elasticsearch.es_utils.ELASTICSEARCH_SERVICE_HOSTNAME', self.ES_HOSTNAME)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch('seqr.views.utils.airtable_utils.AIRTABLE_API_KEY', self.MOCK_AIRTABLE_KEY)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         patcher = mock.patch('seqr.views.utils.permissions_utils.SEQR_PRIVACY_VERSION', 2.1)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -89,12 +98,6 @@ class AuthenticationTestCase(TestCase):
 
         pm_group = Group.objects.get(pk=5)
         pm_group.user_set.add(cls.pm_user)
-
-    @classmethod
-    def add_analyst_project(cls, project_id):
-        analyst_group = Group.objects.get(pk=4)
-        assign_perm(user_or_group=analyst_group, perm=CAN_VIEW, obj=Project.objects.filter(id=project_id))
-        return True
 
     def check_require_login(self, url, **request_kwargs):
         self._check_login(url, self.AUTHENTICATED_USER, **request_kwargs)
@@ -229,12 +232,17 @@ class AuthenticationTestCase(TestCase):
     def get_initial_page_json(self, response):
         return self.get_initial_page_window('initialJSON', response)
 
-    def check_no_analyst_no_access(self, url, get_response=None):
+    def check_no_analyst_no_access(self, url, get_response=None, has_override=False):
         self.mock_analyst_group.__str__.return_value = ''
 
         response = get_response() if get_response else self.client.get(url)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()['error'], 'Permission Denied')
+
+        self.client.force_login(self.super_user)
+        response = get_response() if get_response else self.client.get(url)
+        self.assertEqual(response.status_code, 200 if has_override else 403)
+        return response
 
     def reset_logs(self):
         self._log_stream.truncate(0)
@@ -246,9 +254,12 @@ class AuthenticationTestCase(TestCase):
             extra = extra or {}
             validate = extra.pop('validate', None)
             log_value = json.loads(logs[i])
-            self.assertDictEqual(log_value, {
-                'timestamp': mock.ANY, 'severity': 'INFO', 'user': user.email, 'message': message, **extra,
-            })
+            expected_log = {
+                'timestamp': mock.ANY, 'severity': 'INFO', 'user': user.email, **extra,
+            }
+            if message is not None:
+                expected_log['message'] = message
+            self.assertDictEqual(log_value, expected_log)
             if validate:
                 validate(log_value)
 
@@ -361,7 +372,7 @@ ANVIL_WORKSPACES = [{
         'bucketName': 'test_bucket'
     },
 }, {
-    'workspace_namespace': TEST_WORKSPACE_NAMESPACE,
+    'workspace_namespace': EXT_WORKSPACE_NAMESPACE,
     'workspace_name': TEST_EMPTY_PROJECT_WORKSPACE,
     'public': False,
     'acl': {
@@ -411,12 +422,6 @@ ANVIL_WORKSPACES = [{
             "canShare": True,
             "canCompute": True
         },
-        'test_pm_user@test.com': {
-            "accessLevel": "WRITER",
-            "pending": False,
-            "canShare": False,
-            "canCompute": False
-        },
     },
     'workspace': {
         'authorizationDomain': [],
@@ -428,7 +433,7 @@ ANVIL_WORKSPACES = [{
 
 ANVIL_GROUPS = {
     'project-managers': ['test_pm_user@test.com'],
-    'Analysts': ['test_pm_user@test.com', 'test_user@broadinstitute.org'],
+    'Analysts': ['test_pm_user@test.com', 'seqr+test_user@populationgenomics.org.au'],
 }
 ANVIL_GROUP_LOOKUP = defaultdict(list)
 for group, users in ANVIL_GROUPS.items():
@@ -501,6 +506,9 @@ def get_group_members_side_effect(user, group, use_sa_credentials=False):
 
 class AnvilAuthenticationTestCase(AuthenticationTestCase):
 
+    ES_HOSTNAME = ''
+    MOCK_AIRTABLE_KEY = 'airflow_access'
+
     # mock the terra apis
     def setUp(self):
         patcher = mock.patch('seqr.views.utils.terra_api_utils.TERRA_API_ROOT_URL', TEST_TERRA_API_ROOT_URL)
@@ -545,10 +553,6 @@ class AnvilAuthenticationTestCase(AuthenticationTestCase):
         analyst_group = Group.objects.get(pk=4)
         analyst_group.user_set.add(cls.analyst_user, cls.pm_user)
 
-    @classmethod
-    def add_analyst_project(cls, project_id):
-        return False
-
     def assert_no_extra_anvil_calls(self):
         self.mock_get_ws_acl.assert_not_called()
         self.mock_get_groups.assert_not_called()
@@ -556,6 +560,7 @@ class AnvilAuthenticationTestCase(AuthenticationTestCase):
 
 
 MOCK_AIRFLOW_URL = 'http://testairflowserver'
+DAG_NAME = 'LOADING_PIPELINE'
 PROJECT_GUID = 'R0001_1kg'
 
 
@@ -563,7 +568,7 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
     ADDITIONAL_REQUEST_COUNT = 0
 
     def setUp(self):
-        self._dag_url = f'{MOCK_AIRFLOW_URL}/api/v1/dags/{self.DAG_NAME}'
+        self._dag_url = f'{MOCK_AIRFLOW_URL}/api/v1/dags/{DAG_NAME}'
 
         # check dag running state
         responses.add(responses.GET, f'{self._dag_url}/dagRuns', json={
@@ -579,8 +584,8 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
         responses.add(responses.POST, f'{self._dag_url}/dagRuns', json={})
         # update variables
         responses.add(
-            responses.PATCH, f'{MOCK_AIRFLOW_URL}/api/v1/variables/{self.DAG_NAME}',
-            json={'key': self.DAG_NAME, 'value': 'updated variables'},
+            responses.PATCH, f'{MOCK_AIRFLOW_URL}/api/v1/variables/{DAG_NAME}',
+            json={'key': DAG_NAME, 'value': 'updated variables'},
         )
         # get task id
         self.add_dag_tasks_response(['R0006_test'])
@@ -613,7 +618,7 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
             tasks += [
                 {'task_id': 'create_dataproc_cluster'},
                 {'task_id': f'pyspark_compute_project_{project}'},
-                {'task_id': f'pyspark_compute_variants_{self.DAG_NAME}'},
+                {'task_id': f'pyspark_compute_variants_{DAG_NAME}'},
                 {'task_id': f'pyspark_export_project_{project}'},
                 {'task_id': 'scale_dataproc_cluster'},
                 {'task_id': f'skip_compute_project_subset_{project}'}
@@ -622,17 +627,17 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
             'tasks': tasks, 'total_entries': len(tasks),
         })
 
-    def set_dag_trigger_error_response(self):
-        responses.replace(responses.GET, f'{self._dag_url}/dagRuns', json={'dag_runs': [{
+    def set_dag_trigger_error_response(self, status=200):
+        responses.replace(responses.GET, f'{self._dag_url}/dagRuns', status=status, json={'dag_runs': [{
             'conf': {},
-            'dag_id': self.DAG_NAME,
+            'dag_id': DAG_NAME,
             'dag_run_id': 'manual__2022-04-28T11:51:22.735124+00:00',
             'end_date': None, 'execution_date': '2022-04-28T11:51:22.735124+00:00',
             'external_trigger': True, 'start_date': '2022-04-28T11:51:25.626176+00:00',
             'state': 'running'}
         ]})
 
-    def assert_airflow_calls(self, trigger_error=False, additional_tasks_check=False, secondary_dag_name=None):
+    def assert_airflow_calls(self, trigger_error=False, additional_tasks_check=False, dataset_type=None, **kwargs):
         self.mock_airflow_logger.info.assert_not_called()
 
         # Test triggering anvil dags
@@ -647,18 +652,18 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
         dag_variable_overrides = self._get_dag_variable_overrides(additional_tasks_check)
         dag_variables = {
             'projects_to_run': [dag_variable_overrides['project']] if 'project' in dag_variable_overrides else self.PROJECTS,
-            'callset_paths': [f'gs://test_bucket/{dag_variable_overrides["callset_path"]}'],
-            'sample_source': dag_variable_overrides['sample_source'],
+            'callset_path': f'gs://test_bucket/{dag_variable_overrides["callset_path"]}',
             'sample_type': dag_variable_overrides['sample_type'],
+            'dataset_type': dataset_type or dag_variable_overrides['dataset_type'],
             'reference_genome': dag_variable_overrides.get('reference_genome', 'GRCh38'),
+            'sample_source': dag_variable_overrides['sample_source'],
         }
-        self._assert_airflow_calls(self.DAG_NAME, dag_variables, call_count, secondary_dag_name)
+        self._assert_airflow_calls(dag_variables, call_count)
 
-    def _assert_airflow_calls(self, dag_name, dag_variables, call_count, secondary_dag_name, offset=0):
+    def _assert_airflow_calls(self, dag_variables, call_count, offset=0):
         dag_url = self._dag_url
 
         # check dag running state
-        dag_url = self._dag_url.replace(dag_name, secondary_dag_name) if secondary_dag_name else dag_url
         self.assertEqual(responses.calls[offset].request.url, f'{dag_url}/dagRuns')
         self.assertEqual(responses.calls[offset].request.method, "GET")
 
@@ -666,10 +671,10 @@ class AirflowTestCase(AnvilAuthenticationTestCase):
             return
 
         # update variables
-        self.assertEqual(responses.calls[offset+1].request.url, f'{MOCK_AIRFLOW_URL}/api/v1/variables/{dag_name}')
+        self.assertEqual(responses.calls[offset+1].request.url, f'{MOCK_AIRFLOW_URL}/api/v1/variables/{DAG_NAME}')
         self.assertEqual(responses.calls[offset+1].request.method, 'PATCH')
         self.assertDictEqual(json.loads(responses.calls[offset+1].request.body), {
-            'key': dag_name,
+            'key': DAG_NAME,
             'value': json.dumps(dag_variables),
         })
 
@@ -710,6 +715,10 @@ class AirtableTest(object):
             expected_params.update(additional_params)
         self.assertDictEqual(responses.calls[call_index].request.params, expected_params)
         self.assertListEqual(self._get_list_param(responses.calls[call_index].request, 'fields%5B%5D'), fields)
+        self.assert_expected_airtable_headers(call_index)
+
+    def assert_expected_airtable_headers(self, call_index):
+        self.assertEqual(responses.calls[call_index].request.headers['Authorization'], f'Bearer {self.MOCK_AIRTABLE_KEY}')
 
     @staticmethod
     def _get_list_param(call, param):
@@ -726,21 +735,26 @@ PROJECT_FIELDS = {
     'projectGuid', 'projectCategoryGuids', 'canEdit', 'name', 'description', 'createdDate', 'lastModifiedDate',
     'lastAccessedDate',  'mmeContactUrl', 'genomeVersion', 'mmePrimaryDataOwner', 'mmeContactInstitution',
     'isMmeEnabled', 'workspaceName', 'workspaceNamespace', 'hasCaseReview', 'enableHgmd', 'isDemo', 'allUserDemo',
-    'userIsCreator', 'consentCode', 'isAnalystProject',
+    'userIsCreator', 'consentCode', 'isAnalystProject', 'vlmContactEmail',
 }
 
 ANALYSIS_GROUP_FIELDS = {'analysisGroupGuid', 'description', 'name', 'projectGuid', 'familyGuids'}
+DYNAMIC_ANALYSIS_GROUP_FIELDS = {'analysisGroupGuid', 'criteria', 'name', 'projectGuid'}
 
+SUMMARY_FAMILY_FIELDS = {
+    'projectGuid', 'familyGuid', 'analysedBy', 'familyId', 'displayName', 'description',
+    'analysisStatus', 'createdDate', 'assignedAnalyst', 'codedPhenotype', 'mondoId',
+}
 FAMILY_FIELDS = {
-    'projectGuid', 'familyGuid', 'analysedBy', 'pedigreeImage', 'familyId', 'displayName', 'description',
-    'analysisStatus', 'pedigreeImage', 'createdDate', 'assignedAnalyst', 'codedPhenotype', 'postDiscoveryOmimNumbers',
+    'pedigreeImage', 'postDiscoveryOmimNumbers',
     'pedigreeDataset', 'analysisStatusLastModifiedDate', 'analysisStatusLastModifiedBy', 'mondoId',
 }
+FAMILY_FIELDS.update(SUMMARY_FAMILY_FIELDS)
 CASE_REVIEW_FAMILY_FIELDS = {
     'caseReviewNotes', 'caseReviewSummary'
 }
 INTERNAL_FAMILY_FIELDS = {
-    'individualGuids', 'successStory', 'successStoryTypes', 'pubmedIds',
+    'individualGuids', 'successStory', 'successStoryTypes', 'pubmedIds', 'externalData', 'postDiscoveryMondoId'
 }
 INTERNAL_FAMILY_FIELDS.update(FAMILY_FIELDS)
 
@@ -776,17 +790,17 @@ INTERNAL_INDIVIDUAL_FIELDS.update(CORE_INTERNAL_INDIVIDUAL_FIELDS)
 
 SAMPLE_FIELDS = {
     'projectGuid', 'familyGuid', 'individualGuid', 'sampleGuid', 'createdDate', 'sampleType', 'sampleId', 'isActive',
-    'loadedDate', 'datasetType', 'elasticsearchIndex',
+    'loadedDate', 'datasetType',
 }
 
 IGV_SAMPLE_FIELDS = {
-    'projectGuid', 'familyGuid', 'individualGuid', 'sampleGuid', 'filePath', 'sampleId', 'sampleType',
+    'projectGuid', 'familyGuid', 'individualGuid', 'sampleGuid', 'filePath', 'indexFilePath', 'sampleId', 'sampleType',
 }
 
 SAVED_VARIANT_FIELDS = {'variantGuid', 'variantId', 'familyGuids', 'xpos', 'ref', 'alt', 'selectedMainTranscriptId', 'acmgClassification'}
 SAVED_VARIANT_DETAIL_FIELDS = {
     'chrom', 'pos', 'genomeVersion', 'liftedOverGenomeVersion', 'liftedOverChrom', 'liftedOverPos', 'tagGuids',
-    'functionalDataGuids', 'noteGuids', 'originalAltAlleles', 'genotypes', 'hgmd',
+    'functionalDataGuids', 'noteGuids', 'originalAltAlleles', 'genotypes', 'hgmd', 'CAID',
     'transcripts', 'populations', 'predictions', 'rsid', 'genotypeFilters', 'clinvar', 'acmgClassification'
 }
 SAVED_VARIANT_DETAIL_FIELDS.update(SAVED_VARIANT_FIELDS)
@@ -1493,7 +1507,7 @@ for variant in PARSED_COMPOUND_HET_VARIANTS_MULTI_PROJECT:
         },
     })
 
-GOOGLE_API_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-GOOGLE_ACCESS_TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'
+GOOGLE_API_TOKEN_URL = 'https://oauth2.googleapis.com/token'  # nosec
+GOOGLE_ACCESS_TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'  # nosec
 
-GOOGLE_TOKEN_RESULT = '{"access_token":"ya29.c.EXAMPLE","expires_in":3599,"token_type":"Bearer"}'
+GOOGLE_TOKEN_RESULT = '{"access_token":"ya29.c.EXAMPLE","expires_in":3599,"token_type":"Bearer"}'  # nosec

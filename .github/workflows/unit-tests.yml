@@ -65,7 +65,7 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version: 16
     - name: Build UI
@@ -73,6 +73,7 @@ jobs:
         pushd ui
         npm install
         npm run build
+        mkdir ../static
         cp dist/* ../static/
         popd
     - name: Run coverage tests

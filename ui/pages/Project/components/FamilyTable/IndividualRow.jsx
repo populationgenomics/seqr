@@ -8,6 +8,8 @@ import { Label, Popup, Form, Input, Loader } from 'semantic-ui-react'
 import orderBy from 'lodash/orderBy'
 
 import { SearchInput, YearSelector, RadioButtonGroup, ButtonRadioGroup, Select } from 'shared/components/form/Inputs'
+import { validators } from 'shared/components/form/FormHelpers'
+import LoadOptionsSelect from 'shared/components/form/LoadOptionsSelect'
 import PedigreeIcon from 'shared/components/icons/PedigreeIcon'
 import Modal from 'shared/components/modal/Modal'
 import { AwesomeBarFormInput } from 'shared/components/page/AwesomeBar'
@@ -22,18 +24,20 @@ import FamilyLayout from 'shared/components/panel/family/FamilyLayout'
 import { ColoredIcon, ButtonLink } from 'shared/components/StyledComponents'
 import { VerticalSpacer } from 'shared/components/Spacers'
 import {
-  AFFECTED, PROBAND_RELATIONSHIP_OPTIONS, SAMPLE_TYPE_RNA, INDIVIDUAL_FIELD_CONFIGS, INDIVIDUAL_FIELD_SEX,
-  INDIVIDUAL_FIELD_AFFECTED, INDIVIDUAL_FIELD_FEATURES, INDIVIDUAL_FIELD_LOOKUP,
+  AFFECTED, PROBAND_RELATIONSHIP_OPTIONS, INDIVIDUAL_FIELD_CONFIGS, INDIVIDUAL_FIELD_SEX,
+  INDIVIDUAL_FIELD_AFFECTED, INDIVIDUAL_FIELD_FEATURES, INDIVIDUAL_FIELD_LOOKUP, DATASET_TITLE_LOOKUP,
+  DATA_TYPE_EXPRESSION_OUTLIER, DATA_TYPE_SPLICE_OUTLIER,
 } from 'shared/utils/constants'
+import { snakecaseToTitlecase } from 'shared/utils/stringUtils'
 
 import { updateIndividual } from 'redux/rootReducer'
-import { getSamplesByGuid, getMmeSubmissionsByGuid } from 'redux/selectors'
+import { getSamplesByGuid, getMmeSubmissionsByGuid, getIGVSamplesByFamilySampleIndividual } from 'redux/selectors'
 import { HPO_FORM_FIELDS } from '../HpoTerms'
 import {
   CASE_REVIEW_STATUS_MORE_INFO_NEEDED, CASE_REVIEW_STATUS_OPTIONS, CASE_REVIEW_TABLE_NAME, INDIVIDUAL_DETAIL_FIELDS,
   ONSET_AGE_OPTIONS, INHERITANCE_MODE_OPTIONS, INHERITANCE_MODE_LOOKUP, AR_FIELDS,
 } from '../../constants'
-import { updateIndividuals } from '../../reducers'
+import { updateIndividuals, updateIndividualIGV } from '../../reducers'
 import { getCurrentProject, getParentOptionsByIndividual } from '../../selectors'
 
 import CaseReviewStatusDropdown from './CaseReviewStatusDropdown'
@@ -118,17 +122,6 @@ CaseReviewStatus.propTypes = {
   individual: PropTypes.object.isRequired,
 }
 
-const SHOW_DATA_MODAL_CONFIG = [
-  {
-    shouldShowField: 'hasPhenotypeGeneScores',
-    component: PhenotypePrioritizedGenes,
-    modalName: ({ individualId }) => `PHENOTYPE-PRIORITIZATION-${individualId}`,
-    title: ({ individualId }) => `Phenotype Prioritized Genes: ${individualId}`,
-    modalSize: 'large',
-    linkText: 'Show Phenotype Prioritized Genes',
-  },
-]
-
 const MmeStatusLabel = React.memo(({ title, dateField, color, individual, mmeSubmission }) => (
   <Link to={`/project/${individual.projectGuid}/family_page/${individual.familyGuid}/matchmaker_exchange`}>
     <VerticalSpacer height={5} />
@@ -149,7 +142,42 @@ MmeStatusLabel.propTypes = {
 const DataDetails = React.memo(({ loadedSamples, individual, mmeSubmission }) => (
   <div>
     {loadedSamples.map(
-      sample => <div key={sample.sampleGuid}><Sample loadedSample={sample} isOutdated={!sample.isActive} /></div>,
+      sample => <div key={sample.sampleGuid}><Sample {...sample} isOutdated={!sample.isActive} /></div>,
+    )}
+    {individual.rnaSample && (
+      <Sample
+        sampleType="RNA"
+        loadedDate={individual.rnaSample.loadedDate}
+        hoverContent={`RNAseq methods: ${individual.rnaSample.dataTypes.map(dt => DATASET_TITLE_LOOKUP[dt].trim()).join(', ')}`}
+      />
+    )}
+    {individual.rnaSample && (individual.rnaSample.dataTypes.includes(DATA_TYPE_EXPRESSION_OUTLIER) ||
+      individual.rnaSample.dataTypes.includes(DATA_TYPE_SPLICE_OUTLIER)) && (
+      <div>
+        <Link
+          target="_blank"
+          to={`/project/${individual.projectGuid}/family_page/${individual.familyGuid}/rnaseq_results/${individual.individualGuid}`}
+        >
+          RNAseq Results
+        </Link>
+      </div>
+    )}
+    {individual.phenotypePrioritizationTools.map(
+      ({ tool, loadedDate }) => (
+        <div key={tool}><Sample sampleType={snakecaseToTitlecase(tool)} loadedDate={loadedDate} /></div>
+      ),
+    )}
+    {individual.phenotypePrioritizationTools.length > 0 && (
+      <Modal
+        modalName={`PHENOTYPE-PRIORITIZATION-${individual.individualId}`}
+        title={`Phenotype Prioritized Genes: ${individual.individualId}`}
+        size="large"
+        trigger={<ButtonLink padding="0 0 0 0" content="Show Phenotype Prioritized Genes" />}
+      >
+        <React.Suspense fallback={<Loader />}>
+          <PhenotypePrioritizedGenes familyGuid={individual.familyGuid} individualGuid={individual.individualGuid} />
+        </React.Suspense>
+      </Modal>
     )}
     {mmeSubmission && (
       mmeSubmission.deletedDate ? (
@@ -168,36 +196,6 @@ const DataDetails = React.memo(({ loadedSamples, individual, mmeSubmission }) =>
           }
         />
       ) : <MmeStatusLabel title="Submitted to MME" dateField="lastModifiedDate" color="violet" individual={individual} mmeSubmission={mmeSubmission} />
-    )}
-    {individual.hasRnaOutlierData && (
-      <div>
-        <Link
-          target="_blank"
-          to={`/project/${individual.projectGuid}/family_page/${individual.familyGuid}/rnaseq_results/${individual.individualGuid}`}
-        >
-          RNAseq Results
-        </Link>
-      </div>
-    )}
-    {SHOW_DATA_MODAL_CONFIG.filter(({ shouldShowField }) => individual[shouldShowField]).map(
-      ({ modalName, title, modalSize, linkText, component }) => {
-        const sample = loadedSamples.find(({ sampleType, isActive }) => isActive && sampleType === SAMPLE_TYPE_RNA)
-        const titleIds = { sampleId: sample?.sampleId, individualId: individual.individualId }
-        return (
-          <Modal
-            key={modalName(titleIds)}
-            modalName={modalName(titleIds)}
-            title={title(titleIds)}
-            size={modalSize}
-            trigger={<ButtonLink padding="0 0 0 0" content={linkText} />}
-          >
-            <React.Suspense fallback={<Loader />}>
-              {React.createElement(component,
-                { familyGuid: individual.familyGuid, individualGuid: individual.individualGuid }) }
-            </React.Suspense>
-          </Modal>
-        )
-      },
     )}
   </div>
 ))
@@ -504,6 +502,45 @@ const EDIT_INDIVIDUAL_FIELDS = [INDIVIDUAL_FIELD_SEX, INDIVIDUAL_FIELD_AFFECTED]
   { ...field, component: connect(mapParentOptionsStateToProps)(Select), inline: true, width: 8 }
 )))
 
+const mapIgvOptionsStateToProps = (state) => {
+  const { namespace, name } = getCurrentProject(state)
+  return {
+    url: `/api/anvil_workspace/${namespace}/${name}/get_igv_options`,
+  }
+}
+
+const EDIT_IGV_FIELDS = [
+  {
+    name: 'filePath',
+    label: 'IGV File Path',
+    component: connect(mapIgvOptionsStateToProps)(LoadOptionsSelect),
+    optionsResponseKey: 'igv_options',
+    formatOption: value => value,
+    errorHeader: 'Unable to Load IGV Files',
+    validationErrorHeader: 'No IGV Files Found',
+    validationErrorMessage: 'No BAMs or CRAMs were found in the workspace associated with this project',
+    validate: validators.required,
+  },
+]
+
+const EditIndividualButton = ({ project, displayName, fieldName, ...props }) => (
+  <BaseFieldView
+    field={`${fieldName || 'core'}Edit`}
+    idField="individualGuid"
+    isEditable={!!project.workspaceName && !project.isAnalystProject && project.canEdit}
+    editLabel={`Edit${fieldName || ' Individual'}`}
+    modalTitle={`Edit ${displayName}${fieldName || ''}`}
+    showErrorPanel
+    {...props}
+  />
+)
+
+EditIndividualButton.propTypes = {
+  project: PropTypes.object.isRequired,
+  displayName: PropTypes.string,
+  fieldName: PropTypes.string,
+}
+
 class IndividualRow extends React.PureComponent {
 
   static propTypes = {
@@ -511,7 +548,9 @@ class IndividualRow extends React.PureComponent {
     individual: PropTypes.object.isRequired,
     mmeSubmission: PropTypes.object,
     samplesByGuid: PropTypes.object.isRequired,
+    alignmentSample: PropTypes.object,
     dispatchUpdateIndividual: PropTypes.func,
+    dispatchUpdateIndividualIGV: PropTypes.func,
     updateIndividualPedigree: PropTypes.func,
     tableName: PropTypes.string,
   }
@@ -534,7 +573,10 @@ class IndividualRow extends React.PureComponent {
   }
 
   render() {
-    const { project, individual, mmeSubmission, samplesByGuid, tableName, updateIndividualPedigree } = this.props
+    const {
+      project, individual, mmeSubmission, samplesByGuid, tableName, updateIndividualPedigree, alignmentSample,
+      dispatchUpdateIndividualIGV,
+    } = this.props
     const { displayName, sex, affected, createdDate, sampleGuids } = individual
 
     let loadedSamples = sampleGuids.map(
@@ -555,26 +597,35 @@ class IndividualRow extends React.PureComponent {
             {`ADDED ${new Date(createdDate).toLocaleDateString().toUpperCase()}`}
           </Detail>
         </div>
-        <BaseFieldView
-          field="coreEdit"
-          idField="individualGuid"
+        <EditIndividualButton
           initialValues={individual}
-          isEditable={!!project.workspaceName && !project.isAnalystProject && project.canEdit}
+          project={project}
+          displayName={displayName}
           isDeletable
           deleteConfirm={`Are you sure you want to delete ${displayName}? This action can not be undone`}
-          editLabel="Edit Individual"
           formFields={EDIT_INDIVIDUAL_FIELDS}
-          modalTitle={`Edit ${displayName}`}
-          showErrorPanel
           onSubmit={updateIndividualPedigree}
+        />
+        <EditIndividualButton
+          fieldName=" IGV"
+          initialValues={alignmentSample || individual}
+          project={project}
+          displayName={displayName}
+          formFields={EDIT_IGV_FIELDS}
+          onSubmit={dispatchUpdateIndividualIGV}
         />
       </IndividualContainer>
     )
 
     const editCaseReview = tableName === CASE_REVIEW_TABLE_NAME
     const rightContent = editCaseReview ?
-      <CaseReviewStatus individual={individual} /> :
-      <DataDetails loadedSamples={loadedSamples} individual={individual} mmeSubmission={mmeSubmission} />
+      <CaseReviewStatus individual={individual} /> : (
+        <DataDetails
+          loadedSamples={loadedSamples}
+          individual={individual}
+          mmeSubmission={mmeSubmission}
+        />
+      )
 
     return (
       <CollapsableLayout
@@ -596,10 +647,14 @@ const mapStateToProps = (state, ownProps) => ({
   project: getCurrentProject(state),
   samplesByGuid: getSamplesByGuid(state),
   mmeSubmission: getMmeSubmissionsByGuid(state)[ownProps.individual.mmeSubmissionGuid],
+  alignmentSample: (
+    getIGVSamplesByFamilySampleIndividual(state)[ownProps.individual.familyGuid]?.alignment || {}
+  )[ownProps.individual.individualGuid],
 })
 
 const mapDispatchToProps = {
   dispatchUpdateIndividual: updateIndividual,
+  dispatchUpdateIndividualIGV: values => updateIndividualIGV(values),
   updateIndividualPedigree: values => updateIndividuals({ individuals: [values], delete: values.delete }),
 }
 
