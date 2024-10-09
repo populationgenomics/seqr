@@ -59,9 +59,10 @@ const VARIANT_NOTE_FIELDS = [{
 
 const DEPRECATED_MME_TAG = 'seqr MME (old)'
 const AIP_TAG_TYPE = 'AIP'
+const TALOS_TAG_TYPES = ['Talos', 'Talos Permissive']
 const NO_EDIT_TAG_TYPES = [AIP_TAG_TYPE, GREGOR_FINDING_TAG_NAME]
 
-const aipCategoryRow = ([key, { name, date }]) => (
+const talosCategoryRow = ([key, { name, date }]) => (
   <li key={key}>
     {`${key} - ${name}`}
     <HorizontalSpacer width={5} />
@@ -69,7 +70,7 @@ const aipCategoryRow = ([key, { name, date }]) => (
   </li>
 )
 
-const aipMetaList = (key, name, value) => {
+const talosMetaList = (key, name, value) => {
   if (value.length === 0) {
     return null
   }
@@ -84,7 +85,7 @@ const aipMetaList = (key, name, value) => {
   )
 }
 
-const aipHpoList = (panels) => {
+const talosHpoList = (panels) => {
   if (Object.values(panels).every(array => array.length === 0)) {
     return null
   }
@@ -124,59 +125,94 @@ const aipHpoList = (panels) => {
   )
 }
 
+export const talosPopup = tag => trigger => (
+  <Popup
+    position="top right"
+    size="tiny"
+    trigger={trigger}
+    header="Talos results"
+    hoverable
+    flowing
+    content={
+      <div>
+        <div>
+          <b>First Tagged:</b>
+          <HorizontalSpacer width={5} />
+          {tag.structuredMetadata.first_tagged}
+        </div>
+        <div>
+          <b>Evidence Updated:</b>
+          <HorizontalSpacer width={5} />
+          {tag.structuredMetadata.evidence_last_updated}
+        </div>
+        <div>
+          <b>Phenotype match first identified:</b>
+          <HorizontalSpacer width={5} />
+          {tag.structuredMetadata.date_of_phenotype_match}
+        </div>
+        <div>
+          <b>Categories:</b>
+          {Object.entries(tag.structuredMetadata.categories).map(talosCategoryRow)}
+        </div>
+        {/* {tag.structuredMetadata && tag.structuredMetadata.removed && (
+          <div>
+            <b>Removed Categories:</b>
+            {Object.entries(tag.structuredMetadata.removed).map(talosCategoryRow)}
+          </div>
+        )} */}
+        {tag.structuredMetadata.reasons && (
+          talosMetaList('moi', 'Tagged MOI', tag.structuredMetadata.reasons)
+        )}
+        {tag.structuredMetadata.support_vars && (
+          talosMetaList('support_vars', 'Supporting Variants', tag.structuredMetadata.support_vars)
+        )}
+        {tag.structuredMetadata.labels && (
+          talosMetaList('labels', 'Labels', tag.structuredMetadata.labels)
+        )}
+        {tag.structuredMetadata.panels && (
+          talosHpoList(tag.structuredMetadata.panels)
+        )}
+        {tag.structuredMetadata.phenotype_labels && (
+          talosMetaList('gene-hpo', 'Matched Gene Phenotypes', tag.structuredMetadata.phenotype_labels)
+        )}
+      </div>
+    }
+  />
+)
+const aipCategoryContent = (key, { name, date }) => ([
+  <Table.HeaderCell key="name" content={`${key} - ${name} `} />,
+  <Table.Cell key="date" disabled content={`(${new Date(date).toLocaleDateString()})`} />,
+])
+
+const structuredMetadataRow = ([key, value]) => (
+  <Table.Row key={key}>
+    {typeof value === 'string' ? [
+      <Table.HeaderCell key="key" textAlign="right" content={snakecaseToTitlecase(key)} />,
+      <Table.Cell key="value" content={value} />,
+    ] : aipCategoryContent(key, value)}
+  </Table.Row>
+)
+
 export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
   <Popup
     position="top right"
     size="tiny"
     trigger={trigger}
-    header={title || (tag.aipMetadata ? 'Talos results' : 'Tagged by')}
+    header={title || (tag.structuredMetadata ? TAG_TYPE_TILES[tag.name] : 'Tagged by')}
     hoverable
     flowing
     content={
       <div>
-        {tag.aipMetadata ? (
-          <div>
-            <div>
-              <b>First Tagged:</b>
-              <HorizontalSpacer width={5} />
-              {tag.aipMetadata.first_tagged}
-            </div>
-            <div>
-              <b>Evidence Updated:</b>
-              <HorizontalSpacer width={5} />
-              {tag.aipMetadata.evidence_last_updated}
-            </div>
-            <div>
-              <b>Phenotype match first identified:</b>
-              <HorizontalSpacer width={5} />
-              {tag.aipMetadata.date_of_phenotype_match}
-            </div>
-            <div>
-              <b>Categories:</b>
-              {Object.entries(tag.aipMetadata.categories).map(aipCategoryRow)}
-            </div>
-            {tag.aipMetadata && tag.aipMetadata.removed && (
-              <div>
-                <b>Removed Categories:</b>
-                {Object.entries(tag.aipMetadata.removed).map(aipCategoryRow)}
-              </div>
-            )}
-            {tag.aipMetadata.reasons && (
-              aipMetaList('moi', 'Tagged MOI', tag.aipMetadata.reasons)
-            )}
-            {tag.aipMetadata.support_vars && (
-              aipMetaList('support_vars', 'Supporting Variants', tag.aipMetadata.support_vars)
-            )}
-            {tag.aipMetadata.labels && (
-              aipMetaList('labels', 'Labels', tag.aipMetadata.labels)
-            )}
-            {tag.aipMetadata.labels && (
-              aipHpoList(tag.aipMetadata.panels)
-            )}
-            {tag.aipMetadata.labels && (
-              aipMetaList('gene-hpo', 'Matched Gene Phenotypes', tag.aipMetadata.phenotype_labels)
-            )}
-          </div>
+        {tag.structuredMetadata ? (
+          <NoBorderTable basic="very" compact="very">
+            <Table.Body>
+              {Object.entries(tag.structuredMetadata).filter(e => e[0] !== 'removed').map(structuredMetadataRow)}
+              {tag.structuredMetadata.removed && [
+                <Table.Row key="removedHeader"><Table.HeaderCell colSpan={2} content="Removed Categories" /></Table.Row>,
+                ...Object.entries(tag.structuredMetadata.removed).map(structuredMetadataRow),
+              ]}
+            </Table.Body>
+          </NoBorderTable>
         ) : `${tag.createdBy || 'unknown user'}${tag.lastModifiedDate ? ` on ${new Date(tag.lastModifiedDate).toLocaleDateString()}` : ''}`}
         {tag.metadata && !hideMetadata && (
           <div>
@@ -198,6 +234,9 @@ const notePopup = note => note && taggedByPopup(note, 'Note By')
 
 const ShortcutTagToggle = React.memo(({ tag, ...props }) => {
   const toggle = <InlineToggle color={tag && tag.color} divided {...props} value={tag} />
+  if (tag && TALOS_TAG_TYPES.includes(tag.name)) {
+    return talosPopup(tag)(toggle)
+  }
   return tag ? taggedByPopup(tag)(toggle) : toggle
 })
 

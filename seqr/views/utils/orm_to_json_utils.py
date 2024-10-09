@@ -446,9 +446,11 @@ def _format_functional_tags(tags):
     return tags
 
 
-AIP_TAG_TYPES = ['AIP', 'Talos-permissive', 'Talos-restrictive']
+AIP_TAG_TYPE = 'AIP'
+TALOS_TAG_TYPE = 'Talos'
+TALOS_PERMISSIVE_TAG_TYPE = 'Talos Permissive'
 GREGOR_FINDING_TAG_TYPE = 'GREGoR Finding'
-STRUCTURED_METADATA_TAG_TYPES = AIP_TAG_TYPES + [GREGOR_FINDING_TAG_TYPE,]
+STRUCTURED_METADATA_TAG_TYPES = [GREGOR_FINDING_TAG_TYPE, AIP_TAG_TYPE, TALOS_TAG_TYPE, TALOS_PERMISSIVE_TAG_TYPE]
 def _format_variant_tags(tags):
     for tag in tags:
         if tag['name'] in STRUCTURED_METADATA_TAG_TYPES and tag['metadata']:

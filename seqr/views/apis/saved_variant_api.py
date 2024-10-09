@@ -191,7 +191,7 @@ def _get_tag_type_create_data(tag, saved_variants=None):
 def update_variant_tags_handler(request, variant_guids):
     return _update_variant_tag_models(
         request, variant_guids, tag_key='tags', response_guid_key='tagGuids', model_cls=VariantTag,
-        get_tag_create_data=_get_tag_type_create_data, delete_variants_if_empty=True, protected_tag_types=AIP_TAG_TYPES)
+        get_tag_create_data=_get_tag_type_create_data, delete_variants_if_empty=True, protected_tag_types=STRUCTURED_METADATA_TAG_TYPES)
 
 @login_and_policies_required
 def update_variant_acmg_classification_handler(request, variant_guid):

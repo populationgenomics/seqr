@@ -23,7 +23,7 @@ from seqr.utils.search.utils import get_variants_for_variant_ids, InvalidSearchE
 from seqr.views.utils.json_utils import create_json_response
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.orm_to_json_utils import get_json_for_matchmaker_submissions, get_json_for_saved_variants,\
-    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPES
+    add_individual_hpo_details, INDIVIDUAL_DISPLAY_NAME_EXPR, AIP_TAG_TYPE, TALOS_TAG_TYPE, TALOS_PERMISSIVE_TAG_TYPE
 from seqr.views.utils.permissions_utils import analyst_required, user_is_analyst, get_project_guids_user_can_view, \
     login_and_policies_required, get_project_and_check_permissions, get_internal_projects
 from seqr.views.utils.anvil_metadata_utils import parse_anvil_metadata, anvil_export_airtable_fields, FAMILY_ROW_TYPE, SUBJECT_ROW_TYPE, DISCOVERY_ROW_TYPE
@@ -144,14 +144,16 @@ def hpo_summary_data(request, hpo_id):
     return create_json_response({'data': list(data)})
 
 
-AIP_INGEST_FULL_REPORT_DESC = 'CPG: Full Talos report'
-
-
 @analyst_required
 def bulk_update_family_external_analysis(request):
     request_json = json.loads(request.body)
     data_type = request_json['dataType']
     family_upload_data = load_uploaded_file(request_json['familiesFile']['uploadedFileId'])
+
+    if data_type == AIP_TAG_TYPE:
+        return _load_aip_data(family_upload_data, request.user)
+    if data_type == TALOS_TAG_TYPE:
+        return _load_talos_data(family_upload_data, request.user)
 
     header = [col.split()[0].lower() for col in family_upload_data[0]]
     if not ('project' in header and 'family' in header):
@@ -395,22 +397,22 @@ def send_vlm_email(request):
     return create_json_response({'success': True})
 
 
-def _load_aip_full_report_data(data: dict, user: User):
+def _load_talos_data(data: dict, user: User):
     """
-        Version of _load_aip_data that ingests a full AIP report rather than the
-        cut down "seqr" format.
+        Version of _load_aip_data that ingests a FULL Talos report (not the
+        cut down "seqr" format)
 
-        - Adds both the Talos-permissive and Talos-restrictive tags
+        - Adds both the Talos-permissive and Talos tags
           depending on the presence of HPO matches in the variant.
         - Adds the First Seen metadata field to the tags.
 
     """
     category_map = data['metadata']['categories']
     results = data['results']
-    warnings = []
+    projects = data['metadata'].get('projects')
 
-    # This endpoint does not let us specify the project, so we are going to add a list
-    # of target projects into the report.
+    # This endpoint does not let us specify the project, so we list
+    # target projects in the report.
     projects = Project.objects.filter(guid__in=data['metadata']['projects'])
     if not projects:
         raise ErrorsWarningsException([
@@ -435,10 +437,10 @@ def _load_aip_full_report_data(data: dict, user: User):
             f'when searching in the project/s: {", ".join(projects.values_list("name", flat=True))}',
         ])
 
-    # Make a dict of (family_id, variant_id) -> AIP prediction for variant.
+    # Make a dict of (family_id, variant_id) -> Talos prediction for variant.
     # Adds the variant multiple times if the family is in multiple projects.
-    all_variant_ids = set()
     family_variant_data = {}
+    family_variant_data_restrictive = {}
     for sg_id, individual_aip_results in results.items():
         individual_id = results[sg_id]['metadata']['ext_id']
         family_ids = family_id_map[individual_id]
@@ -446,79 +448,128 @@ def _load_aip_full_report_data(data: dict, user: User):
             for variant_result in individual_aip_results['variants']:
                 variant_id = variant_result['var_data']['info']['seqr_link']
                 family_variant_data[(family_id, variant_id)] = variant_result
-                all_variant_ids.add(variant_id)
+                if any(hpo_match for hpo_match in variant_result['panels'].values()) or variant_result['phenotype_labels']:
+                    family_variant_data_restrictive[(family_id, variant_id)] = variant_result
 
-    # Get a map of the saved variants that are already in the database.
-    saved_variant_map = {
-        (v.family_id, v.variant_id): v
-        for v in SavedVariant.objects.filter(family_id__in=all_family_ids, variant_id__in=all_variant_ids)
-    }
-
-    # If the variant has not been "saved" before, find it in the search backend and save it.
-    new_variants = set(family_variant_data.keys()) - set(saved_variant_map.keys())
-    if new_variants:
-        new_variants_from_search = _search_new_saved_variants(new_variants, user, warnings)
-        saved_variant_map.update(new_variants_from_search)
-
-    # Add the aip_permissive tag to all variants
-    aip_tag_type = VariantTagType.objects.get(name='Talos-permissive', project=None)
-    num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
-
-    # Add the aip_restrictive tag to qualifying variants
-    aip_restrictive_tag_type = VariantTagType.objects.get(name='Talos-restrictive', project=None)
-    num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_restrictive_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
-
-    summary_message = f'Loaded {num_new} new ({num_new_restrictive} restrictive) and {num_updated} updated ({num_updated_restrictive} restrictive) AIP tags for {len(family_id_map)} families'
-    safe_post_to_slack(
-        SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL,
-        f'{summary_message}:\n```{", ".join(sorted(family_id_map.keys()))}```',
+    # Add the Talos-permissive tag to all variants
+    today = datetime.now().strftime('%Y-%m-%d')
+    num_new, num_updated = bulk_create_tagged_variants(
+        family_variant_data, tag_name=TALOS_PERMISSIVE_TAG_TYPE, user=user, load_new_variant_data=_search_new_saved_variants,
+        get_metadata=lambda pred:{
+            k: pred[k] for k in [
+                'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged', 'flags', 'independent',
+                'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
+                ]}.update({category: {'name': category_map[category], 'date': today} for category in pred['categories']}),
     )
+
+    # Add the Talos-restrictive tag to qualifying variants
+    num_new_restrictive, num_updated_restrictive = bulk_create_tagged_variants(
+        family_variant_data_restrictive, tag_name=TALOS_TAG_TYPE, user=user, load_new_variant_data=_search_new_saved_variants,
+        get_metadata=lambda pred: {
+            k: pred[k] for k in [
+                'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged', 'flags', 'independent',
+                'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
+                ]}.update({category: {'name': category_map[category], 'date': today} for category in pred['categories']}),
+    )
+
+    summary_message = f'Loaded {num_new} new and {num_updated} updated Talos permissive tags for {len(family_id_map)} families.\n'
+    summary_message += f'Loaded {num_new_restrictive} new and {num_updated_restrictive} updated Talos restrictive tags for {len(family_id_map)} families'
 
     return create_json_response({
         'info': [summary_message],
-        'warnings': warnings,
     })
 
 
-def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False):
-    existing_tags = {
-        tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
-            variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
-        ).annotate(saved_variant_ids=ArrayAgg('saved_variants__id', ordering='id'))
-    }
 
-    # Add/update a metadata field on each tags containing the AIP results that will be displayed.
-    today = datetime.now().strftime('%Y-%m-%d')
-    update_tags = []
-    num_new = 0
 
-    for key, variant_result in family_variant_data.items():
-        if restrictive:
-            # Skip if the variant if if does not have a HPO match.
-            if not any(hpo_match for hpo_match in variant_result['panels'].values()):
-                continue
+# Talos-all
+# Talos-comprehensive
+# Talos-permissive
+# Talos-restrictive
+# Talos-phenotype
+# Talos-pheno-match
+# Talos-high-confidence
+# Talos-high-conf
 
-        # Skip if the variant is not in the saved map.
-        if key not in saved_variant_map:
-            continue
 
-        # Copy selected metadata fields from the AIP results to the tag metadata.
-        metadata = {}
-        for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
-                  'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged']:
-            metadata[k] = variant_result[k]
+# ##### replace all of below
+#     # Get a map of the saved variants that are already in the database.
+#     saved_variant_map = {
+#         (v.family_id, v.variant_id): v
+#         for v in SavedVariant.objects.filter(family_id__in=all_family_ids, variant_id__in=all_variant_ids)
+#     }
 
-        # Add the categories using the date of ingest as the date.
-        metadata['categories'] = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
+#     # If the variant has not been "saved" before, find it in the search backend and save it.
+#     new_variants = set(family_variant_data.keys()) - set(saved_variant_map.keys())
+#     if new_variants:
+#         new_variants_from_search = _search_new_saved_variants(new_variants, user, warnings)
+#         saved_variant_map.update(new_variants_from_search)
 
-        updated_tag = _set_aip_tags(
-            key, metadata, variant_result['support_vars'], saved_variant_map, existing_tags, aip_tag_type, user,
-        )
-        if updated_tag:
-            update_tags.append(updated_tag)
-        else:
-            num_new += 1
+#     # Add the aip_permissive tag to all variants
+#     aip_tag_type = VariantTagType.objects.get(name='Talos-permissive', project=None)
+#     num_new, num_updated = _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False)
 
-    VariantTag.bulk_update_models(user, update_tags, ['metadata'])
+#     # Add the aip_restrictive tag to qualifying variants
+#         for key, variant_result in family_variant_data.items():
+#         if restrictive:
+#             # Skip if the variant if if does not have a HPO match.
+#             if not any(hpo_match for hpo_match in variant_result['panels'].values()):
+#                 continue
 
-    return num_new, len(update_tags)
+#     aip_restrictive_tag_type = VariantTagType.objects.get(name='Talos-restrictive', project=None)
+#     num_new_restrictive, num_updated_restrictive = _cpg_add_aip_tags_to_saved_variants(aip_restrictive_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=True)
+
+#     summary_message = f'Loaded {num_new} new ({num_new_restrictive} restrictive) and {num_updated} updated ({num_updated_restrictive} restrictive) AIP tags for {len(family_id_map)} families'
+#     safe_post_to_slack(
+#         SEQR_SLACK_DATA_ALERTS_NOTIFICATION_CHANNEL,
+#         f'{summary_message}:\n```{", ".join(sorted(family_id_map.keys()))}```',
+#     )
+
+#     return create_json_response({
+#         'info': [summary_message],
+#         'warnings': warnings,
+#     })
+
+
+# def _cpg_add_aip_tags_to_saved_variants(aip_tag_type, saved_variant_map, family_variant_data, category_map, user, restrictive=False):
+#     existing_tags = {
+#         tuple(t.saved_variant_ids): t for t in VariantTag.objects.filter(
+#             variant_tag_type=aip_tag_type, saved_variants__in=saved_variant_map.values(),
+#         ).annotate(saved_variant_ids=ArrayAgg('saved_variants__id', ordering='id'))
+#     }
+
+#     # Add/update a metadata field on each tags containing the AIP results that will be displayed.
+#     today = datetime.now().strftime('%Y-%m-%d')
+#     update_tags = []
+#     num_new = 0
+
+#     for key, variant_result in family_variant_data.items():
+#         if restrictive:
+#             # Skip if the variant if if does not have a HPO match.
+#             if not any(hpo_match for hpo_match in variant_result['panels'].values()):
+#                 continue
+
+#         # Skip if the variant is not in the saved map.
+#         if key not in saved_variant_map:
+#             continue
+
+#         # Copy selected metadata fields from the AIP results to the tag metadata.
+#         metadata = {}
+#         for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
+#                   'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged']:
+#             metadata[k] = variant_result[k]
+
+#         # Add the categories using the date of ingest as the date.
+#         metadata['categories'] = {category: {'name': category_map[category], 'date': today} for category in variant_result['categories']}
+
+#         updated_tag = _set_aip_tags(
+#             key, metadata, variant_result['support_vars'], saved_variant_map, existing_tags, aip_tag_type, user,
+#         )
+#         if updated_tag:
+#             update_tags.append(updated_tag)
+#         else:
+#             num_new += 1
+
+#     VariantTag.bulk_update_models(user, update_tags, ['metadata'])
+
+#     return num_new, len(update_tags)
