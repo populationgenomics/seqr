@@ -16,6 +16,7 @@ import {
   getGenesById,
 } from 'redux/selectors'
 import { DISCOVERY_CATEGORY_NAME, MME_TAG_NAME, GREGOR_FINDING_TAG_NAME } from 'shared/utils/constants'
+import { snakecaseToTitlecase } from 'shared/utils/stringUtils'
 import VariantClassify from './VariantClassify'
 import PopupWithModal from '../../PopupWithModal'
 import { HorizontalSpacer } from '../../Spacers'
@@ -61,6 +62,10 @@ const DEPRECATED_MME_TAG = 'seqr MME (old)'
 const AIP_TAG_TYPE = 'AIP'
 const TALOS_TAG_TYPES = ['Talos', 'Talos Permissive']
 const NO_EDIT_TAG_TYPES = [AIP_TAG_TYPE, GREGOR_FINDING_TAG_NAME]
+const TAG_TYPE_TILES = {
+  [AIP_TAG_TYPE]: 'Categories',
+  [GREGOR_FINDING_TAG_NAME]: 'Finding Detail',
+}
 
 const talosCategoryRow = ([key, { name, date }]) => (
   <li key={key}>
