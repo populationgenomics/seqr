@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 
 import csv
-from datetime import datetime
 from seqr.models import Sample
 
 import logging
@@ -15,9 +14,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        outfile_name = (
-            f'/app/seqr/cpg_id_map_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}'
-        )
+        outfile_name = '/app/seqr/cpg_id_map.tsv'
 
         # Get all the active samples
         samples = Sample.objects.filter(is_active=True)
