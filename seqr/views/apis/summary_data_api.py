@@ -263,9 +263,12 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
 
     if missing:
         missing_summary = [f'{family} ({", ".join(sorted(variant_ids))})' for family, variant_ids in missing.items()]
-        raise ErrorsWarningsException([
-            f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
-        ])
+        missing_cnt = sum([len(variant_ids) for variant_ids in missing.values()])
+        logger.error(f"Unable to find the {missing_cnt} Talos variants from {len(missing)} families in the search backend: {', '.join(missing_summary)[:1000]}...", user)
+
+        # raise ErrorsWarningsException([
+        #     f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
+        # ])
 
     return new_variants
 
