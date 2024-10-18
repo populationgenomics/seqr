@@ -201,6 +201,7 @@ def _set_updated_tags(key: tuple[int, str], metadata: dict[str, dict], support_v
     existing_tag = existing_tags.get(tuple([variant.id]))
     updated_tag = None
     if existing_tag:
+
         existing_metadata = json.loads(existing_tag.metadata or '{}')
         metadata = {k: existing_metadata.get(k, v) for k, v in metadata.items()}
         removed = {k: v for k, v in existing_metadata.get('removed', {}).items() if k not in metadata}
@@ -217,6 +218,9 @@ def _set_updated_tags(key: tuple[int, str], metadata: dict[str, dict], support_v
     variant_genes = set(variant.saved_variant_json['transcripts'].keys())
     support_vars = []
     for support_id in support_var_ids:
+        # Temp handle for  support variants missing from back end...
+        if (key[0], support_id) not in saved_variant_map:
+            continue
         support_v = saved_variant_map[(key[0], support_id)]
         if variant_genes.intersection(set(support_v.saved_variant_json['transcripts'].keys())):
             support_vars.append(support_v)
