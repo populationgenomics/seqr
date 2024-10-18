@@ -242,7 +242,9 @@ const ShortcutTagToggle = React.memo(({ tag, ...props }) => {
   if (tag && TALOS_TAG_TYPES.includes(tag.name)) {
     return talosPopup(tag)(toggle)
   }
-  return tag ? taggedByPopup(tag)(toggle) : toggle
+  // FIXME!!!
+  return tag ? talosPopup(tag)(toggle) : toggle
+  // return tag ? taggedByPopup(tag)(toggle) : toggle
 })
 
 ShortcutTagToggle.propTypes = {
