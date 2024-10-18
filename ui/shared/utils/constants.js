@@ -1320,8 +1320,8 @@ const VARIANT_SORT_OPTONS = [
     text: 'TALOS: Date first Tagged',
     comparator: (a, b, genesById, tagsByGuid) => {
       const getTalosFirstTaggedDate = (variant) => {
-        const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => metadata?.first_tagged || '')
+        const structuredMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.structuredMetadata)
+        const dates = (structuredMetadata || []).map(metadata => metadata?.first_tagged || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
@@ -1333,8 +1333,8 @@ const VARIANT_SORT_OPTONS = [
     text: 'TALOS: Date Evidence Updated',
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestTalosCatagoryDate = (variant) => {
-        const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => metadata?.evidence_last_updated || '')
+        const structuredMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.structuredMetadata)
+        const dates = (structuredMetadata || []).map(metadata => metadata?.evidence_last_updated || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
@@ -1346,8 +1346,8 @@ const VARIANT_SORT_OPTONS = [
     text: 'TALOS: Date Phenotype Match Fist Found',
     comparator: (a, b, genesById, tagsByGuid) => {
       const getLatestTalosPhenoDate = (variant) => {
-        const aipMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.aipMetadata)
-        const dates = (aipMetadata || []).map(metadata => metadata?.date_of_phenotype_match || '')
+        const structuredMetadata = variant.tagGuids.map(tagGuid => tagsByGuid[tagGuid]?.structuredMetadata)
+        const dates = (structuredMetadata || []).map(metadata => metadata?.date_of_phenotype_match || '')
         return dates.filter(date => date !== null).sort().reverse()[0] || ''
       }
 
