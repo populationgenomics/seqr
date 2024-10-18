@@ -207,8 +207,52 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
     hoverable
     flowing
     content={
+       /*eslint-disable */
       <div>
-        {tag.structuredMetadata ? (
+        {TALOS_TAG_TYPES.includes(tag.name) ? (
+      <div>
+      <div>
+        <b>First Tagged:</b>
+        <HorizontalSpacer width={5} />
+        {tag.structuredMetadata.first_tagged}
+      </div>
+      <div>
+        <b>Evidence Updated:</b>
+        <HorizontalSpacer width={5} />
+        {tag.structuredMetadata.evidence_last_updated}
+      </div>
+      <div>
+        <b>Phenotype match first identified:</b>
+        <HorizontalSpacer width={5} />
+        {tag.structuredMetadata.date_of_phenotype_match}
+      </div>
+      <div>
+        <b>Categories:</b>
+        {Object.entries(tag.structuredMetadata.categories).map(talosCategoryRow)}
+      </div>
+      {/* {tag.structuredMetadata && tag.structuredMetadata.removed && (
+        <div>
+          <b>Removed Categories:</b>
+          {Object.entries(tag.structuredMetadata.removed).map(talosCategoryRow)}
+        </div>
+      )} */}
+      {tag.structuredMetadata.reasons && (
+        talosMetaList('moi', 'Tagged MOI', tag.structuredMetadata.reasons)
+      )}
+      {tag.structuredMetadata.support_vars && (
+        talosMetaList('support_vars', 'Supporting Variants', tag.structuredMetadata.support_vars)
+      )}
+      {tag.structuredMetadata.labels && (
+        talosMetaList('labels', 'Labels', tag.structuredMetadata.labels)
+      )}
+      {tag.structuredMetadata.panels && (
+        talosHpoList(tag.structuredMetadata.panels)
+      )}
+      {tag.structuredMetadata.phenotype_labels && (
+        talosMetaList('gene-hpo', 'Matched Gene Phenotypes', tag.structuredMetadata.phenotype_labels)
+      )}
+    </div>
+      ) : tag.structuredMetadata ? (
           <NoBorderTable basic="very" compact="very">
             <Table.Body>
               {Object.entries(tag.structuredMetadata).filter(e => e[0] !== 'removed').map(structuredMetadataRow)}
@@ -231,6 +275,7 @@ export const taggedByPopup = (tag, title) => (trigger, hideMetadata) => (
         )}
         {tag.searchHash && <div><NavLink to={`/variant_search/results/${tag.searchHash}`}>Re-run search</NavLink></div>}
       </div>
+      /* eslint-enable */
     }
   />
 )
@@ -239,12 +284,10 @@ const notePopup = note => note && taggedByPopup(note, 'Note By')
 
 const ShortcutTagToggle = React.memo(({ tag, ...props }) => {
   const toggle = <InlineToggle color={tag && tag.color} divided {...props} value={tag} />
-  if (tag && TALOS_TAG_TYPES.includes(tag.name)) {
-    return talosPopup(tag)(toggle)
-  }
-  // FIXME!!!
-  return tag ? talosPopup(tag)(toggle) : toggle
-  // return tag ? taggedByPopup(tag)(toggle) : toggle
+  // if (tag && TALOS_TAG_TYPES.includes(tag.name)) {
+  //   return talosPopup(tag)(toggle)
+  // }
+  return tag ? taggedByPopup(tag)(toggle) : toggle
 })
 
 ShortcutTagToggle.propTypes = {
