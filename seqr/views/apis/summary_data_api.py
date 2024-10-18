@@ -251,7 +251,7 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
     }
 
     new_variants = {}
-    missing = defaultdict(list)
+    missing = {}
     for variant_id, family_ids in variant_families.items():
         variant = search_variants_by_id.get(variant_id) or {'familyGuids': []}
         for family_id in family_ids:
@@ -259,18 +259,16 @@ def _search_new_saved_variants(family_variant_ids: list[FamilyVariantKey], user:
             if family.guid in variant['familyGuids']:
                 new_variants[(family_id, variant_id)] = variant
             else:
-                missing[family.family_id].append(variant_id)
+                missing[(family_id, variant_id)] = variant
 
     if missing:
-        missing_summary = [f'{family} ({", ".join(sorted(variant_ids))})' for family, variant_ids in missing.items()]
-        missing_cnt = sum([len(variant_ids) for variant_ids in missing.values()])
-        logger.error(f"Unable to find the {missing_cnt} Talos variants from {len(missing)} families in the search backend: {', '.join(missing_summary)[:1000]}...", user)
+        logger.error(f"Unable to find the {len(missing)} Talos variants in the search backend: {', '.join(missing)[:1000]}...", user)
 
         # raise ErrorsWarningsException([
         #     f"Unable to find the following family's AIP variants in the search backend: {', '.join(missing_summary)}",
         # ])
 
-    return new_variants
+    return new_variants, missing
 
 
 ALL_PROJECTS = 'all'

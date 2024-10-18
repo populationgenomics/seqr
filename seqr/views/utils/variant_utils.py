@@ -155,6 +155,12 @@ def bulk_create_tagged_variants(family_variant_data, tag_name, get_metadata, use
         new_variant_data = load_new_variant_data(new_variant_keys, user) if load_new_variant_data else {
             k: v for k, v in family_variant_data.items() if k in new_variant_keys
         }
+        # Cheeky way to return missing variants from the backend
+        if type(new_variant_data) is tuple:
+            new_variant_data, variants_missing_from_backend = new_variant_data
+        else:
+            variants_missing_from_backend = {}
+
         new_variant_models = []
         for (family_id, variant_id), variant in new_variant_data.items():
             create_json, update_json = parse_saved_variant_json(variant, family_id, variant_id=variant_id)
@@ -174,6 +180,8 @@ def bulk_create_tagged_variants(family_variant_data, tag_name, get_metadata, use
     update_tags = []
     num_new = 0
     for key, variant in family_variant_data.items():
+        if key in variants_missing_from_backend:
+            continue
         updated_tag = _set_updated_tags(
             key, get_metadata(variant), variant['support_vars'], saved_variant_map, existing_tags, tag_type, user,
         )
