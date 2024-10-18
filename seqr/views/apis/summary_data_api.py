@@ -398,6 +398,14 @@ def send_vlm_email(request):
     return create_json_response({'success': True})
 
 
+def _get_talos_metadata(pred):
+    metadata = {}
+    for k in ['flags', 'independent', 'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
+              'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged']:
+        metadata[k] = pred[k]
+    return metadata
+
+
 def _load_talos_data(data: dict, user: User):
     """
         Version of _load_aip_data that ingests a FULL Talos report (not the
@@ -456,22 +464,12 @@ def _load_talos_data(data: dict, user: User):
     today = datetime.now().strftime('%Y-%m-%d')
     num_new, num_updated = bulk_create_tagged_variants(
         family_variant_data, tag_name=TALOS_PERMISSIVE_TAG_TYPE, user=user, load_new_variant_data=_search_new_saved_variants,
-        get_metadata=lambda pred:{
-            k: pred[k] for k in [
-                'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged', 'flags', 'independent',
-                'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
-                ]}.update({category: {'name': category_map[category], 'date': today} for category in pred['categories']}),
-    )
+        get_metadata=_get_talos_metadata)
 
     # Add the Talos-restrictive tag to qualifying variants
     num_new_restrictive, num_updated_restrictive = bulk_create_tagged_variants(
         family_variant_data_restrictive, tag_name=TALOS_TAG_TYPE, user=user, load_new_variant_data=_search_new_saved_variants,
-        get_metadata=lambda pred: {
-            k: pred[k] for k in [
-                'date_of_phenotype_match', 'evidence_last_updated',  'first_tagged', 'flags', 'independent',
-                'labels', 'panels', 'phenotypes', 'reasons', 'support_vars', 'phenotype_labels',
-                ]}.update({category: {'name': category_map[category], 'date': today} for category in pred['categories']}),
-    )
+        get_metadata=_get_talos_metadata)
 
     summary_message = f'Loaded {num_new} new and {num_updated} updated Talos permissive tags for {len(family_id_map)} families.\n'
     summary_message += f'Loaded {num_new_restrictive} new and {num_updated_restrictive} updated Talos restrictive tags for {len(family_id_map)} families'
