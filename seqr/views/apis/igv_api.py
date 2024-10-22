@@ -278,6 +278,8 @@ def igv_genomes_proxy(request, cloud_host, file_path):
     range_header = request.META.get('HTTP_RANGE')
     if range_header:
         headers['Range'] = range_header
+    headers['User-Agent'] = request.META.get('HTTP_USER_AGENT', 'Mozilla/5.0')
+
     if cloud_host == S3_KEY:
         headers.update(convert_django_meta_to_http_headers(request))
 
