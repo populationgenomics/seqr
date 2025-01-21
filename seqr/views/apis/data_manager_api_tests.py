@@ -497,7 +497,8 @@ class DataManagerAPITest(AirtableTest):
         self.assertDictEqual(response_json['indices'][3], TEST_INDEX_NO_PROJECT_EXPECTED_DICT)
         self.assertDictEqual(response_json['indices'][4], TEST_SV_INDEX_EXPECTED_DICT)
 
-        self.assertListEqual(response_json['errors'], EXPECTED_ERRORS)
+        # sort both of these lists since the list ordering from the response dict is indeterminate
+        self.assertListEqual(sorted(response_json['errors']), sorted(EXPECTED_ERRORS))
 
         self.assertListEqual(response_json['diskStats'], EXPECTED_DISK_ALLOCATION)
         self.assertListEqual(response_json['nodeStats'], EXPECTED_NODE_STATS)

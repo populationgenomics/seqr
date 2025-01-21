@@ -311,9 +311,6 @@ def igv_genomes_proxy(request, cloud_host, file_path):
         headers['Range'] = range_header
     headers['User-Agent'] = request.META.get('HTTP_USER_AGENT', 'Mozilla/5.0')
 
-    if cloud_host == S3_KEY:
-        headers.update(convert_django_meta_to_http_headers(request))
-
     genome_response = requests.get(f'{CLOUD_STORAGE_URLS[cloud_host]}/{file_path}', headers=headers, timeout=TIMEOUT)
     proxy_response = HttpResponse(
         content=genome_response.content,
