@@ -63,7 +63,7 @@ const METADATA_FIELD_PROPS = {
     fluid: true,
     allowAdditions: true,
     addValueOptions: true,
-    options: ['Polymorphism', 'artefact', 'No phenotypic fit'].map(value => ({ value })),
+    options: ['Polymorphism', 'Artefact', 'No phenotypic fit'].map(value => ({ value })),
     placeholder: 'Select test types or add your own',
     ...LIST_FORMAT_PROPS,
   },
