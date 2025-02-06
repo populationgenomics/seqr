@@ -22,10 +22,10 @@ const MetadataFormGroup = styled(Form.Group).attrs({ inline: true })`
   label, .label {
     white-space: nowrap;
   }
-  
+
   .fluid.selection.dropdown {
     width: 100% !important;
-  } 
+  }
 `
 
 const MultiselectField = ({ input, ...props }) => <Multiselect {...input} {...props} />
@@ -54,6 +54,16 @@ const METADATA_FIELD_PROPS = {
     allowAdditions: true,
     addValueOptions: true,
     options: ['Sanger', 'Segregation', 'SV', 'Splicing'].map(value => ({ value })),
+    placeholder: 'Select test types or add your own',
+    ...LIST_FORMAT_PROPS,
+  },
+  'Exclude Type(s)': {
+    width: 16,
+    component: MultiselectField,
+    fluid: true,
+    allowAdditions: true,
+    addValueOptions: true,
+    options: ['Polymorphism', 'artefact', 'No phenotypic fit'].map(value => ({ value })),
     placeholder: 'Select test types or add your own',
     ...LIST_FORMAT_PROPS,
   },
