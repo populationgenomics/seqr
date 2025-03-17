@@ -70,7 +70,7 @@ gcloud beta run jobs create \
    ${ENV_NAME}-reference-import-panels \
    --image=${IMAGE} \
    --task-timeout 3600 \
-   --command=python --args="-u,manage.py,import_all_panels,https://panelapp.agha.umccr.org/api/v1,--label=AU" \
+   --command=python --args="-u,manage.py,import_all_panels,https://panelapp-aus.org/api/v1,--label=AU" \
    --region=australia-southeast1 \
    --service-account=${SERVICE_ACCOUNT} \
    --vpc-connector=projects/seqr-308602/locations/australia-southeast1/connectors/seqr-cloud-run-to-sql \
