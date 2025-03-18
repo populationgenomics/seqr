@@ -74,7 +74,6 @@ jobs:
         pushd ui
         npm install
         npm run build
-        mkdir ../static
         cp dist/* ../static/
         popd
     - name: Run coverage tests
