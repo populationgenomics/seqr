@@ -369,7 +369,7 @@ api_endpoints = {
     'project/sa/(?P<project_guid>[^/]+)/igv/diff': sa_get_igv_updates_required,
     'individual/sa/(?P<individual_guid>[\w.|-]+)/igv/update': sa_update_igv_individual,
     
-    'project/sa/(?P<project_guid>[^/]+)/get_family_guid_mapping': sa_get_family_guid_mapping,
+    'project/sa/(?P<project_guid>[^/]+)/families/mapping': sa_get_family_guid_mapping,
 
     # EXTERNAL APIS: DO NOT CHANGE
     # matchmaker public facing MME URLs
