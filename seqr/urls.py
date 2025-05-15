@@ -30,7 +30,8 @@ from seqr.views.apis.family_api import \
     get_family_rna_seq_data, \
     get_family_phenotype_gene_scores, \
     family_variant_tag_summary, \
-    sa_sync_families
+    sa_sync_families, \
+    sa_get_family_guid_mapping
 
 from seqr.views.apis.individual_api import \
     get_individual_rna_seq_data, \
@@ -367,6 +368,8 @@ api_endpoints = {
     'project/sa/(?P<project_guid>[^/]+)/individuals_metadata/sync': sa_sync_individuals_metadata,
     'project/sa/(?P<project_guid>[^/]+)/igv/diff': sa_get_igv_updates_required,
     'individual/sa/(?P<individual_guid>[\w.|-]+)/igv/update': sa_update_igv_individual,
+    
+    'project/sa/(?P<project_guid>[^/]+)/families/mapping': sa_get_family_guid_mapping,
 
     # EXTERNAL APIS: DO NOT CHANGE
     # matchmaker public facing MME URLs

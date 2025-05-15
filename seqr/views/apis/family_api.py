@@ -539,3 +539,13 @@ def get_family_phenotype_gene_scores(request, family_guid):
 def sa_sync_families(request, project_guid):
     return edit_families_handler_base(request, project_guid)
 
+
+@service_account_access
+def sa_get_family_guid_mapping(request, project_guid):
+    project = Project.objects.get(guid=project_guid)
+    check_project_permissions(project, request.user)
+
+    family_mapping = Family.objects.filter(project=project).values('guid', 'family_id')
+    return create_json_response({
+        'familyGuidById': {f['family_id']: f['guid'] for f in family_mapping}
+    })
