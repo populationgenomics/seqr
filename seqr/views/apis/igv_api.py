@@ -22,6 +22,7 @@ CLOUD_STORAGE_URLS = {
     's3': 'https://s3.amazonaws.com',
     'gs': GS_STORAGE_URL,
 }
+TIMEOUT = 300
 
 def _process_alignment_records(rows, num_id_cols=1, **kwargs):
     num_cols = num_id_cols + 1
@@ -272,10 +273,9 @@ def igv_genomes_proxy(request, cloud_host, file_path):
     range_header = request.META.get('HTTP_RANGE')
     if range_header:
         headers['Range'] = range_header
-
     headers['User-Agent'] = request.META.get('HTTP_USER_AGENT', 'Mozilla/5.0')
 
-    genome_response = requests.get(f'{CLOUD_STORAGE_URLS[cloud_host]}/{file_path}', headers=headers)
+    genome_response = requests.get(f'{CLOUD_STORAGE_URLS[cloud_host]}/{file_path}', headers=headers, timeout=TIMEOUT)
     proxy_response = HttpResponse(
         content=genome_response.content,
         status=genome_response.status_code,
