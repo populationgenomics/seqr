@@ -75,6 +75,7 @@ class HailSearchUtilsTests(SearchTestHelper, TestCase):
     @mock.patch('seqr.utils.search.hail_search_utils.MAX_FAMILY_COUNTS', {'WES': 2, 'WGS': 1})
     @responses.activate
     def test_query_variants(self):
+        self.maxDiff = None
         variants, total = query_variants(self.results_model, user=self.user)
         self.assertListEqual(variants, HAIL_BACKEND_VARIANTS)
         self.assertEqual(total, 5)
