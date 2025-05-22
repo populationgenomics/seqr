@@ -2,6 +2,34 @@
 
 ## dev
 
+## 8/14/24
+* Remove ONT support (REQUIRES DB MIGRATION)
+* Add "Validated Name" functional tag (REQUIRES DB MIGRATION)
+
+## 8/9/24
+* Update directory structure for search backend
+
+## 8/2/24
+* Adds index_file_path to IGV Sample model (REQUIRES DB MIGRATION)
+
+## 7/24/24
+* Split RNA Sample models (REQUIRES DB MIGRATION)
+
+## 7/8/24
+* Add VLM contact for Projects (REQUIRES DB MIGRATION)
+
+## 6/11/24
+* Add "Partial Phenotype Contribution" functional tag (REQUIRES DB MIGRATION)
+
+## 5/24/24
+* Adds external_data to Family model (REQUIRES DB MIGRATION)
+* Adds post_discovery_mondo_id to Family model (REQUIRES DB MIGRATION)
+* Adds guid and created fields to PhenotypePrioritization model (REQUIRES DB MIGRATION)
+* Enable "Reports" tab by default for local installations
+
+## 5/8/24
+* Adds dynamic analysis groups (REQUIRES DB MIGRATION)
+
 ## 4/4/24
 * Add ability to import project metadata from gregor metadata
   * Only enabled for a project if tag is first created via 

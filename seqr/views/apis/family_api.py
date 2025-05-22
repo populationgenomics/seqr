@@ -4,8 +4,10 @@ APIs used to retrieve and modify Individual fields
 import json
 from collections import defaultdict
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Count, Max, Q
 from django.db.models.fields.files import ImageFieldFile
+from django.db.models.functions import JSONObject, Concat, Upper, Substr
 
 from matchmaker.models import MatchmakerSubmission
 from reference_data.models import Omim
@@ -21,9 +23,10 @@ from seqr.views.utils.orm_to_json_utils import _get_json_for_model,  get_json_fo
 from seqr.views.utils.project_context_utils import add_families_context, families_discovery_tags, add_project_tag_types, \
     MME_TAG_NAME
 from seqr.models import Family, FamilyAnalysedBy, Individual, FamilyNote, Sample, VariantTag, AnalysisGroup, RnaSeqTpm, \
-    PhenotypePrioritization, Project
+    PhenotypePrioritization, Project, RnaSeqOutlier, RnaSeqSpliceOutlier, RnaSample
 from seqr.views.utils.permissions_utils import check_project_permissions, get_project_and_check_pm_permissions, \
-    login_and_policies_required, user_is_analyst, has_case_review_permissions, service_account_access
+    login_and_policies_required, user_is_analyst, has_case_review_permissions, external_anvil_project_can_edit, \
+    service_account_access
 from seqr.views.utils.variant_utils import get_phenotype_prioritization, get_omim_intervals_query, DISCOVERY_CATEGORY
 from seqr.utils.xpos_utils import get_chrom_pos
 
@@ -41,9 +44,11 @@ def family_page_data(request, family_guid):
     has_case_review_perm = has_case_review_permissions(project, request.user)
 
     sample_models = Sample.objects.filter(individual__family=family)
-    samples = get_json_for_samples(sample_models, project_guid=project.guid, family_guid=family_guid, skip_nested=True, is_analyst=is_analyst)
+    samples = get_json_for_samples(
+        sample_models, project_guid=project.guid, family_guid=family_guid, skip_nested=True, is_analyst=is_analyst
+    )
     response = {
-        'samplesByGuid': {s['sampleGuid']: s for s in samples},
+        'samplesByGuid': {s['sampleGuid']: s for s in samples}
     }
 
     add_families_context(response, families, project.guid, request.user, is_analyst, has_case_review_perm)
@@ -75,20 +80,24 @@ def family_page_data(request, family_guid):
         'postDiscoveryOmimOptions': omim_map,
     })
 
-    outlier_individual_guids = sample_models.filter(sample_type=Sample.SAMPLE_TYPE_RNA)\
-        .exclude(rnaseqoutlier__isnull=True, rnaseqspliceoutlier__isnull=True).values_list('individual__guid', flat=True)
-    for individual_guid in outlier_individual_guids:
-        response['individualsByGuid'][individual_guid]['hasRnaOutlierData'] = True
+    tools_by_indiv = defaultdict(list)
+    tools_agg = PhenotypePrioritization.objects.filter(individual__family=family).values('individual__guid', 'tool').annotate(
+        loadedDate=Max('created_date'),
+    ).order_by('tool')
+    for agg in tools_agg:
+        tools_by_indiv[agg.pop('individual__guid')].append(agg)
 
-    has_phentoype_score_indivs = PhenotypePrioritization.objects.filter(individual__family=family).values_list(
-        'individual__guid', flat=True)
-    for individual_guid in has_phentoype_score_indivs:
-        response['individualsByGuid'][individual_guid]['hasPhenotypeGeneScores'] = True
+    rna_agg = RnaSample.objects.filter(individual__family=family, is_active=True).values('individual__guid').annotate(
+        loadedDate=Max('created_date'), dataTypes=ArrayAgg('data_type', distinct=True, ordering='data_type'),
+    )
+    rna_samples_by_individual = {agg.pop('individual__guid'): agg for agg in rna_agg}
 
     submissions = get_json_for_matchmaker_submissions(MatchmakerSubmission.objects.filter(individual__family=family))
     individual_mme_submission_guids = {s['individualGuid']: s['submissionGuid'] for s in submissions}
     for individual in response['individualsByGuid'].values():
         individual['mmeSubmissionGuid'] = individual_mme_submission_guids.get(individual['individualGuid'])
+        individual['phenotypePrioritizationTools'] = tools_by_indiv.get(individual['individualGuid'], [])
+        individual['rnaSample'] = rna_samples_by_individual.get(individual['individualGuid'])
     response['mmeSubmissionsByGuid'] = {s['submissionGuid']: s for s in submissions}
 
     return create_json_response(response)
@@ -129,7 +138,7 @@ def family_variant_tag_summary(request, family_guid):
         saved_variants__matchmakersubmissiongenes__isnull=False).values('saved_variants__guid').distinct().count()
 
     response['projectsByGuid'] = {project.guid: {}}
-    add_project_tag_types(response['projectsByGuid'])
+    add_project_tag_types(response['projectsByGuid'], project=project)
 
     return create_json_response(response)
 
@@ -264,13 +273,18 @@ def update_family_fields_handler(request, family_guid):
     check_project_permissions(family.project, request.user)
 
     request_json = json.loads(request.body)
+    immutable_keys = [] if external_anvil_project_can_edit(family.project, request.user) else ['family_id']
     update_family_from_json(family, request_json, user=request.user, allow_unknown_keys=True, immutable_keys=[
-        'family_id', 'display_name',
-    ])
+        'display_name',
+    ] + immutable_keys)
 
     return create_json_response({
-        family.guid: _get_json_for_model(family, user=request.user)
+        family.guid: _get_json_for_model(family, user=request.user, process_result=_set_display_name)
     })
+
+
+def _set_display_name(family_json, family_model):
+    family_json['displayName'] = family_model.display_name or family_model.family_id
 
 
 @login_and_policies_required
@@ -382,6 +396,12 @@ def update_family_analysis_groups(request, family_guid):
     })
 
 
+EXTERNAL_DATA_LOOKUP = {v: k for k, v in Family.EXTERNAL_DATA_CHOICES}
+PARSE_FAMILY_TABLE_FIELDS = {
+    'externalData': lambda data_type: [EXTERNAL_DATA_LOOKUP[dt.strip()] for dt in (data_type or '').split(';') if dt],
+}
+
+
 @login_and_policies_required
 def receive_families_table_handler(request, project_guid):
     return receive_families_table_handler_base(request, project_guid)
@@ -415,10 +435,12 @@ def receive_families_table_handler_base(request, project_guid):
                 column_map['mondoId'] = i
             elif 'description' in key:
                 column_map['description'] = i
+            elif 'external' in key and 'data' in key:
+                column_map['externalData'] = i
         if FAMILY_ID_FIELD not in column_map:
             raise ValueError('Invalid header, missing family id column')
 
-        return [{column: row[index] if isinstance(index, int) else next((row[i] for i in index if row[i]), None)
+        return [{column: PARSE_FAMILY_TABLE_FIELDS.get(column, lambda v: v)(row[index])
                 for column, index in column_map.items()} for row in records[1:]]
 
     try:
@@ -508,7 +530,7 @@ def get_family_phenotype_gene_scores(request, family_guid):
     gene_ids = {gene_id for indiv in phenotype_prioritization.values() for gene_id in indiv.keys()}
     return create_json_response({
         'phenotypeGeneScores': phenotype_prioritization,
-        'genesById': get_genes_for_variant_display(gene_ids)
+        'genesById': get_genes_for_variant_display(gene_ids, project.genome_version),
     })
 
 
@@ -517,3 +539,13 @@ def get_family_phenotype_gene_scores(request, family_guid):
 def sa_sync_families(request, project_guid):
     return edit_families_handler_base(request, project_guid)
 
+
+@service_account_access
+def sa_get_family_guid_mapping(request, project_guid):
+    project = Project.objects.get(guid=project_guid)
+    check_project_permissions(project, request.user)
+
+    family_mapping = Family.objects.filter(project=project).values('guid', 'family_id')
+    return create_json_response({
+        'familyGuidById': {f['family_id']: f['guid'] for f in family_mapping}
+    })

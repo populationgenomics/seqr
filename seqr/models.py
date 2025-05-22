@@ -17,7 +17,8 @@ from seqr.utils.logging_utils import log_model_update, log_model_bulk_update, Se
 from seqr.utils.xpos_utils import get_chrom_pos
 from seqr.views.utils.terra_api_utils import anvil_enabled
 from reference_data.models import GENOME_VERSION_GRCh37, GENOME_VERSION_CHOICES
-from settings import MME_DEFAULT_CONTACT_NAME, MME_DEFAULT_CONTACT_HREF, MME_DEFAULT_CONTACT_INSTITUTION
+from settings import MME_DEFAULT_CONTACT_NAME, MME_DEFAULT_CONTACT_HREF, MME_DEFAULT_CONTACT_INSTITUTION, \
+    VLM_DEFAULT_CONTACT_EMAIL
 
 logger = SeqrLogger(__name__)
 
@@ -56,6 +57,8 @@ class CustomModelBase(base.ModelBase):
 
 class ModelWithGUID(models.Model, metaclass=CustomModelBase):
     MAX_GUID_SIZE = 30
+    GUID_PREFIX = ''
+    GUID_PRECISION = 7
 
     guid = models.CharField(max_length=MAX_GUID_SIZE, db_index=True, unique=True)
 
@@ -72,13 +75,11 @@ class ModelWithGUID(models.Model, metaclass=CustomModelBase):
         internal_json_fields = []
         audit_fields = set()
 
-    @abstractmethod
+    def _format_guid(self, model_id):
+        return f'{self.GUID_PREFIX}{model_id:0{self.GUID_PRECISION}d}_{_slugify(str(self))}'[:self.MAX_GUID_SIZE]
+
     def _compute_guid(self):
-        """Returns a human-readable label (aka. slug) for this object with only alphanumeric
-        chars, '-' and '_'. This label doesn't need to be globally unique by itself, but should not
-        be null or blank, and should be globally unique when paired with this object's created-time
-        in seconds.
-        """
+        return self._format_guid(self.id)
 
     def __unicode__(self):
         return self.guid
@@ -112,7 +113,7 @@ class ModelWithGUID(models.Model, metaclass=CustomModelBase):
             self.created_date = kwargs.pop('created_date', current_time)
             super(ModelWithGUID, self).save(*args, **kwargs)
 
-            self.guid = self._compute_guid()[:ModelWithGUID.MAX_GUID_SIZE]
+            self.guid = self._compute_guid()
             super(ModelWithGUID, self).save()
 
     def delete_model(self, user, user_can_delete=False):
@@ -123,11 +124,13 @@ class ModelWithGUID(models.Model, metaclass=CustomModelBase):
         log_model_update(logger, self, user, 'delete')
 
     @classmethod
-    def bulk_create(cls, user, new_models):
+    def bulk_create(cls, user, new_models, **kwargs):
         """Helper bulk create method that logs the creation"""
         for model in new_models:
             model.created_by = user
-        models = cls.objects.bulk_create(new_models)
+            model.created_date = timezone.now()
+            model.guid = model._format_guid(random.randint(10**(cls.GUID_PRECISION-1), 10**cls.GUID_PRECISION))  # nosec
+        models = cls.objects.bulk_create(new_models, **kwargs)
         log_model_bulk_update(logger, models, user, 'create')
         return models
 
@@ -195,6 +198,8 @@ class Project(ModelWithGUID):
     mme_contact_url = models.TextField(null=True, blank=True, default=MME_DEFAULT_CONTACT_HREF)
     mme_contact_institution = models.TextField(null=True, blank=True, default=MME_DEFAULT_CONTACT_INSTITUTION)
 
+    vlm_contact_email = models.TextField(null=True, blank=True, default=VLM_DEFAULT_CONTACT_EMAIL)
+
     has_case_review = models.BooleanField(default=False)
     enable_hgmd = models.BooleanField(default=False)
     all_user_demo = models.BooleanField(default=False)
@@ -208,8 +213,8 @@ class Project(ModelWithGUID):
     def __unicode__(self):
         return self.name.strip()
 
-    def _compute_guid(self):
-        return 'R%04d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'R'
+    GUID_PRECISION = 4
 
     def save(self, *args, **kwargs):
         """Override the save method and create user permissions groups + add the created_by user.
@@ -260,6 +265,7 @@ class Project(ModelWithGUID):
             'name', 'description', 'created_date', 'last_modified_date', 'genome_version', 'mme_contact_institution',
             'last_accessed_date', 'is_mme_enabled', 'mme_primary_data_owner', 'mme_contact_url', 'guid', 'consent_code',
             'workspace_namespace', 'workspace_name', 'has_case_review', 'enable_hgmd', 'is_demo', 'all_user_demo',
+            'vlm_contact_email',
         ]
 
 
@@ -271,8 +277,8 @@ class ProjectCategory(ModelWithGUID):
     def __unicode__(self):
         return self.name.strip()
 
-    def _compute_guid(self):
-        return 'PC%06d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'PC'
+    GUID_PRECISION = 6
 
 
 class Family(ModelWithGUID):
@@ -315,6 +321,14 @@ class Family(ModelWithGUID):
         ('D', 'Data Sharing'),
         ('O', 'Other'),
     )
+    EXTERNAL_DATA_CHOICES = (
+        ('M', 'Methylation'),
+        ('P', 'PacBio lrGS'),
+        ('R', 'PacBio RNA'),
+        ('L', 'ONT lrGS'),
+        ('O', 'ONT RNA'),
+        ('B', 'BioNano'),
+    )
 
     project = models.ForeignKey('Project', on_delete=models.PROTECT)
 
@@ -338,8 +352,16 @@ class Family(ModelWithGUID):
     ), default=list)
     success_story = models.TextField(null=True, blank=True)
 
+    external_data = ArrayField(models.CharField(
+        max_length=1,
+        choices=EXTERNAL_DATA_CHOICES,
+        null=True,
+        blank=True
+    ), default=list)
+
     coded_phenotype = models.TextField(null=True, blank=True)
     mondo_id = models.CharField(null=True, blank=True, max_length=30)
+    post_discovery_mondo_id = models.CharField(null=True, blank=True, max_length=30)
     post_discovery_omim_numbers = ArrayField(models.PositiveIntegerField(), default=list)
     pubmed_ids = ArrayField(models.TextField(), default=list)
 
@@ -355,8 +377,8 @@ class Family(ModelWithGUID):
     def __unicode__(self):
         return self.family_id.strip()
 
-    def _compute_guid(self):
-        return 'F%06d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'F'
+    GUID_PRECISION = 6
 
     class Meta:
         unique_together = ('project', 'family_id')
@@ -366,7 +388,7 @@ class Family(ModelWithGUID):
             'post_discovery_omim_numbers', 'pedigree_dataset', 'coded_phenotype', 'mondo_id',
         ]
         internal_json_fields = [
-            'success_story_types', 'success_story', 'pubmed_ids',
+            'success_story_types', 'success_story', 'pubmed_ids', 'external_data', 'post_discovery_mondo_id',
         ]
         audit_fields = {'analysis_status'}
 
@@ -386,8 +408,8 @@ class FamilyAnalysedBy(ModelWithGUID):
     def __unicode__(self):
         return '{}_{}_{}'.format(self.family.guid, self.created_by, self.data_type)
 
-    def _compute_guid(self):
-        return 'FAB%06d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'FAB'
+    GUID_PRECISION = 6
 
     class Meta:
         json_fields = ['last_modified_date', 'created_by', 'data_type']
@@ -407,8 +429,8 @@ class FamilyNote(ModelWithGUID):
     def __unicode__(self):
         return '{}_{}_{}'.format(self.family.family_id, self.note_type, self.note)[:20]
 
-    def _compute_guid(self):
-        return 'FAN{:06d}_{}'.format(self.id, _slugify(str(self)))
+    GUID_PREFIX = 'FAN'
+    GUID_PRECISION = 6
 
     class Meta:
         json_fields = ['guid', 'note', 'note_type', 'last_modified_date', 'created_by']
@@ -632,8 +654,7 @@ class Individual(ModelWithGUID):
     def __unicode__(self):
         return self.individual_id.strip()
 
-    def _compute_guid(self):
-        return 'I%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'I'
 
     def save(self, *args, **kwargs):
         if Individual.objects.filter(individual_id=self.individual_id, family__project_id=self.family.project_id).count() > 1:
@@ -666,12 +687,11 @@ class Sample(ModelWithGUID):
 
     SAMPLE_TYPE_WES = 'WES'
     SAMPLE_TYPE_WGS = 'WGS'
-    SAMPLE_TYPE_RNA = 'RNA'
     SAMPLE_TYPE_CHOICES = (
         (SAMPLE_TYPE_WES, 'Exome'),
         (SAMPLE_TYPE_WGS, 'Whole Genome'),
-        (SAMPLE_TYPE_RNA, 'RNA'),
     )
+    SAMPLE_TYPE_LOOKUP = dict(SAMPLE_TYPE_CHOICES)
 
     DATASET_TYPE_VARIANT_CALLS = 'SNV_INDEL'
     DATASET_TYPE_SV_CALLS = 'SV'
@@ -680,26 +700,13 @@ class Sample(ModelWithGUID):
         (DATASET_TYPE_VARIANT_CALLS, 'Variant Calls'),
         (DATASET_TYPE_SV_CALLS, 'SV Calls'),
         (DATASET_TYPE_MITO_CALLS, 'Mitochondria calls'),
-        ('ONT_SNV_INDEL', 'ONT Calls'),
     )
     DATASET_TYPE_LOOKUP = dict(DATASET_TYPE_CHOICES)
-
-    NO_TISSUE_TYPE = 'X'
-    TISSUE_TYPE_CHOICES = (
-        ('WB', 'whole_blood'),
-        ('F', 'fibroblasts'),
-        ('M', 'muscle'),
-        ('L', 'lymphocytes'),
-        ('A', 'airway_cultured_epithelium'),
-        (NO_TISSUE_TYPE, 'None'),
-    )
 
     individual = models.ForeignKey('Individual', on_delete=models.PROTECT)
 
     sample_type = models.CharField(max_length=10, choices=SAMPLE_TYPE_CHOICES)
     dataset_type = models.CharField(max_length=13, choices=DATASET_TYPE_CHOICES)
-
-    tissue_type = models.CharField(max_length=2, choices=TISSUE_TYPE_CHOICES)
 
     # The sample's id in the underlying dataset (eg. the VCF Id for variant callsets).
     sample_id = models.TextField(db_index=True)
@@ -714,14 +721,49 @@ class Sample(ModelWithGUID):
     def __unicode__(self):
         return self.sample_id.strip()
 
-    def _compute_guid(self):
-        return 'S%010d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'S'
+    GUID_PRECISION = 10
 
     class Meta:
        json_fields = [
            'guid', 'created_date', 'sample_type', 'dataset_type', 'sample_id', 'is_active', 'loaded_date',
-           'elasticsearch_index',
        ]
+
+
+class RnaSample(ModelWithGUID):
+
+    DATA_TYPE_TPM = 'T'
+    DATA_TYPE_EXPRESSION_OUTLIER = 'E'
+    DATA_TYPE_SPLICE_OUTLIER = 'S'
+    DATA_TYPE_CHOICES = (
+        (DATA_TYPE_TPM, 'TPM'),
+        (DATA_TYPE_EXPRESSION_OUTLIER, 'Expression Outlier'),
+        (DATA_TYPE_SPLICE_OUTLIER, 'Splice Outlier'),
+    )
+    DATA_TYPE_LOOKUP = dict(DATA_TYPE_CHOICES)
+
+    TISSUE_TYPE_CHOICES = (
+        ('WB', 'whole_blood'),
+        ('F', 'fibroblasts'),
+        ('M', 'muscle'),
+        ('L', 'lymphocytes'),
+        ('A', 'airway_cultured_epithelium'),
+    )
+
+    individual = models.ForeignKey('Individual', on_delete=models.PROTECT)
+
+    data_type = models.CharField(max_length=1, choices=DATA_TYPE_CHOICES)
+    tissue_type = models.CharField(max_length=2, choices=TISSUE_TYPE_CHOICES)
+    data_source = models.TextField()
+    is_active = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return f'{self.data_type}_{self.individual.individual_id}'
+
+    GUID_PREFIX = 'RS'
+
+    class Meta:
+       json_fields = ['guid', 'created_date', 'data_type', 'is_active']
 
 
 class IgvSample(ModelWithGUID):
@@ -738,22 +780,29 @@ class IgvSample(ModelWithGUID):
         (SAMPLE_TYPE_JUNCTION, 'RNAseq Junction'),
         (SAMPLE_TYPE_GCNV, 'gCNV'),
     )
+    SAMPLE_TYPE_FILE_EXTENSIONS = {
+        SAMPLE_TYPE_ALIGNMENT: ('bam', 'cram'),
+        SAMPLE_TYPE_COVERAGE: ('bigWig',),
+        SAMPLE_TYPE_JUNCTION: ('junctions.bed.gz',),
+        SAMPLE_TYPE_GCNV: ('bed.gz',),
+    }
 
     individual = models.ForeignKey('Individual', on_delete=models.PROTECT)
     sample_type = models.CharField(max_length=15, choices=SAMPLE_TYPE_CHOICES)
     file_path = models.TextField()
+    index_file_path = models.TextField(null=True, blank=True)
     sample_id = models.TextField(null=True)
 
     def __unicode__(self):
         return self.file_path.split('/')[-1].split('.')[0].strip()
 
-    def _compute_guid(self):
-        return 'S%010d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'S'
+    GUID_PRECISION = 10
 
     class Meta:
         unique_together = ('individual', 'sample_type')
 
-        json_fields = ['guid', 'file_path', 'sample_type', 'sample_id']
+        json_fields = ['guid', 'file_path', 'index_file_path', 'sample_type', 'sample_id']
 
 
 class SavedVariant(ModelWithGUID):
@@ -774,8 +823,7 @@ class SavedVariant(ModelWithGUID):
         chrom, pos = get_chrom_pos(self.xpos)
         return "%s:%s-%s" % (chrom, pos, self.family.guid)
 
-    def _compute_guid(self):
-        return 'SV%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'SV'
 
     class Meta:
         unique_together = ('xpos', 'xpos_end', 'variant_id', 'family')
@@ -810,8 +858,8 @@ class VariantTagType(ModelWithGUID):
     def __unicode__(self):
         return self.name.strip()
 
-    def _compute_guid(self):
-        return 'VTT%05d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'VTT'
+    GUID_PRECISION = 5
 
     class Meta:
         unique_together = ('project', 'name', 'color')
@@ -831,8 +879,7 @@ class VariantTag(ModelWithGUID):
         saved_variants_ids = "".join(str(saved_variant) for saved_variant in self.saved_variants.all())
         return "%s:%s" % (saved_variants_ids, self.variant_tag_type.name)
 
-    def _compute_guid(self):
-        return 'VT%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'VT'
 
     class Meta:
         json_fields = ['guid', 'search_hash', 'metadata', 'last_modified_date', 'created_by']
@@ -850,8 +897,7 @@ class VariantNote(ModelWithGUID):
         saved_variants_ids = "".join(str(saved_variant) for saved_variant in self.saved_variants.all())
         return "%s:%s" % (saved_variants_ids, (self.note or "")[:20])
 
-    def _compute_guid(self):
-        return 'VN%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'VN'
 
     class Meta:
         json_fields = ['guid', 'note', 'submit_to_clinvar', 'last_modified_date', 'created_by']
@@ -922,6 +968,16 @@ class VariantFunctionalData(ModelWithGUID):
                 'description': 'Variant has been shown to be disease-causing (in literature, functional studies, etc.) but one or more individuals in this family with the variant do not present with clinical features of the disorder.',
                 'color': '#E985DC',
             })),
+            ('Partial Phenotype Contribution', json.dumps({
+                'metadata_title': 'HPO Terms',
+                'description': 'Variant is believed to be part of the solve, explaining only some of the phenotypes.',
+                'color': '#1F42D9',
+            })),
+            ('Validated Name', json.dumps({
+                'description': 'Variant name which differs from the computed name.',
+                'color': '#0E7694',
+                'metadata_title': 'Name',
+            })),
         )),
     )
 
@@ -944,8 +1000,7 @@ class VariantFunctionalData(ModelWithGUID):
         saved_variants_ids = "".join(str(saved_variant) for saved_variant in self.saved_variants.all())
         return "%s:%s" % (saved_variants_ids, self.functional_data_tag)
 
-    def _compute_guid(self):
-        return 'VFD%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'VFD'
 
     class Meta:
         json_fields = ['guid', 'functional_data_tag', 'metadata', 'last_modified_date', 'created_by']
@@ -958,8 +1013,7 @@ class GeneNote(ModelWithGUID):
     def __unicode__(self):
         return "%s:%s" % (self.gene_id, (self.note or "")[:20])
 
-    def _compute_guid(self):
-        return 'GN%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'GN'
 
     class Meta:
         json_fields = ['guid', 'note', 'gene_id', 'last_modified_date', 'created_by']
@@ -977,8 +1031,8 @@ class LocusList(ModelWithGUID):
     def __unicode__(self):
         return self.name.strip()
 
-    def _compute_guid(self):
-        return 'LL%05d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'LL'
+    GUID_PRECISION = 5
 
     class Meta:
         unique_together = ('name', 'description', 'is_public', 'created_by')
@@ -994,8 +1048,7 @@ class LocusListGene(ModelWithGUID):
     def __unicode__(self):
         return "%s:%s" % (self.locus_list, self.gene_id)
 
-    def _compute_guid(self):
-        return 'LLG%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'LLG'
 
     class Meta:
         unique_together = ('locus_list', 'gene_id')
@@ -1012,8 +1065,7 @@ class LocusListInterval(ModelWithGUID):
     def __unicode__(self):
         return "%s:%s:%s-%s" % (self.locus_list, self.chrom, self.start, self.end)
 
-    def _compute_guid(self):
-        return 'LLI%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'LLI'
 
     class Meta:
         unique_together = ('locus_list', 'genome_version', 'chrom', 'start', 'end')
@@ -1031,13 +1083,28 @@ class AnalysisGroup(ModelWithGUID):
     def __unicode__(self):
         return self.name.strip()
 
-    def _compute_guid(self):
-        return 'AG%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'AG'
 
     class Meta:
         unique_together = ('project', 'name')
 
         json_fields = ['guid', 'name', 'description']
+
+
+class DynamicAnalysisGroup(ModelWithGUID):
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, null=True, blank=True)
+    name = models.TextField()
+    criteria = JSONField()
+
+    def __unicode__(self):
+        return self.name.strip()
+
+    GUID_PREFIX = 'DAG'
+
+    class Meta:
+        unique_together = ('project', 'name')
+
+        json_fields = ['guid', 'name', 'criteria']
 
 
 class VariantSearch(ModelWithGUID):
@@ -1048,8 +1115,7 @@ class VariantSearch(ModelWithGUID):
     def __unicode__(self):
         return self.name or str(self.id)
 
-    def _compute_guid(self):
-        return 'VS%07d_%s' % (self.id, _slugify(self.name or ''))
+    GUID_PREFIX = 'VS'
 
     class Meta:
         unique_together = ('created_by', 'name')
@@ -1065,8 +1131,7 @@ class VariantSearchResults(ModelWithGUID):
     def __unicode__(self):
         return self.search_hash
 
-    def _compute_guid(self):
-        return 'VSR%07d_%s' % (self.id, _slugify(str(self)))
+    GUID_PREFIX = 'VSR'
 
 
 class BulkOperationBase(models.Model):
@@ -1085,11 +1150,11 @@ class BulkOperationBase(models.Model):
         logger.info(f'{update_type} {db_entity}s', user, db_update=db_update)
 
     @classmethod
-    def bulk_create(cls, user, new_models):
+    def bulk_create(cls, user, new_models, **kwargs):
         """Helper bulk create method that logs the creation"""
         for model in new_models:
             model.created_by = user
-        models = cls.objects.bulk_create(new_models)
+        models = cls.objects.bulk_create(new_models, **kwargs)
         cls.log_model_no_guid_bulk_update(models, user, 'create')
         return models
 
@@ -1105,10 +1170,10 @@ class BulkOperationBase(models.Model):
         abstract = True
 
 
-class DeletableSampleMetadataModel(BulkOperationBase):
+class DeletableRnaSampleMetadataModel(BulkOperationBase):
     PARENT_FIELD = 'sample'
 
-    sample = models.ForeignKey('Sample', on_delete=models.CASCADE)
+    sample = models.ForeignKey('RnaSample', on_delete=models.CASCADE)
     gene_id = models.CharField(max_length=20)  # ensembl ID
 
     def __unicode__(self):
@@ -1118,7 +1183,7 @@ class DeletableSampleMetadataModel(BulkOperationBase):
         abstract = True
 
 
-class RnaSeqOutlier(DeletableSampleMetadataModel):
+class RnaSeqOutlier(DeletableRnaSampleMetadataModel):
     MAX_SIGNIFICANT_P_ADJUST = 0.05
 
     p_value = models.FloatField()
@@ -1133,7 +1198,7 @@ class RnaSeqOutlier(DeletableSampleMetadataModel):
         indexes = [models.Index(fields=['sample_id', 'gene_id']), models.Index(fields=['p_adjust'])]
 
 
-class RnaSeqTpm(DeletableSampleMetadataModel):
+class RnaSeqTpm(DeletableRnaSampleMetadataModel):
     tpm = models.FloatField()
 
     class Meta:
@@ -1144,7 +1209,7 @@ class RnaSeqTpm(DeletableSampleMetadataModel):
         indexes = [models.Index(fields=['sample_id', 'gene_id'])]
 
 
-class RnaSeqSpliceOutlier(DeletableSampleMetadataModel):
+class RnaSeqSpliceOutlier(DeletableRnaSampleMetadataModel):
     MAX_SIGNIFICANT_P_ADJUST = 0.3
     SIGNIFICANCE_ABS_VALUE_THRESHOLDS = {'delta_intron_jaccard_index': 0.1}
     STRAND_CHOICES = (
@@ -1176,7 +1241,7 @@ class RnaSeqSpliceOutlier(DeletableSampleMetadataModel):
                        'delta_intron_jaccard_index', 'mean_counts', 'total_counts', 'mean_total_counts']
 
 
-class PhenotypePrioritization(BulkOperationBase):
+class PhenotypePrioritization(ModelWithGUID):
     PARENT_FIELD = 'individual'
 
     individual = models.ForeignKey('Individual', on_delete=models.CASCADE, db_index=True)
@@ -1190,6 +1255,8 @@ class PhenotypePrioritization(BulkOperationBase):
 
     def __unicode__(self):
         return "%s:%s:%s" % (self.individual.individual_id, self.gene_id, self.disease_id)
+
+    GUID_PREFIX = 'PP'
 
     class Meta:
         json_fields = ['gene_id', 'tool', 'rank', 'disease_id', 'disease_name', 'scores']

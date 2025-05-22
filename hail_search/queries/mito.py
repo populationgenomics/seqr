@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from aiohttp.web import HTTPNotFound
 import hail as hl
 import logging
@@ -93,6 +95,9 @@ class MitoHailTableQuery(BaseHailTableQuery):
             **BaseHailTableQuery.ENUM_ANNOTATION_FIELDS['transcripts'],
             'annotate_value': lambda transcript, *args: {'major_consequence': transcript.consequence_terms.first()},
             'drop_fields': ['consequence_terms'],
+            'format_array_values': lambda values, *args: BaseHailTableQuery.ENUM_ANNOTATION_FIELDS['transcripts']['format_array_values'](values).map_values(
+                lambda transcripts: hl.enumerate(transcripts).starmap(lambda i, t: t.annotate(transcriptRank=i))
+            ),
         }
     }
 
@@ -147,8 +152,8 @@ class MitoHailTableQuery(BaseHailTableQuery):
             self._load_table_kwargs = {'_intervals': parsed_intervals, '_filter_intervals': True}
         return parsed_intervals
 
-    def _get_family_passes_quality_filter(self, quality_filter, ht=None, pathogenicity=None, **kwargs):
-        passes_quality = super()._get_family_passes_quality_filter(quality_filter)
+    def _get_family_passes_quality_filter(self, quality_filter, ht, pathogenicity=None, **kwargs):
+        passes_quality = super()._get_family_passes_quality_filter(quality_filter, ht)
         clinvar_path_ht = False if passes_quality is None else self._get_loaded_clinvar_prefilter_ht(pathogenicity)
         if not clinvar_path_ht:
             return passes_quality
@@ -305,30 +310,36 @@ class MitoHailTableQuery(BaseHailTableQuery):
 
     def _add_project_lookup_data(self, ht, annotation_fields, *args, **kwargs):
         # Get all the project-families for the looked up variant formatted as a dict of dicts:
-        # {<project_guid>: {<family_guid>: True, <family_guid_2>: True}, <project_guid_2>: ...}
+        # {<project_guid>: {<sample_type>: {<family_guid>: True}, <sample_type_2>: {<family_guid_2>: True}}, <project_guid_2>: ...}
         lookup_ht = self._read_table('lookup.ht', use_ssd_dir=True, skip_missing_field='project_stats')
         if lookup_ht is None:
             raise HTTPNotFound()
         variant_projects = lookup_ht.aggregate(hl.agg.take(
             hl.dict(hl.enumerate(lookup_ht.project_stats).starmap(lambda i, ps: (
-                lookup_ht.project_guids[i],
+                lookup_ht.project_sample_types[i],
                 hl.enumerate(ps).starmap(
                     lambda j, s: hl.or_missing(self._stat_has_non_ref(s), j)
                 ).filter(hl.is_defined),
             )).filter(
                 lambda x: x[1].any(hl.is_defined)
-            ).starmap(lambda project_guid, family_indices: (
-                project_guid,
-                hl.dict(family_indices.map(lambda j: (lookup_ht.project_families[project_guid][j], True))),
-            ))), 1),
+            ).starmap(lambda project_key, family_indices: (
+                project_key,
+                hl.dict(family_indices.map(lambda j: (lookup_ht.project_families[project_key][j], True))),
+            )).group_by(
+                lambda x: x[0][0]
+            ).map_values(
+                lambda project_data: hl.dict(project_data.starmap(
+                    lambda project_key, families: (project_key[1], families)
+            )))), 1)
         )[0]
+
         # Variant can be present in the lookup table with only ref calls, so is still not present in any projects
         if not variant_projects:
             raise HTTPNotFound()
 
         annotation_fields.update({
             'familyGenotypes': lambda r: hl.dict(r.family_entries.map(
-                lambda entries: (entries.first().familyGuid, entries.map(self._get_sample_genotype))
+                lambda entries: (entries.first().familyGuid, entries.filter(hl.is_defined).map(self._get_sample_genotype))
             )),
         })
 

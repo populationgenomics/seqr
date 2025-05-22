@@ -3,23 +3,26 @@ import json
 import re
 import requests
 
+from django.core.exceptions import PermissionDenied
 from django.http import StreamingHttpResponse, HttpResponse
 
 from seqr.models import Individual, IgvSample
 from seqr.utils.file_utils import file_iter, does_file_exist, is_google_bucket_file_path, run_command, get_google_project
 from seqr.utils.redis_utils import safe_redis_get_json, safe_redis_set_json
+from seqr.views.utils.dataset_utils import convert_django_meta_to_http_headers
 from seqr.views.utils.file_utils import save_uploaded_file, load_uploaded_file
 from seqr.views.utils.json_to_orm_utils import get_or_create_model_from_json
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.orm_to_json_utils import get_json_for_sample
-from seqr.views.utils.permissions_utils import get_project_and_check_permissions, check_project_permissions, \
-    login_and_policies_required, pm_or_data_manager_required, get_project_guids_user_can_view \
-    , service_account_access
+from seqr.views.utils.permissions_utils import get_project_and_check_permissions, external_anvil_project_can_edit, \
+    login_and_policies_required, pm_or_data_manager_required, get_project_guids_user_can_view, user_is_data_manager, \
+    user_is_pm, service_account_access
 
 GS_STORAGE_ACCESS_CACHE_KEY = 'gs_storage_access_cache_entry'
 GS_STORAGE_URL = 'https://storage.googleapis.com'
+S3_KEY = 's3'
 CLOUD_STORAGE_URLS = {
-    's3': 'https://s3.amazonaws.com',
+    S3_KEY: 'https://s3.amazonaws.com',
     'gs': GS_STORAGE_URL,
 }
 TIMEOUT = 300
@@ -32,7 +35,15 @@ def _process_alignment_records(rows, num_id_cols=1, **kwargs):
     parsed_records = defaultdict(list)
     for row in rows:
         row_id = row[0] if num_id_cols == 1 else tuple(row[:num_id_cols])
-        parsed_records[row_id].append({'filePath': row[num_id_cols], 'sampleId': row[num_cols] if len(row) > num_cols else None})
+        file_path = row[num_id_cols]
+        sample_id = None
+        index_file_path = None
+        if len(row) > num_cols:
+            if file_path.endswith(IgvSample.SAMPLE_TYPE_FILE_EXTENSIONS[IgvSample.SAMPLE_TYPE_GCNV]):
+                sample_id = row[num_cols]
+            else:
+                index_file_path = row[num_cols]
+        parsed_records[row_id].append({'filePath': row[num_id_cols], 'sampleId': sample_id, 'indexFilePath': index_file_path})
     return parsed_records
 
 
@@ -68,26 +79,51 @@ def _post_process_igv_records(individual_dataset_mapping, get_valid_matched_indi
 
 
 def _process_igv_table_handler(parse_uploaded_file, get_valid_matched_individuals):
+    info = []
+
     try:
         uploaded_file_id, filename, individual_dataset_mapping = parse_uploaded_file()
 
-        info, all_updates = _post_process_igv_records(
-            individual_dataset_mapping=individual_dataset_mapping,
-            get_valid_matched_individuals=get_valid_matched_individuals,
-            filename=filename,
-        )
+        matched_individuals = get_valid_matched_individuals(individual_dataset_mapping)
 
-        response = {
-            'updates': all_updates,
-            'uploadedFileId': uploaded_file_id,
-            'errors': [],
-            'warnings': [],
-            'info': info,
-        }
-        return create_json_response(response)
+        message = f'Parsed {sum([len(rows) for rows in individual_dataset_mapping.values()])} rows in {len(matched_individuals)} individuals'
+        if filename:
+            message += f' from {filename}'
+        info.append(message)
+
+        existing_sample_files = defaultdict(set)
+        existing_sample_index_files = defaultdict(set)
+        for sample in IgvSample.objects.select_related('individual').filter(individual__in=matched_individuals.keys()):
+            existing_sample_files[sample.individual].add(sample.file_path)
+            if sample.index_file_path:
+                existing_sample_index_files[sample.individual].add(sample.index_file_path)
+
+        num_unchanged_rows = 0
+        all_updates = []
+        for individual, updates in matched_individuals.items():
+            changed_updates = [
+                dict(individualGuid=individual.guid, individualId=individual.individual_id, **update)
+                for update in updates
+                if update['filePath'] not in existing_sample_files[individual]
+                   or (update['indexFilePath'] and update['indexFilePath'] not in existing_sample_index_files)
+            ]
+            all_updates += changed_updates
+            num_unchanged_rows += len(updates) - len(changed_updates)
+
+        if num_unchanged_rows:
+            info.append('No change detected for {} rows'.format(num_unchanged_rows))
 
     except Exception as e:
         return create_json_response({'errors': [str(e)]}, status=400)
+
+    response = {
+        'updates': all_updates,
+        'uploadedFileId': uploaded_file_id,
+        'errors': [],
+        'warnings': [],
+        'info': info,
+    }
+    return create_json_response(response)
 
 
 @pm_or_data_manager_required
@@ -136,16 +172,7 @@ def receive_bulk_igv_table_handler(request):
     return _process_igv_table_handler(_parse_uploaded_file, _get_valid_matched_individuals)
 
 
-SAMPLE_TYPE_MAP = [
-    ('bam', IgvSample.SAMPLE_TYPE_ALIGNMENT),
-    ('cram', IgvSample.SAMPLE_TYPE_ALIGNMENT),
-    ('bigWig', IgvSample.SAMPLE_TYPE_COVERAGE),
-    ('junctions.bed.gz', IgvSample.SAMPLE_TYPE_JUNCTION),
-    ('bed.gz', IgvSample.SAMPLE_TYPE_GCNV),
-]
-
-
-@pm_or_data_manager_required
+@login_and_policies_required
 def update_individual_igv_sample(request, individual_guid):
     return update_individual_igv_sample_base(request, individual_guid)
 
@@ -153,7 +180,10 @@ def update_individual_igv_sample(request, individual_guid):
 def update_individual_igv_sample_base(request, individual_guid):
     individual = Individual.objects.get(guid=individual_guid)
     project = individual.family.project
-    check_project_permissions(project, request.user, can_edit=True)
+    user = request.user
+
+    if not (user_is_pm(user) or user_is_data_manager(user) or external_anvil_project_can_edit(project, user)):
+        raise PermissionDenied(f'{user} does not have sufficient permissions for {project}')
 
     request_json = json.loads(request.body)
 
@@ -162,16 +192,21 @@ def update_individual_igv_sample_base(request, individual_guid):
         if not file_path:
             raise ValueError('request must contain fields: filePath')
 
-        sample_type = next((st for suffix, st in SAMPLE_TYPE_MAP if file_path.endswith(suffix)), None)
+        sample_type = next((st for st, suffixes in IgvSample.SAMPLE_TYPE_FILE_EXTENSIONS.items() if file_path.endswith(suffixes)), None)
         if not sample_type:
             raise Exception('Invalid file extension for "{}" - valid extensions are {}'.format(
-                file_path, ', '.join([suffix for suffix, _ in SAMPLE_TYPE_MAP])))
-        if not does_file_exist(file_path, user=request.user):
+                file_path, ', '.join([suffix for suffixes in IgvSample.SAMPLE_TYPE_FILE_EXTENSIONS.values() for suffix in suffixes])))
+        if not does_file_exist(file_path, user=user):
             raise Exception('Error accessing "{}"'.format(file_path))
+        if request_json.get('indexFilePath') and not does_file_exist(request_json['indexFilePath'], user=user):
+            raise Exception('Error accessing "{}"'.format(request_json['indexFilePath']))
 
         sample, created = get_or_create_model_from_json(
             IgvSample, create_json={'individual': individual, 'sample_type': sample_type},
-            update_json={'file_path': file_path, 'sample_id': request_json.get('sampleId')}, user=request.user)
+            update_json={
+                'file_path': file_path,
+                **{field: request_json.get(field) for field in ['sampleId', 'indexFilePath']}
+            }, user=user)
 
         response = {
             'igvSamplesByGuid': {
@@ -207,7 +242,7 @@ def _stream_gs(request, gs_path):
     response = requests.get(
         f"{GS_STORAGE_URL}/{gs_path.replace('gs://', '', 1)}",
         headers=headers,
-        stream=True)
+        stream=True, timeout=TIMEOUT)
 
     return StreamingHttpResponse(response.iter_content(chunk_size=65536), status=response.status_code,
                                  content_type='application/octet-stream')
@@ -227,7 +262,7 @@ def _get_gs_rest_api_headers(range_header, gs_path, user=None):
 def _get_token_expiry(token):
     response = requests.post('https://www.googleapis.com/oauth2/v1/tokeninfo',
                              headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                             data='access_token={}'.format(token))
+                             data='access_token={}'.format(token), timeout=30)
     if response.status_code == 200:
         result = json.loads(response.text)
         return result['expires_in']

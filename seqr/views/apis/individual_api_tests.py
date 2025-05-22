@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
+import gzip
 import json
 import mock
+import re
 
 from copy import deepcopy
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -16,7 +18,7 @@ from seqr.views.apis.individual_api import edit_individuals_handler, update_indi
     get_hpo_terms, get_individual_rna_seq_data, import_gregor_metadata, _get_record_updates
 from seqr.views.apis.report_api_tests import PARTICIPANT_TABLE, PHENOTYPE_TABLE, EXPERIMENT_TABLE, EXPERIMENT_LOOKUP_TABLE, GENETIC_FINDINGS_TABLE
 from seqr.views.utils.test_utils import AuthenticationTestCase, AnvilAuthenticationTestCase, INDIVIDUAL_FIELDS, \
-    INDIVIDUAL_CORE_FIELDS, CORE_INTERNAL_INDIVIDUAL_FIELDS
+    INDIVIDUAL_CORE_FIELDS, CORE_INTERNAL_INDIVIDUAL_FIELDS, GENE_FIELDS
 
 PROJECT_GUID = 'R0001_1kg'
 PM_REQUIRED_PROJECT_GUID = 'R0003_test'
@@ -305,7 +307,6 @@ class IndividualAPITest(object):
         self.assertIsNone(updated_individual['paternalGuid'])
         self.assertIsNone(updated_individual['paternalGuid'])
 
-    @mock.patch('seqr.utils.search.elasticsearch.es_utils.ELASTICSEARCH_SERVICE_HOSTNAME', 'testhost')
     @mock.patch('seqr.views.utils.permissions_utils.PM_USER_GROUP')
     def test_delete_individuals(self, mock_pm_group):
         individuals_url = reverse(delete_individuals_handler, args=[PROJECT_GUID])
@@ -321,6 +322,9 @@ class IndividualAPITest(object):
         response = self.client.post(individuals_url, content_type='application/json', data=json.dumps({
             'individuals': [INDIVIDUAL_IDS_UPDATE_DATA]
         }))
+        self._assert_expected_delete_individuals(response, mock_pm_group)
+
+    def _assert_expected_delete_individuals(self, response, mock_pm_group):
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
         self.assertSetEqual(set(response_json.keys()), {'individualsByGuid', 'familiesByGuid'})
@@ -360,11 +364,6 @@ class IndividualAPITest(object):
         data = json.dumps({
             'individuals': [{'individualGuid': 'I000015_na20885'}]
         })
-        with mock.patch('seqr.utils.search.elasticsearch.es_utils.ELASTICSEARCH_SERVICE_HOSTNAME', ''):
-            response = self.client.post(pm_required_delete_individuals_url, content_type='application/json', data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertListEqual(response.json()['errors'], ['Unable to delete individuals with active search sample: NA20885'])
-
         response = self.client.post(pm_required_delete_individuals_url, content_type='application/json', data=data)
         self.assertEqual(response.status_code, 200)
 
@@ -995,8 +994,13 @@ class IndividualAPITest(object):
     @mock.patch('seqr.utils.file_utils.subprocess.Popen')
     def test_import_gregor_metadata(self, mock_subprocess):
         genetic_findings_table = deepcopy(GENETIC_FINDINGS_TABLE)
-        genetic_findings_table[2] = genetic_findings_table[2][:11] + genetic_findings_table[3][11:14] + \
+        genetic_findings_table[2] = genetic_findings_table[2][:11] + genetic_findings_table[4][11:14] + \
                                     genetic_findings_table[2][14:]
+        genetic_findings_table.append([
+            'Broad_NA20889_1_249045487', 'Broad_NA20889', '', 'SNV/INDEL', 'GRCh37', '1', '249045487', 'A', 'G', '',
+            'OR4G11P', '', '', '', 'Heterozygous', '', 'unknown', 'Broad_NA20889_1_248367227', '', 'Candidate',
+            'IRIDA syndrome', 'MONDO:0008788', 'Autosomal dominant', 'Full', '', '', 'SR-ES', '', '', '', '', '', '', '',
+        ])
         self._set_metadata_file_iter(mock_subprocess, genetic_findings_table)
 
         url = reverse(import_gregor_metadata, args=[PM_REQUIRED_PROJECT_GUID])
@@ -1022,7 +1026,7 @@ class IndividualAPITest(object):
                 'Created 1 new families, 3 new individuals',
                 'Updated 1 existing families, 1 existing individuals',
                 'Skipped 0 unchanged individuals',
-                'Loaded 3 new and 0 updated findings tags',
+                'Loaded 4 new and 0 updated findings tags',
             ],
         }})
 
@@ -1037,7 +1041,7 @@ class IndividualAPITest(object):
             'metadataTitle': None,
             'color': '#c25fc4',
             'order': 0.5,
-            'numTags': 4,
+            'numTags': 5,
         })
 
         self.assertEqual(len(response_json['familiesByGuid']), 2)
@@ -1048,7 +1052,7 @@ class IndividualAPITest(object):
 
         self.assertDictEqual(response_json['familyTagTypeCounts'], {
             'F000012_12': {'GREGoR Finding': 3, 'MME Submission': 2, 'Tier 1 - Novel gene and phenotype': 1},
-            new_family_guid: {'GREGoR Finding': 1},
+            new_family_guid: {'GREGoR Finding': 2},
         })
 
         self.assertEqual(len(response_json['individualsByGuid']), 4)
@@ -1127,7 +1131,7 @@ class IndividualAPITest(object):
             'saved_variant_json__transcripts', 'saved_variant_json__genotypes', 'saved_variant_json__mainTranscriptId',
             'saved_variant_json__hgvsc',
         )
-        self.assertEqual(len(saved_variants), 3)
+        self.assertEqual(len(saved_variants), 4)
         self.assertDictEqual(saved_variants[0], {
             'guid': 'SV0000006_1248367227_r0003_tes',
             'variant_id': '1-248367227-TC-T',
@@ -1178,9 +1182,9 @@ class IndividualAPITest(object):
         self.assertIsNone(comp_het_tag.metadata)
         self.assertDictEqual(json.loads(next(t for t in existing_variant_tags if t != comp_het_tag).metadata), {
             'gene_known_for_phenotype': 'Candidate',
-            'condition_id': 'MONDO:0008788',
-            'known_condition_name': 'IRIDA syndrome',
-            'condition_inheritance': 'Autosomal dominant',
+            'condition_id': 'OMIM:616126',
+            'known_condition_name': 'Immunodeficiency 38',
+            'condition_inheritance': 'Autosomal recessive',
         })
         self.assertDictEqual(json.loads(next(t for t in new_variant_tags if t != comp_het_tag).metadata), {
             'gene_known_for_phenotype': 'Candidate',
@@ -1221,12 +1225,12 @@ class IndividualAPITest(object):
                 'Created 0 new families, 0 new individuals',
                 'Updated 0 existing families, 0 existing individuals',
                 'Skipped 4 unchanged individuals',
-                'Loaded 1 new and 2 updated findings tags',
+                'Loaded 1 new and 3 updated findings tags',
             ],
         }})
         self.assertDictEqual(response_json['individualsByGuid'], {})
 
-        no_gene_saved_variant_json = SavedVariant.objects.get(family__guid=new_family_guid).saved_variant_json
+        no_gene_saved_variant_json = SavedVariant.objects.get(family__guid=new_family_guid, variant_id='1-248367227-TC-T').saved_variant_json
         self.assertDictEqual(no_gene_saved_variant_json['transcripts'], {})
         self.assertDictEqual(no_gene_saved_variant_json['genotypes'], new_family_genotypes)
         self.assertNotIn('mainTranscriptId', no_gene_saved_variant_json)
@@ -1294,6 +1298,7 @@ class IndividualAPITest(object):
             outliers_by_pos[132885746]
         )
         self.assertSetEqual(set(response_json['genesById'].keys()), {'ENSG00000135953', 'ENSG00000268903'})
+        self.assertSetEqual(set(response_json['genesById']['ENSG00000135953'].keys()), GENE_FIELDS)
 
     def test_get_individual_rna_seq_data_is_significant(self):
         url = reverse(get_individual_rna_seq_data, args=[INDIVIDUAL_GUID])
@@ -1321,6 +1326,14 @@ class LocalIndividualAPITest(AuthenticationTestCase, IndividualAPITest):
     fixtures = ['users', '1kg_project', 'reference_data']
     HAS_EXTERNAL_PROJECT_ACCESS = False
 
+    def setUp(self):
+        patcher = mock.patch('seqr.utils.file_utils.subprocess.Popen')
+        _mock_subprocess = patcher.start()
+        _mock_subprocess.side_effect = Exception('Calling gs from local')
+        self.addCleanup(patcher.stop)
+
+        super().setUp()
+
     def test_import_gregor_metadata(self, *args):
         # Importing gregor metadata does not work in local environment
         pass
@@ -1329,3 +1342,34 @@ class LocalIndividualAPITest(AuthenticationTestCase, IndividualAPITest):
 # class AnvilIndividualAPITest(AnvilAuthenticationTestCase, IndividualAPITest):
 #     fixtures = ['users', 'social_auth', '1kg_project', 'reference_data']
 #     HAS_EXTERNAL_PROJECT_ACCESS = True
+#
+#     def setUp(self):
+#         patcher = mock.patch('seqr.utils.file_utils.subprocess.Popen')
+#         _mock_subprocess = patcher.start()
+#         self.addCleanup(patcher.stop)
+#
+#         self.mock_subprocess = mock.MagicMock()
+#         self.mock_subprocess.wait.return_value = 0
+#         self.mock_subprocess.stdout.__iter__.return_value = []
+#         self.gs_files = {}
+#         _mock_subprocess.side_effect = self._mock_subprocess
+#
+#         super().setUp()
+#
+#     def _mock_subprocess(self, command, **kwargs):
+#         command_args = re.match(
+#             r'gsutil (?P<cmd>cat|mv)(?P<local_path> \S+)? gs://seqr-scratch-temp/(?P<gs_path>\S+)', command,
+#         ).groupdict()
+#         file_name = command_args['gs_path']
+#         if command_args['cmd'] == 'mv':
+#             src_path = command_args['local_path'].strip()
+#             self.assertEqual(src_path.split('/')[-1], file_name)
+#             with gzip.open(src_path) as f:
+#                 self.gs_files[file_name] = f.readlines()
+#         else:
+#             self.mock_subprocess.stdout.__iter__.return_value = self.gs_files[file_name]
+#         return self.mock_subprocess
+#
+#     def _assert_expected_delete_individuals(self, response, mock_pm_group):
+#         self.assertEqual(response.status_code, 400)
+#         self.assertListEqual(response.json()['errors'], ['Unable to delete individuals with active search sample: NA19678'])

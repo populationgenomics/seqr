@@ -1,0 +1,374 @@
+{
+  "count": 4,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "gene_data": {
+        "alias": [
+          "HHT2",
+          "ALK1",
+          "HHT"
+        ],
+        "biotype": "protein_coding",
+        "hgnc_id": "HGNC:175",
+        "gene_name": "activin A receptor like type 1",
+        "omim_gene": [
+          "601284"
+        ],
+        "alias_name": null,
+        "gene_symbol": "ACVRL1",
+        "hgnc_symbol": "ACVRL1",
+        "hgnc_release": "2017-11-03",
+        "ensembl_genes": {
+          "GRch37": {
+            "82": {
+              "location": "12:52300692-52317145",
+              "ensembl_id": "ENSG00000139567"
+            }
+          },
+          "GRch38": {
+            "90": {
+              "location": "12:51906908-51923361",
+              "ensembl_id": "ENSG00000139567"
+            }
+          }
+        },
+        "hgnc_date_symbol_changed": "1994-12-12"
+      },
+      "entity_type": "gene",
+      "entity_name": "ACVRL1",
+      "confidence_level": "3",
+      "penetrance": null,
+      "mode_of_pathogenicity": "",
+      "publications": [
+        "16542389"
+      ],
+      "evidence": [
+        "Expert Review Green",
+        "Royal Melbourne Hospital"
+      ],
+      "phenotypes": [
+        "telangiectasia",
+        "pulmonary arterial hypertension",
+        "epistaxis",
+        "pulmonary arteriovenous malformation",
+        "cerebral pulmonary arteriovenous malformation",
+        "hepatic arteriovenous malformation",
+        "Telangiectasia, hereditary hemorrhagic, type 2 600376"
+      ],
+      "mode_of_inheritance": "MONOALLELIC, autosomal or pseudoautosomal, NOT imprinted",
+      "tags": [],
+      "panel": {
+        "id": 260,
+        "hash_id": null,
+        "name": "Hereditary Haemorrhagic Telangiectasia",
+        "disease_group": "Vascular disorders",
+        "disease_sub_group": "",
+        "status": "public",
+        "version": "1.0",
+        "version_created": "2021-01-21T10:54:52.442904Z",
+        "relevant_disorders": [],
+        "stats": {
+          "number_of_genes": 6,
+          "number_of_strs": 0,
+          "number_of_regions": 0
+        },
+        "types": [
+          {
+            "name": "Victorian Clinical Genetics Services",
+            "slug": "victorian-clinical-genetics-services",
+            "description": "Panel used by VCGS."
+          },
+          {
+            "name": "Royal Melbourne Hospital",
+            "slug": "royal-melbourne-hospital",
+            "description": "Royal Melbourne Hospital"
+          },
+          {
+            "name": "Rare Disease",
+            "slug": "rare-disease",
+            "description": "Rare disease panels"
+          }
+        ]
+      },
+      "transcript": null
+    },
+    {
+      "gene_data": {
+        "alias": [
+          "END",
+          "HHT1",
+          "CD105"
+        ],
+        "biotype": "protein_coding",
+        "hgnc_id": "HGNC:3349",
+        "gene_name": "endoglin",
+        "omim_gene": [
+          "131195"
+        ],
+        "alias_name": null,
+        "gene_symbol": "ENG",
+        "hgnc_symbol": "ENG",
+        "hgnc_release": "2017-11-03",
+        "ensembl_genes": {
+          "GRch37": {
+            "82": {
+              "location": "9:130577291-130617035",
+              "ensembl_id": "ENSG00000106991"
+            }
+          },
+          "GRch38": {
+            "90": {
+              "location": "9:127815012-127854756",
+              "ensembl_id": "ENSG00000106991"
+            }
+          }
+        },
+        "hgnc_date_symbol_changed": "1993-03-03"
+      },
+      "entity_type": "gene",
+      "entity_name": "ENG",
+      "confidence_level": "3",
+      "penetrance": null,
+      "mode_of_pathogenicity": "",
+      "publications": [],
+      "evidence": [
+        "Expert Review Green",
+        "Royal Melbourne Hospital"
+      ],
+      "phenotypes": [
+        "Telangiectasia, hereditary hemorrhagic, type 1, 187300",
+        "Gastrointestinal telangiectasia (HP:0002604)",
+        "Palate telangiectasia (HP:0002707)",
+        "Lip telangiectasia (HP:0000214)",
+        "Pulmonary arteriovenous malformation (HP:0006548)",
+        "Nasal mucosa telangiectasia (HP:0000434)",
+        "Tongue telangiectasia (HP:0000227)",
+        "Epistaxis (HP:0000421)",
+        "Cerebral arteriovenous malformation (HP:0002408)",
+        "Hepatic arteriovenous malformation (HP:0006574",
+        "Spinal arteriovenous malformation (HP:0002390)",
+        ")",
+        "Finger pad telangiectasia (pulp not nail side)",
+        "Arteriovenous malformation (HP:0100026)"
+      ],
+      "mode_of_inheritance": "MONOALLELIC, autosomal or pseudoautosomal, NOT imprinted",
+      "tags": [],
+      "panel": {
+        "id": 260,
+        "hash_id": null,
+        "name": "Hereditary Haemorrhagic Telangiectasia",
+        "disease_group": "Vascular disorders",
+        "disease_sub_group": "",
+        "status": "public",
+        "version": "1.0",
+        "version_created": "2021-01-21T10:54:52.442904Z",
+        "relevant_disorders": [],
+        "stats": {
+          "number_of_genes": 6,
+          "number_of_strs": 0,
+          "number_of_regions": 0
+        },
+        "types": [
+          {
+            "name": "Victorian Clinical Genetics Services",
+            "slug": "victorian-clinical-genetics-services",
+            "description": "Panel used by VCGS."
+          },
+          {
+            "name": "Royal Melbourne Hospital",
+            "slug": "royal-melbourne-hospital",
+            "description": "Royal Melbourne Hospital"
+          },
+          {
+            "name": "Rare Disease",
+            "slug": "rare-disease",
+            "description": "Rare disease panels"
+          }
+        ]
+      },
+      "transcript": null
+    },
+    {
+      "gene_data": {
+        "alias": [
+          "CMT2N",
+          "AlaRS"
+        ],
+        "biotype": "protein_coding",
+        "hgnc_id": "HGNC:20",
+        "gene_name": "alanyl-tRNA synthetase",
+        "omim_gene": [
+          "601065"
+        ],
+        "alias_name": [
+          "alanine tRNA ligase 1, cytoplasmic"
+        ],
+        "gene_symbol": "AARS",
+        "hgnc_symbol": "AARS",
+        "hgnc_release": "2017-11-03",
+        "ensembl_genes": {
+          "GRch37": {
+            "82": {
+              "location": "16:70286198-70323446",
+              "ensembl_id": "ENSG00000090861"
+            }
+          },
+          "GRch38": {
+            "90": {
+              "location": "16:70252295-70289543",
+              "ensembl_id": "ENSG00000090861"
+            }
+          }
+        },
+        "hgnc_date_symbol_changed": "1995-07-11"
+      },
+      "entity_type": "gene",
+      "entity_name": "AARS",
+      "confidence_level": "3",
+      "penetrance": null,
+      "mode_of_pathogenicity": "",
+      "publications": [
+        "20045102",
+        "22009580",
+        "22206013",
+        "30373780",
+        "26032230"
+      ],
+      "evidence": [
+        "Expert Review Green",
+        "Royal Melbourne Hospital"
+      ],
+      "phenotypes": [
+        "Charcot Marie Tooth disease, axonal, type 2N, 613287",
+        "HMSN, dHMN/dSMA"
+      ],
+      "mode_of_inheritance": "MONOALLELIC, autosomal or pseudoautosomal, imprinted status unknown",
+      "tags": [],
+      "panel": {
+        "id": 3069,
+        "hash_id": null,
+        "name": "Hereditary Neuropathy_CMT - isolated",
+        "disease_group": "Neurology and neurodevelopmental disorders",
+        "disease_sub_group": "",
+        "status": "public",
+        "version": "1.7",
+        "version_created": "2021-08-09T10:57:36.791182Z",
+        "relevant_disorders": [],
+        "stats": {
+          "number_of_genes": 106,
+          "number_of_strs": 0,
+          "number_of_regions": 0
+        },
+        "types": [
+          {
+            "name": "Victorian Clinical Genetics Services",
+            "slug": "victorian-clinical-genetics-services",
+            "description": "Panel used by VCGS."
+          },
+          {
+            "name": "Royal Melbourne Hospital",
+            "slug": "royal-melbourne-hospital",
+            "description": "Royal Melbourne Hospital"
+          },
+          {
+            "name": "Rare Disease",
+            "slug": "rare-disease",
+            "description": "Rare disease panels"
+          }
+        ]
+      },
+      "transcript": null
+    },
+    {
+      "gene_data": {
+        "alias": [
+          "KIAA0294",
+          "Gef10"
+        ],
+        "biotype": "protein_coding",
+        "hgnc_id": "HGNC:14103",
+        "gene_name": "Rho guanine nucleotide exchange factor 10",
+        "omim_gene": [
+          "608136"
+        ],
+        "alias_name": null,
+        "gene_symbol": "ARHGEF10",
+        "hgnc_symbol": "ARHGEF10",
+        "hgnc_release": "2017-11-03",
+        "ensembl_genes": {
+          "GRch37": {
+            "82": {
+              "location": "8:1772142-1906807",
+              "ensembl_id": "ENSG00000104728"
+            }
+          },
+          "GRch38": {
+            "90": {
+              "location": "8:1823976-1958641",
+              "ensembl_id": "ENSG00000104728"
+            }
+          }
+        },
+        "hgnc_date_symbol_changed": "2000-12-01"
+      },
+      "entity_type": "gene",
+      "entity_name": "ARHGEF10",
+      "confidence_level": "2",
+      "penetrance": null,
+      "mode_of_pathogenicity": "",
+      "publications": [
+        "14508709",
+        "21719701",
+        "25025039",
+        "25275565",
+        "25091364"
+      ],
+      "evidence": [
+        "Expert Review Amber",
+        "Royal Melbourne Hospital"
+      ],
+      "phenotypes": [
+        "?Slowed nerve conduction velocity, AD, 608236",
+        "HMSN"
+      ],
+      "mode_of_inheritance": "MONOALLELIC, autosomal or pseudoautosomal, NOT imprinted",
+      "tags": [],
+      "panel": {
+        "id": 3069,
+        "hash_id": null,
+        "name": "Hereditary Neuropathy_CMT - isolated",
+        "disease_group": "Neurology and neurodevelopmental disorders",
+        "disease_sub_group": "",
+        "status": "public",
+        "version": "1.7",
+        "version_created": "2021-08-09T10:57:36.791182Z",
+        "relevant_disorders": [],
+        "stats": {
+          "number_of_genes": 106,
+          "number_of_strs": 0,
+          "number_of_regions": 0
+        },
+        "types": [
+          {
+            "name": "Victorian Clinical Genetics Services",
+            "slug": "victorian-clinical-genetics-services",
+            "description": "Panel used by VCGS."
+          },
+          {
+            "name": "Royal Melbourne Hospital",
+            "slug": "royal-melbourne-hospital",
+            "description": "Royal Melbourne Hospital"
+          },
+          {
+            "name": "Rare Disease",
+            "slug": "rare-disease",
+            "description": "Rare disease panels"
+          }
+        ]
+      },
+      "transcript": null
+    }
+  ]
+}

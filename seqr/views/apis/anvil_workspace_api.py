@@ -13,12 +13,12 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 
 from reference_data.models import GENOME_VERSION_LOOKUP
-from seqr.models import Project, CAN_EDIT, Sample
+from seqr.models import Project, CAN_EDIT, Sample, Individual, IgvSample
 from seqr.views.react_app import render_app_html
 from seqr.views.utils.airtable_utils import AirtableSession, ANVIL_REQUEST_TRACKING_TABLE
 from seqr.utils.search.constants import VCF_FILE_EXTENSIONS
 from seqr.utils.search.utils import get_search_samples
-from seqr.views.utils.airflow_utils import trigger_data_loading
+from seqr.views.utils.airflow_utils import trigger_airflow_data_loading
 from seqr.views.utils.json_to_orm_utils import create_model_from_json
 from seqr.views.utils.json_utils import create_json_response
 from seqr.views.utils.file_utils import load_uploaded_file
@@ -109,15 +109,30 @@ def grant_workspace_access(request, namespace, name):
     return create_json_response({'success': True})
 
 
-@anvil_workspace_access_required(meta_fields=['workspace.bucketName'])
-def get_anvil_vcf_list(request, namespace, name, workspace_meta):
+def _get_workspace_files(request, namespace, name, workspace_meta):
     bucket_name = workspace_meta['workspace']['bucketName']
     bucket_path = 'gs://{bucket}'.format(bucket=bucket_name.rstrip('/'))
-    data_path_list = [path.replace(bucket_path, '') for path in get_gs_file_list(bucket_path, request.user)
-                      if path.endswith(VCF_FILE_EXTENSIONS)]
+    return bucket_path, get_gs_file_list(bucket_path, request.user)
+
+
+@anvil_workspace_access_required(meta_fields=['workspace.bucketName'])
+def get_anvil_vcf_list(*args):
+    bucket_path, file_list = _get_workspace_files(*args)
+    data_path_list = [path.replace(bucket_path, '') for path in file_list if path.endswith(VCF_FILE_EXTENSIONS)]
     data_path_list = _merge_sharded_vcf(data_path_list)
 
     return create_json_response({'dataPathList': data_path_list})
+
+
+@anvil_workspace_access_required(meta_fields=['workspace.bucketName'])
+def get_anvil_igv_options(*args):
+    bucket_path, file_list = _get_workspace_files(*args)
+    igv_options = [
+        {'name': path.replace(bucket_path, ''), 'value': path} for path in file_list
+        if path.endswith(IgvSample.SAMPLE_TYPE_FILE_EXTENSIONS[IgvSample.SAMPLE_TYPE_ALIGNMENT])
+    ]
+
+    return create_json_response({'igv_options': igv_options})
 
 
 @anvil_workspace_access_required(meta_fields=['workspace.bucketName'])
@@ -184,6 +199,7 @@ def create_project_from_workspace(request, namespace, name):
         'workspace_name': name,
         'mme_primary_data_owner': request.user.get_full_name(),
         'mme_contact_url': 'mailto:{}'.format(request.user.email),
+        'vlm_contact_email': request.user.email,
     }
 
     project = create_model_from_json(Project, project_args, user=request.user)
@@ -242,17 +258,32 @@ def _parse_uploaded_pedigree(request_json, project=None):
     # Parse families/individuals in the uploaded pedigree file
     json_records = load_uploaded_file(request_json['uploadedFileId'])
     pedigree_records, _ = parse_basic_pedigree_table(
-        project, json_records, 'uploaded pedigree file', required_columns=[
+        project, json_records, 'uploaded pedigree file', update_features=True, required_columns=[
             JsonConstants.SEX_COLUMN, JsonConstants.AFFECTED_COLUMN,
         ])
 
     missing_samples = [record['individualId'] for record in pedigree_records
                        if record['individualId'] not in request_json['vcfSamples']]
 
+    errors = []
     if missing_samples:
-        error = 'The following samples are included in the pedigree file but are missing from the VCF: {}'.format(
-                ', '.join(missing_samples))
-        raise ErrorsWarningsException([error], [])
+        errors.append('The following samples are included in the pedigree file but are missing from the VCF: {}'.format(
+                ', '.join(missing_samples)))
+
+    records_by_family = defaultdict(list)
+    for record in pedigree_records:
+        records_by_family[record[JsonConstants.FAMILY_ID_COLUMN]].append(record)
+
+    no_affected_families = [
+        family_id for family_id, records in records_by_family.items()
+        if not any(record[JsonConstants.AFFECTED_COLUMN] == Individual.AFFECTED_STATUS_AFFECTED for record in records)
+    ]
+
+    if no_affected_families:
+        errors.append('The following families do not have any affected individuals: {}'.format(', '.join(no_affected_families)))
+
+    if errors:
+        raise ErrorsWarningsException(errors, [])
 
     return pedigree_records
 
@@ -261,6 +292,7 @@ def _trigger_add_workspace_data(project, pedigree_records, user, data_path, samp
     # add families and individuals according to the uploaded individual records
     pedigree_json, sample_ids = add_or_update_individuals_and_families(
         project, individual_records=pedigree_records, user=user, get_update_json=get_pedigree_json, get_updated_individual_ids=True,
+        allow_features_update=True,
     )
     num_updated_individuals = len(sample_ids)
     sample_ids.update(previous_loaded_ids or [])
@@ -270,20 +302,19 @@ def _trigger_add_workspace_data(project, pedigree_records, user, data_path, samp
     success_message = f"""
         *{user.email}* requested to load {num_updated_individuals} new{reload_summary} {sample_type} samples ({GENOME_VERSION_LOOKUP.get(project.genome_version)}) from AnVIL workspace *{project.workspace_namespace}/{project.workspace_name}* at 
         {data_path} to seqr project <{_get_seqr_project_url(project)}|*{project.name}*> (guid: {project.guid})"""
-    trigger_success = trigger_data_loading(
-        [project], sample_type, Sample.DATASET_TYPE_VARIANT_CALLS, data_path, user, success_message,
-        SEQR_SLACK_ANVIL_DATA_LOADING_CHANNEL, f'ERROR triggering AnVIL loading for project {project.guid}',
-        genome_version=project.genome_version,
+    trigger_success = trigger_airflow_data_loading(
+        [project], sample_type, Sample.DATASET_TYPE_VARIANT_CALLS, project.genome_version, data_path, user=user, success_message=success_message,
+        success_slack_channel=SEQR_SLACK_ANVIL_DATA_LOADING_CHANNEL, error_message=f'ERROR triggering AnVIL loading for project {project.guid}',
     )
-    AirtableSession(user, base=AirtableSession.ANVIL_BASE).safe_create_record(
-        ANVIL_REQUEST_TRACKING_TABLE, {
+    AirtableSession(user, base=AirtableSession.ANVIL_BASE).safe_create_records(
+        ANVIL_REQUEST_TRACKING_TABLE, [{
             'Requester Name': user.get_full_name(),
             'Requester Email': user.email,
             'AnVIL Project URL': _get_seqr_project_url(project),
             'Initial Request Date': datetime.now().strftime('%Y-%m-%d'),
             'Number of Samples': len(sample_ids),
             'Status': 'Loading' if trigger_success else 'Loading Requested'
-        })
+        }])
 
     loading_warning_date = ANVIL_LOADING_DELAY_EMAIL_START_DATE and datetime.strptime(ANVIL_LOADING_DELAY_EMAIL_START_DATE, '%Y-%m-%d')
     if loading_warning_date and loading_warning_date <= datetime.now():

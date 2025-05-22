@@ -6,25 +6,26 @@ import json
 from collections import defaultdict
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Max, Q, Case, When, Value
+from django.db.models import Count, Max, Q, F, Value
 from django.db.models.functions import JSONObject, TruncDate
 from django.utils import timezone
 from notifications.models import Notification
 
 from matchmaker.models import MatchmakerSubmission
-from seqr.models import Project, Family, Individual, Sample, FamilyNote, CAN_EDIT
+from seqr.models import Project, Family, Individual, Sample, RnaSample, FamilyNote, PhenotypePrioritization, CAN_EDIT
 from seqr.views.utils.airtable_utils import AirtableSession, ANVIL_REQUEST_TRACKING_TABLE
 from seqr.views.utils.individual_utils import delete_individuals
-from seqr.views.utils.json_utils import create_json_response, _to_snake_case
+from seqr.views.utils.json_utils import create_json_response, _to_snake_case, _to_camel_case
 from seqr.views.utils.json_to_orm_utils import update_project_from_json, create_model_from_json, update_model_from_json
 from seqr.views.utils.orm_to_json_utils import _get_json_for_project, get_json_for_samples, \
-    get_json_for_project_collaborator_list, get_json_for_matchmaker_submissions, _get_json_for_families, \
-    get_json_for_family_notes, _get_json_for_individuals, get_json_for_project_collaborator_groups
+    get_json_for_project_collaborator_list, get_json_for_matchmaker_submissions, \
+    get_json_for_family_notes, _get_json_for_individuals, get_json_for_project_collaborator_groups, \
+    FAMILY_ADDITIONAL_VALUES, INDIVIDUAL_GUIDS_VALUES
 from seqr.views.utils.permissions_utils import get_project_and_check_permissions, check_project_permissions, \
     check_user_created_object_permissions, pm_required, user_is_pm, login_and_policies_required, \
     has_workspace_perm, has_case_review_permissions, is_internal_anvil_project
 from seqr.views.utils.project_context_utils import families_discovery_tags, \
-    add_project_tag_types, get_project_analysis_groups, get_project_locus_lists
+    add_project_tag_type_counts, get_project_analysis_groups, get_project_locus_lists
 from seqr.views.utils.terra_api_utils import is_anvil_authenticated, anvil_enabled
 from settings import BASE_URL
 
@@ -180,29 +181,76 @@ def project_page_data(request, project_guid):
     })
 
 
+FAMILY_INDIVIDUAL_FIELDS = {
+    'caseReviewStatuses': {'agg': ArrayAgg('case_review_status', distinct=True, filter=~Q(case_review_status=''))},
+    'caseReviewStatusLastModified': {'agg': Max('case_review_status_last_modified_date'), 'default': None},
+    'parental_ids': {
+        'agg': ArrayAgg(JSONObject(**{k: k for k in ['id', 'guid', 'father_id', 'mother_id']})),
+        'format': lambda parental_ids, id_guid_map: [
+            {'paternalGuid': id_guid_map.get(p['father_id']), 'maternalGuid': id_guid_map.get(p['mother_id'])}
+            for p in parental_ids if p['father_id'] or p['mother_id']
+        ],
+        'response_key': 'parents',
+    },
+    'metadata_count': {
+        'agg': Count('id', filter=Q(
+            features__0__isnull=False, birth_year__isnull=False,
+            population__isnull=False, proband_relationship__isnull=False,
+        )),
+        'format': lambda metadata_count, *args: bool(metadata_count),
+        'response_key': 'hasRequiredMetadata',
+    },
+}
+
+
+def _get_formatted_value(value, config, *args):
+    value = value or config.get('default', [])
+    if config.get('format'):
+        value = config['format'](value, *args)
+    return value
+
+
 @login_and_policies_required
 def project_families(request, project_guid):
     project = get_project_and_check_permissions(project_guid, request.user)
-    family_models = Family.objects.filter(project=project).annotate(
-        metadata_individual_count=Count('individual', filter=Q(
-            individual__features__0__isnull=False, individual__birth_year__isnull=False,
-            individual__population__isnull=False, individual__proband_relationship__isnull=False,
-        ))
+
+    family_models = Family.objects.filter(project=project)
+    families = family_models.values(
+        'id', 'description',
+        **{_to_camel_case(field): F(field) for field in [
+            'family_id', 'analysis_status', 'created_date', 'coded_phenotype', 'mondo_id', 'external_data',
+        ]},
+        familyGuid=F('guid'),
+        projectGuid=Value(project_guid),
+        **FAMILY_ADDITIONAL_VALUES,
     )
-    family_annotations = dict(
-        caseReviewStatuses=ArrayAgg('individual__case_review_status', distinct=True, filter=~Q(individual__case_review_status='')),
-        caseReviewStatusLastModified=Max('individual__case_review_status_last_modified_date'),
-        hasRequiredMetadata=Case(When(metadata_individual_count__gt=0, then=Value(True)), default=Value(False)),
-        parents=ArrayAgg(
-            JSONObject(paternalGuid='individual__father__guid', maternalGuid='individual__mother__guid'),
-            filter=Q(individual__mother__isnull=False) | Q(individual__father__isnull=False), distinct=True,
-        ),
-    )
-    families = _get_json_for_families(
-        family_models, request.user, has_case_review_perm=has_case_review_permissions(project, request.user),
-        project_guid=project_guid, add_individual_guids_field=True, additional_values=family_annotations,
-    )
-    response = families_discovery_tags(families)
+    families_by_id = {f.pop('id'): f for f in families}
+
+    has_data_families = {
+        key: set(models.filter(
+            individual__family_id__in=families_by_id).values_list('individual__family_id', flat=True).distinct()
+        ) for key, models in [
+            ('hasPhenotypePrioritization', PhenotypePrioritization.objects),
+            ('hasRna', RnaSample.objects.filter(is_active=True)),
+        ]
+    }
+
+    family_individual_aggs = {
+        agg.pop('family_id'): agg for agg in Individual.objects.filter(family_id__in=families_by_id).values('family_id').annotate(
+            **{k: v['agg'] for k, v in FAMILY_INDIVIDUAL_FIELDS.items()}
+        )
+    }
+    for family_id, family in families_by_id.items():
+        individual_agg = family_individual_aggs.get(family_id, {})
+        id_guid_map = {i['id']: i['guid'] for i in individual_agg.get('parental_ids', [])}
+        family.update({
+            'individualGuids': sorted(id_guid_map.values()),
+            **{config.get('response_key', key): _get_formatted_value(individual_agg.get(key), config, id_guid_map)
+               for key, config in FAMILY_INDIVIDUAL_FIELDS.items()},
+            **{key: family_id in data_families for key, data_families in has_data_families.items()},
+        })
+
+    response = families_discovery_tags(families, project=project)
     return create_json_response(response)
 
 
@@ -210,28 +258,28 @@ def project_families(request, project_guid):
 def project_overview(request, project_guid):
     project = get_project_and_check_permissions(project_guid, request.user)
 
-    sample_models = Sample.objects.filter(individual__family__project=project)
+    sample_load_counts, sample_models = _sample_load_counts(
+        Sample, project, 'sample_type', 'dataset_type', loadedDate=TruncDate('loaded_date'),
+    )
+    rna_sample_load_counts, _ = _sample_load_counts(
+        RnaSample, project, sample_type=Value('RNA'), dataset_type=F('data_type'), loadedDate=TruncDate('created_date'),
+    )
 
-    active_samples = sample_models.filter(is_active=True)
-    first_loaded_samples = sample_models.order_by('individual__family', 'loaded_date').distinct('individual__family')
-    samples_by_guid = {}
-    for samples in [active_samples, first_loaded_samples]:
-        samples_by_guid.update({s['sampleGuid']: s for s in get_json_for_samples(samples, project_guid=project_guid)})
+    first_loaded_samples = sample_models.order_by('individual__family', 'loaded_date').distinct('individual__family').values_list('id', flat=True)
+    samples = sample_models.filter(Q(is_active=True) | Q(id__in=first_loaded_samples))
+    samples_by_guid = {s['sampleGuid']: s for s in get_json_for_samples(samples, project_guid=project_guid)}
 
-    sample_load_counts = sample_models.values(
-        'sample_type', 'dataset_type', loadedDate=TruncDate('loaded_date'),
-    ).order_by('loadedDate').annotate(familyCounts=ArrayAgg('individual__family__guid'))
     grouped_sample_counts = defaultdict(list)
-    for s in sample_load_counts:
+    for s in sample_load_counts + rna_sample_load_counts:
         s['familyCounts'] = {f: s['familyCounts'].count(f) for f in s['familyCounts']}
         grouped_sample_counts[f'{s.pop("sample_type")}__{s.pop("dataset_type")}'].append(s)
 
+    project_json = {'projectGuid': project_guid, 'sampleCounts': grouped_sample_counts}
     response = {
-        'projectsByGuid': {project_guid: {'projectGuid': project_guid, 'sampleCounts': grouped_sample_counts}},
         'samplesByGuid': samples_by_guid,
     }
 
-    response['familyTagTypeCounts'] = add_project_tag_types(response['projectsByGuid'], add_counts=True)
+    add_project_tag_type_counts(project, response, project_json=project_json)
 
     project_mme_submissions = MatchmakerSubmission.objects.filter(individual__family__project=project)
 
@@ -242,6 +290,13 @@ def project_overview(request, project_guid):
     })
 
     return create_json_response(response)
+
+
+def _sample_load_counts(sample_cls, project, *args, **kwargs):
+    sample_models = sample_cls.objects.filter(individual__family__project=project)
+    return list(sample_models.values(*args, **kwargs).order_by('loadedDate').annotate(
+        familyCounts=ArrayAgg('individual__family__guid'))
+    ), sample_models
 
 
 @login_and_policies_required

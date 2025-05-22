@@ -13,17 +13,18 @@ from seqr.models import Individual, Family, CAN_VIEW
 from seqr.utils.file_utils import file_iter
 from seqr.utils.gene_utils import get_genes, get_gene_ids_for_gene_symbols
 from seqr.views.utils.anvil_metadata_utils import PARTICIPANT_TABLE, PHENOTYPE_TABLE, EXPERIMENT_TABLE, \
-    EXPERIMENT_LOOKUP_TABLE, FINDINGS_TABLE, FINDING_METADATA_COLUMNS, TRANSCRIPT_FIELDS, parse_population
+    EXPERIMENT_LOOKUP_TABLE, FINDINGS_TABLE, FINDING_METADATA_COLUMNS, TRANSCRIPT_FIELDS, GENE_COLUMN, parse_population
 from seqr.views.utils.file_utils import save_uploaded_file, load_uploaded_file, parse_file
 from seqr.views.utils.json_to_orm_utils import update_individual_from_json, update_model_from_json
 from seqr.views.utils.json_utils import create_json_response, _to_snake_case, _to_camel_case
 from seqr.views.utils.orm_to_json_utils import _get_json_for_model, _get_json_for_individuals, add_individual_hpo_details, \
     _get_json_for_families, get_json_for_rna_seq_outliers, get_project_collaborators_by_username, INDIVIDUAL_DISPLAY_NAME_EXPR, \
     GREGOR_FINDING_TAG_TYPE
-from seqr.views.utils.pedigree_info_utils import parse_pedigree_table, validate_fam_file_records, JsonConstants, ErrorsWarningsException
+from seqr.views.utils.pedigree_info_utils import parse_pedigree_table, validate_fam_file_records, parse_hpo_terms, \
+    get_valid_hpo_terms, JsonConstants, ErrorsWarningsException
 from seqr.views.utils.permissions_utils import get_project_and_check_permissions, check_project_permissions, \
-    get_project_and_check_pm_permissions, login_and_policies_required, has_project_permissions, project_has_anvil, \
-    is_internal_anvil_project, pm_or_data_manager_required, check_workspace_perm, service_account_access
+    get_project_and_check_pm_permissions, login_and_policies_required, has_project_permissions, external_anvil_project_can_edit, \
+    pm_or_data_manager_required, check_workspace_perm, service_account_access
 from seqr.views.utils.project_context_utils import add_project_tag_types
 from seqr.views.utils.individual_utils import delete_individuals, add_or_update_individuals_and_families
 from seqr.views.utils.variant_utils import bulk_create_tagged_variants
@@ -118,11 +119,6 @@ def _get_parsed_features(features):
     return list(parsed_features.values())
 
 
-def _anvil_project_can_edit_pedigree(project, user):
-    return project_has_anvil(project) and has_project_permissions(project, user, can_edit=True) and not \
-        is_internal_anvil_project(project)
-
-
 @login_and_policies_required
 def edit_individuals_handler(request, project_guid):
     """Modify one or more Individual records.
@@ -153,7 +149,7 @@ def edit_individuals_handler(request, project_guid):
     """
 
     project = get_project_and_check_pm_permissions(project_guid, request.user,
-                                                   override_permission_func=_anvil_project_can_edit_pedigree)
+                                                   override_permission_func=external_anvil_project_can_edit)
 
     request_json = json.loads(request.body)
 
@@ -230,7 +226,7 @@ def delete_individuals_handler(request, project_guid):
 
     # validate request
     project = get_project_and_check_pm_permissions(project_guid, request.user,
-                                                   override_permission_func=_anvil_project_can_edit_pedigree)
+                                                   override_permission_func=external_anvil_project_can_edit)
 
     request_json = json.loads(request.body)
     individuals_list = request_json.get('individuals')
@@ -394,7 +390,7 @@ INDIVIDUAL_ID_COL = 'individual_id'
 INDIVIDUAL_GUID_COL = 'individual_guid'
 HPO_TERM_NUMBER_COL = 'hpo_number'
 AFFECTED_FEATURE_COL = 'affected'
-FEATURES_COL = 'features'
+FEATURES_COL = JsonConstants.FEATURES
 ABSENT_FEATURES_COL = 'absent_features'
 BIRTH_COL = 'birth_year'
 DEATH_COL = 'death_year'
@@ -447,8 +443,8 @@ def _gene_list_value(val):
 
 
 INDIVIDUAL_METADATA_FIELDS = {
-    FEATURES_COL: lambda val: [{'id': feature} for feature in set(val)],
-    ABSENT_FEATURES_COL: lambda val: [{'id': feature} for feature in val],
+    FEATURES_COL: list,
+    ABSENT_FEATURES_COL: list,
     BIRTH_COL: int,
     DEATH_COL: int,
     ONSET_AGE_COL: lambda val: Individual.ONSET_AGE_REVERSE_LOOKUP[val],
@@ -478,7 +474,7 @@ def _nested_val(nested_key):
 
 def _get_phenotips_features(observed):
     def get_observed_features(features):
-        return [feature['id'] for feature in features if feature['observed'] == observed]
+        return [{'id': feature['id']} for feature in features if feature['observed'] == observed]
     return get_observed_features
 
 PHENOTIPS_JSON_FIELD_MAP = {
@@ -602,8 +598,8 @@ def _process_hpo_records(records, filename, project, user):
 
         if FEATURES_COL in column_map or ABSENT_FEATURES_COL in column_map:
             for row in row_dicts:
-                row[FEATURES_COL] = _parse_hpo_terms(row.get(FEATURES_COL))
-                row[ABSENT_FEATURES_COL] = _parse_hpo_terms(row.get(ABSENT_FEATURES_COL))
+                row[FEATURES_COL] = parse_hpo_terms(row.get(FEATURES_COL))
+                row[ABSENT_FEATURES_COL] = parse_hpo_terms(row.get(ABSENT_FEATURES_COL))
 
         elif HPO_TERM_NUMBER_COL in column_map:
             aggregate_rows = defaultdict(lambda: {FEATURES_COL: set(), ABSENT_FEATURES_COL: set()})
@@ -618,7 +614,7 @@ def _process_hpo_records(records, filename, project, user):
                 aggregate_entry.update({k: v for k, v in row.items() if v})
 
             row_dicts = [
-                {**entry, FEATURES_COL: list(entry[FEATURES_COL]), ABSENT_FEATURES_COL: list(entry[ABSENT_FEATURES_COL])}
+                {**entry, **{col: [{'id': feature} for feature in entry[col]] for col in [FEATURES_COL, ABSENT_FEATURES_COL]}}
                 for entry in aggregate_rows.values()
             ]
 
@@ -632,16 +628,12 @@ def _parse_hpo_terms(hpo_term_string):
 
 
 def _has_same_features(individual, present_features, absent_features):
-    return {feature['id'] for feature in individual.features or []} == set(present_features or []) and \
-           {feature['id'] for feature in individual.absent_features or []} == set(absent_features or [])
+    return {feature['id'] for feature in individual.features or []} == {feature['id'] for feature in present_features or []} and \
+           {feature['id'] for feature in individual.absent_features or []} == {feature['id'] for feature in absent_features or []}
 
 
 def _get_valid_hpo_terms(json_records):
-    all_hpo_terms = set()
-    for record in json_records:
-        all_hpo_terms.update(record.get(FEATURES_COL, []))
-        all_hpo_terms.update(record.get(ABSENT_FEATURES_COL, []))
-    return set(HumanPhenotypeOntology.objects.filter(hpo_id__in=all_hpo_terms).values_list('hpo_id', flat=True))
+    return get_valid_hpo_terms(json_records, additional_feature_columns=[ABSENT_FEATURES_COL])
 
 
 def _parse_individual_hpo_terms(json_records, project, user):
@@ -714,14 +706,11 @@ def _get_record_individual(record, individual_lookup):
 
 def _remove_invalid_hpo_terms(record, hpo_terms):
     invalid_terms = set()
-    for feature in record.get(FEATURES_COL, []):
-        if feature not in hpo_terms:
-            invalid_terms.add(feature)
-            record[FEATURES_COL].remove(feature)
-    for feature in record.get(ABSENT_FEATURES_COL, []):
-        if feature not in hpo_terms:
-            invalid_terms.add(feature)
-            record[ABSENT_FEATURES_COL].remove(feature)
+    for col in [FEATURES_COL, ABSENT_FEATURES_COL]:
+        for feature in record.get(col, []):
+            if feature['id'] not in hpo_terms:
+                invalid_terms.add(feature['id'])
+                record[col].remove(feature)
     return invalid_terms
 
 
@@ -784,6 +773,9 @@ def _get_metadata_warnings(invalid_hpo_term_individuals, invalid_values, missing
 
 @login_and_policies_required
 def save_individuals_metadata_table_handler(request, project_guid, upload_file_id):
+    """
+    Handler for 'save' requests to apply HPO terms tables previously uploaded through receive_individuals_metadata_handler
+    """
     project = get_project_and_check_permissions(project_guid, request.user)
 
     json_records, _ = load_uploaded_file(upload_file_id)
@@ -874,12 +866,12 @@ def import_gregor_metadata(request, project_guid):
         lambda r: r['participant_id'] in individuals_by_participant and r['ontology'] == 'HPO' and r['presence'] in {'Present', 'Absent'},
     ):
         col = FEATURES_COL if row['presence'] == 'Present' else ABSENT_FEATURES_COL
-        individuals_by_participant[row['participant_id']][col].append(row['term_id'])
+        individuals_by_participant[row['participant_id']][col].append({'id': row['term_id']})
     hpo_terms = _get_valid_hpo_terms(individuals)
     invalid_hpo_terms = set()
     for row in individuals:
         invalid_hpo_terms.update(_remove_invalid_hpo_terms(row, hpo_terms))
-        row.update({k: INDIVIDUAL_METADATA_FIELDS[k](v) for k, v in row.items() if k in [FEATURES_COL, ABSENT_FEATURES_COL]})
+        row.update({k: row[k] for k in [FEATURES_COL, ABSENT_FEATURES_COL] if k in row})
     if invalid_hpo_terms:
         warnings.append(f"Skipped the following unrecognized HPO terms: {', '.join(sorted(invalid_hpo_terms))}")
 
@@ -925,13 +917,13 @@ def import_gregor_metadata(request, project_guid):
             'support_vars': [],
         })
         family_variant_data[key] = variant
-        genes.add(variant['gene'])
+        genes.add(variant[GENE_COLUMN])
         finding_id_map[variant['genetic_findings_id']] = variant_id
 
-    gene_symbols_to_ids = {k: v[0] for k, v in get_gene_ids_for_gene_symbols(genes).items()}
+    gene_symbols_to_ids = {k: v[0] for k, v in get_gene_ids_for_gene_symbols(genes, genome_version=project.genome_version).items()}
     missing_genes = set()
     for variant in family_variant_data.values():
-        gene = variant['gene']
+        gene = variant[GENE_COLUMN]
         transcript = variant.pop('transcript')
         if gene in gene_symbols_to_ids:
             variant.update({
@@ -952,8 +944,7 @@ def import_gregor_metadata(request, project_guid):
     )
     info.append(f'Loaded {num_new} new and {num_updated} updated findings tags')
 
-    response_json['projectsByGuid'] = {project_guid: {}}
-    response_json['familyTagTypeCounts'] = add_project_tag_types(response_json['projectsByGuid'], add_counts=True)
+    add_project_tag_type_counts(project, response_json)
 
     response_json['importStats'] = {'gregorMetadata': {'info': info, 'warnings': warnings}}
     return create_json_response(response_json)
@@ -999,7 +990,8 @@ def _parse_participant_val(column, value, participant_sample_lookup):
 @login_and_policies_required
 def get_individual_rna_seq_data(request, individual_guid):
     individual = Individual.objects.get(guid=individual_guid)
-    check_project_permissions(individual.family.project, request.user)
+    project = individual.family.project
+    check_project_permissions(project, request.user)
 
     filters = {'sample__individual': individual}
     outlier_data = get_json_for_rna_seq_outliers(filters, significant_only=False, individual_guid=individual_guid)
@@ -1007,7 +999,7 @@ def get_individual_rna_seq_data(request, individual_guid):
     genes_to_show = get_genes({
         gene_id for rna_data in outlier_data.get(individual_guid, {}).values() for gene_id, data in rna_data.items()
         if any([d['isSignificant'] for d in (data if isinstance(data, list) else [data])])
-    })
+    }, genome_version=project.genome_version)
 
     return create_json_response({
         'rnaSeqData': outlier_data,

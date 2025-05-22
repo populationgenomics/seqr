@@ -6,7 +6,7 @@ import { Grid } from 'semantic-ui-react'
 import styled from 'styled-components'
 
 import { updateVariantTags } from 'redux/rootReducer'
-import { getAnalysisGroupsByGuid } from 'redux/selectors'
+import { getCurrentAnalysisGroupFamilyGuids } from 'redux/selectors'
 import {
   VARIANT_SORT_FIELD,
   VARIANT_HIDE_EXCLUDED_FIELD,
@@ -91,7 +91,19 @@ const LINK_VARIANT_FIELDS = [
       VARIANT_POS_COLUMN,
       TAG_COLUMN,
     ],
-    validate: value => (Object.keys(value || {}).length > 1 ? undefined : 'Multiple variants required'),
+    includeSelectedRowData: true,
+    validate: (value) => {
+      const variants = Object.values(value || {}).filter(v => v)
+      if (variants.length < 2) {
+        return 'Multiple variants required'
+      }
+      if (variants.length === 2 &&
+        Object.keys(variants[0].transcripts).every(geneId => !variants[1].transcripts[geneId])
+      ) {
+        return 'Compound het pairs must be in the same gene'
+      }
+      return undefined
+    },
   },
 ]
 
@@ -130,7 +142,7 @@ class BaseProjectSavedVariants extends React.PureComponent {
   static propTypes = {
     match: PropTypes.object,
     project: PropTypes.object,
-    analysisGroup: PropTypes.object,
+    analysisGroupFamilyGuids: PropTypes.arrayOf(PropTypes.string),
     tagTypeCounts: PropTypes.object,
     updateTableField: PropTypes.func,
     loadProjectSavedVariants: PropTypes.func,
@@ -154,7 +166,7 @@ class BaseProjectSavedVariants extends React.PureComponent {
   }
 
   loadVariants = (newParams) => {
-    const { analysisGroup, match, loadProjectSavedVariants, updateTableField } = this.props
+    const { analysisGroupFamilyGuids, match, loadProjectSavedVariants, updateTableField } = this.props
     const { familyGuid, variantGuid, analysisGroupGuid } = match.params
 
     const isInitialLoad = match.params === newParams
@@ -162,7 +174,7 @@ class BaseProjectSavedVariants extends React.PureComponent {
       newParams.analysisGroupGuid !== analysisGroupGuid ||
       newParams.variantGuid !== variantGuid
 
-    const familyGuids = newParams.familyGuid ? [newParams.familyGuid] : (analysisGroup || {}).familyGuids
+    const familyGuids = newParams.familyGuid ? [newParams.familyGuid] : analysisGroupFamilyGuids
 
     updateTableField('page')(1)
     if (isInitialLoad || hasUpdatedFamilies) {
@@ -235,7 +247,7 @@ class BaseProjectSavedVariants extends React.PureComponent {
   }
 
   render() {
-    const { project, analysisGroup, loadProjectSavedVariants, categoryFilter, ...props } = this.props
+    const { project, analysisGroupFamilyGuids, loadProjectSavedVariants, categoryFilter, ...props } = this.props
     const { familyGuid, tag, variantGuid } = props.match.params
     const appliedTagCategoryFilter = tag || (variantGuid ? null : (categoryFilter || SHOW_ALL))
 
@@ -260,7 +272,7 @@ class BaseProjectSavedVariants extends React.PureComponent {
 
 const mapStateToProps = (state, ownProps) => ({
   project: getCurrentProject(state),
-  analysisGroup: getAnalysisGroupsByGuid(state)[ownProps.match.params.analysisGroupGuid],
+  analysisGroupFamilyGuids: getCurrentAnalysisGroupFamilyGuids(state, ownProps),
   tagTypeCounts: ownProps.match.params.familyGuid ?
     getSavedVariantTagTypeCountsByFamily(state)[ownProps.match.params.familyGuid] :
     getSavedVariantTagTypeCounts(state, ownProps),

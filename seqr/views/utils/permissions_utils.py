@@ -138,6 +138,8 @@ data_manager_required = active_user_has_policies_and_passes_test(user_is_data_ma
 pm_required = active_user_has_policies_and_passes_test(user_is_pm)
 pm_or_data_manager_required = active_user_has_policies_and_passes_test(
     lambda user: user_is_data_manager(user) or user_is_pm(user))
+pm_or_analyst_required = active_user_has_policies_and_passes_test(
+    lambda user: user_is_analyst(user) or user_is_pm(user))
 superuser_required = active_user_has_policies_and_passes_test(lambda user: user.is_superuser)
 
 
@@ -163,7 +165,7 @@ def get_project_and_check_permissions(project_guid, user, **kwargs):
     return _get_project_and_check_permissions(project_guid, user, check_project_permissions, **kwargs)
 
 def get_project_and_check_pm_permissions(project_guid, user, override_permission_func=None):
-    return _get_project_and_check_permissions(project_guid, user, _check_project_pm_permission,
+    return _get_project_and_check_permissions(project_guid, user, check_project_pm_permission,
                                               override_permission_func=override_permission_func)
 
 def _get_project_and_check_permissions(project_guid, user, _check_permission_func, **kwargs):
@@ -171,7 +173,7 @@ def _get_project_and_check_permissions(project_guid, user, _check_permission_fun
     _check_permission_func(project, user, **kwargs)
     return project
 
-def _check_project_pm_permission(project, user, override_permission_func=None, **kwargs):
+def check_project_pm_permission(project, user, override_permission_func=None, **kwargs):
     if user_is_pm(user) or (project.has_case_review and has_project_permissions(project, user, can_edit=True)):
         return
 
@@ -183,6 +185,11 @@ def _check_project_pm_permission(project, user, override_permission_func=None, *
 
 def project_has_anvil(project):
     return anvil_enabled() and bool(project.workspace_namespace and project.workspace_name)
+
+
+def external_anvil_project_can_edit(project, user):
+    return project_has_anvil(project) and has_project_permissions(project, user, can_edit=True) and not \
+        is_internal_anvil_project(project)
 
 
 def _map_anvil_seqr_permission(anvil_permission):
