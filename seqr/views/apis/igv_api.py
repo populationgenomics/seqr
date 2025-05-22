@@ -27,7 +27,6 @@ CLOUD_STORAGE_URLS = {
 }
 TIMEOUT = 300
 
-
 def _process_alignment_records(rows, num_id_cols=1, **kwargs):
     num_cols = num_id_cols + 1
     invalid_row = next((row for row in rows if not num_cols <= len(row) <= num_cols+1), None)
