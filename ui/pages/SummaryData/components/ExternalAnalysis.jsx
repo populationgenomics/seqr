@@ -17,7 +17,7 @@ const UPLOAD_FIELDS = [
     component: Select,
     options: [
       ...FAMILY_ANALYSED_BY_DATA_TYPES.map(([value, text]) => ({ value, text })),
-      { value: 'AIP' }, { value: 'CPG: Full Talos report' },
+      { value: 'AIP' }, { value: 'CaRDinal: Full Talos report' },
     ],
     validate: validators.required,
   },
