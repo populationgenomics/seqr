@@ -3,7 +3,7 @@ import { Header, Segment, List } from 'semantic-ui-react'
 
 export default () => (
   <Segment basic padded="very">
-    <Header dividing content="CPG seqr Terms Of Service" subheader="Last Updated 13-MAY-2021" size="huge" />
+    <Header dividing content="CaRDinal seqr Terms Of Service" subheader="Last Updated 13-MAY-2021" size="huge" />
 
     Please read these terms of service carefully before using this site.
     <br />
