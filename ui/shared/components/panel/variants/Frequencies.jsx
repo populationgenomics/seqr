@@ -191,7 +191,7 @@ const POPULATIONS = [
     field: 'gnomad_genomes',
     fieldTitle: 'gnomAD genomes',
     titleContainer: gnomadLink,
-    esVersion: 'v4',
+    esVersion: 'v3',
     conditionalQueryParams: populations => (populations.seqr ? GNOMAD_URL_INFO.queryParams : { [GENOME_VERSION_38]: 'dataset=gnomad_r4' }),
     precision: 3,
     ...GNOMAD_URL_INFO,
