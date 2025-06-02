@@ -1,3 +1,4 @@
+import glob
 import gzip
 import os
 import subprocess # nosec
@@ -61,7 +62,12 @@ def does_file_exist(file_path, user=None):
     return os.path.isfile(file_path)
 
 
-# pylint: disable=unused-argument
+def list_files(wildcard_path, user):
+    if is_google_bucket_file_path(wildcard_path):
+        return get_gs_file_list(wildcard_path, user, check_subfolders=False, allow_missing=True)
+    return [file_path for file_path in glob.glob(wildcard_path) if os.path.isfile(file_path)]
+
+
 def file_iter(file_path, byte_range=None, raw_content=False, user=None, **kwargs):
     """Note: the byte_range interval end is inclusive, i.e. the length is
     byte_range[1] - byte_range[0] + 1."""
@@ -98,7 +104,7 @@ def _google_bucket_file_iter(gs_path, byte_range=None, raw_content=False, user=N
 
 def mv_file_to_gs(local_path, gs_path, user=None):
     command = 'mv {}'.format(local_path)
-    _run_gsutil_with_wait(command, gs_path, user)
+    run_gsutil_with_wait(command, gs_path, user)
 
 
 def get_gs_file_list(gs_path, user=None, check_subfolders=True, allow_missing=False):
@@ -116,7 +122,7 @@ def get_gs_file_list(gs_path, user=None, check_subfolders=True, allow_missing=Fa
     return [line for line in all_lines if is_google_bucket_file_path(line)]
 
 
-def _run_gsutil_with_wait(command, gs_path, user=None):
+def run_gsutil_with_wait(command, gs_path, user=None):
     process = _run_gsutil_command(command, gs_path, user=user)
     if process.wait() != 0:
         errors = [line.decode('utf-8').strip() for line in process.stdout]

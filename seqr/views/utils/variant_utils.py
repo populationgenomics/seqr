@@ -11,9 +11,10 @@ import traceback
 from matchmaker.models import MatchmakerSubmissionGenes, MatchmakerSubmission
 from reference_data.models import TranscriptInfo, Omim, GENOME_VERSION_GRCh38
 from seqr.models import SavedVariant, VariantSearchResults, Family, LocusList, LocusListInterval, LocusListGene, \
-    RnaSeqTpm, PhenotypePrioritization, Project, Sample, VariantTag, VariantTagType
-from seqr.utils.search.utils import get_variants_for_variant_ids
+    RnaSeqTpm, PhenotypePrioritization, Project, Sample, RnaSample, VariantTag, VariantTagType
+from seqr.utils.search.utils import get_variants_for_variant_ids, backend_specific_call
 from seqr.utils.gene_utils import get_genes_for_variants
+from seqr.utils.redis_utils import get_escaped_redis_key
 from seqr.utils.xpos_utils import get_xpos
 from seqr.views.utils.json_to_orm_utils import update_model_from_json, create_model_from_json
 from seqr.views.utils.orm_to_json_utils import get_json_for_discovery_tags, get_json_for_locus_lists, \
@@ -37,10 +38,10 @@ def update_projects_saved_variant_json(projects, user_email, **kwargs):
     error = {}
     updated_variants_by_id = {}
     logger.info(f'Reloading saved variants in {len(projects)} projects')
-    for project_id, project_name, family_guids in tqdm(projects, unit=' project'):
+    for project_id, project_name, genome_version, family_guids in tqdm(projects, unit=' project'):
         try:
             updated_saved_variants = update_project_saved_variant_json(
-                project_id, user_email=user_email, family_guids=family_guids, **kwargs)
+                project_id, genome_version, user_email=user_email, family_guids=family_guids, **kwargs)
             if updated_saved_variants is None:
                 skipped[project_name] = True
             else:
@@ -66,13 +67,22 @@ def update_projects_saved_variant_json(projects, user_email, **kwargs):
     return updated_variants_by_id
 
 
-def update_project_saved_variant_json(project_id, family_guids=None, dataset_type=None, user=None, user_email=None):
-    saved_variants = SavedVariant.objects.filter(family__project_id=project_id).select_related('family')
+def get_saved_variants(genome_version, project_id=None, family_guids=None, dataset_type=None):
+    saved_variants = SavedVariant.objects.filter(
+        Q(saved_variant_json__genomeVersion__isnull=True) |
+        Q(saved_variant_json__genomeVersion=genome_version.replace('GRCh', ''))
+    )
+    if project_id:
+        saved_variants = saved_variants.filter(family__project_id=project_id)
     if family_guids:
         saved_variants = saved_variants.filter(family__guid__in=family_guids)
-
     if dataset_type:
         saved_variants = saved_variants.filter(**saved_variants_dataset_type_filter(dataset_type))
+    return saved_variants
+
+
+def update_project_saved_variant_json(project_id, genome_version, family_guids=None, dataset_type=None, user=None, user_email=None):
+    saved_variants = get_saved_variants(genome_version, project_id, family_guids, dataset_type).select_related('family')
 
     if not saved_variants:
         return None
@@ -109,7 +119,7 @@ def saved_variants_dataset_type_filter(dataset_type):
         dataset_filter['alt__isnull'] = True
     else:
         # Filter out manual variants with invalid characters, such as those used for STRs
-        dataset_filter['alt__regex'] = '^[ACGT]$'
+        dataset_filter['alt__regex'] = '^[ACGT]+$'
     return dataset_filter
 
 
@@ -148,9 +158,7 @@ def bulk_create_tagged_variants(family_variant_data, tag_name, get_metadata, use
         new_variant_models = []
         for (family_id, variant_id), variant in new_variant_data.items():
             create_json, update_json = parse_saved_variant_json(variant, family_id, variant_id=variant_id)
-            variant_model = SavedVariant(**create_json, **update_json)
-            variant_model.guid = f'SV{str(variant_model)}'[:SavedVariant.MAX_GUID_SIZE]
-            new_variant_models.append(variant_model)
+            new_variant_models.append(SavedVariant(**create_json, **update_json))
 
         saved_variant_map.update({
             (v.family_id, v.variant_id): v for v in SavedVariant.bulk_create(user, new_variant_models)
@@ -222,12 +230,12 @@ def reset_cached_search_results(project, reset_index_metadata=False):
         if project:
             result_guids = [res.guid for res in VariantSearchResults.objects.filter(families__project=project)]
             for guid in result_guids:
-                keys_to_delete += redis_client.keys(pattern='search_results__{}*'.format(guid))
+                keys_to_delete += redis_client.keys(pattern=get_escaped_redis_key('search_results__{}*'.format(guid)))
         else:
-            keys_to_delete = redis_client.keys(pattern='search_results__*')
-        keys_to_delete += redis_client.keys(pattern='variant_lookup_results__*')
+            keys_to_delete = redis_client.keys(pattern=get_escaped_redis_key('search_results__*'))
+        keys_to_delete += redis_client.keys(pattern=get_escaped_redis_key('variant_lookup_results__*'))
         if reset_index_metadata:
-            keys_to_delete += redis_client.keys(pattern='index_metadata__*')
+            keys_to_delete += redis_client.keys(pattern=get_escaped_redis_key('index_metadata__*'))
         if keys_to_delete:
             redis_client.delete(*keys_to_delete)
             logger.info('Reset {} cached results'.format(len(keys_to_delete)))
@@ -241,6 +249,12 @@ def get_variant_key(xpos=None, ref=None, alt=None, genomeVersion=None, **kwargs)
     return '{}-{}-{}_{}'.format(xpos, ref, alt, genomeVersion)
 
 
+def _requires_transcript_metadata(variant):
+    if isinstance(variant, list):
+        return _requires_transcript_metadata(variant[0])
+    return variant.get('genomeVersion') != GENOME_VERSION_GRCh38 or variant.get('chrom', '').startswith('M')
+
+
 def _saved_variant_genes_transcripts(variants):
     family_genes = defaultdict(set)
     gene_ids = set()
@@ -251,11 +265,16 @@ def _saved_variant_genes_transcripts(variants):
         for var in variant:
             for gene_id, transcripts in var.get('transcripts', {}).items():
                 gene_ids.add(gene_id)
-                transcript_ids.update([t['transcriptId'] for t in transcripts if t.get('transcriptId')])
+                if backend_specific_call(lambda v: True, _requires_transcript_metadata)(variant):
+                    transcript_ids.update([t['transcriptId'] for t in transcripts if t.get('transcriptId')])
             for family_guid in var['familyGuids']:
                 family_genes[family_guid].update(var.get('transcripts', {}).keys())
 
-    genes = get_genes_for_variants(gene_ids)
+    projects = Project.objects.filter(family__guid__in=family_genes.keys()).distinct()
+    genome_versions = {p.genome_version for p in projects}
+    genome_version = list(genome_versions)[0] if len(genome_versions) == 1 else None
+
+    genes = get_genes_for_variants(gene_ids, genome_version=genome_version)
     for gene in genes.values():
         if gene:
             gene['locusListGuids'] = []
@@ -265,9 +284,9 @@ def _saved_variant_genes_transcripts(variants):
             TranscriptInfo.objects.filter(transcript_id__in=transcript_ids),
             nested_fields=[{'fields': ('refseqtranscript', 'refseq_id'), 'key': 'refseqId'}]
         )
-    }
+    } if transcript_ids else None
 
-    return genes, transcripts, family_genes
+    return genes, transcripts, family_genes, projects
 
 
 def get_omim_intervals_query(variants):
@@ -369,9 +388,11 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
         if saved_variants is not None else {'savedVariantsByGuid': {}}
 
     variants = list(response['savedVariantsByGuid'].values()) if response_variants is None else response_variants
-    genes, transcripts, family_genes = _saved_variant_genes_transcripts(variants)
+    if not variants:
+        return response
 
-    projects = Project.objects.filter(family__guid__in=family_genes.keys()).distinct()
+    genes, transcripts, family_genes, projects = _saved_variant_genes_transcripts(variants)
+
     project = list(projects)[0] if len(projects) == 1 else None
 
     discovery_tags = None
@@ -380,7 +401,8 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
         discovery_tags, discovery_response = get_json_for_discovery_tags(response['savedVariantsByGuid'].values(), request.user)
         response.update(discovery_response)
 
-    response['transcriptsById'] = transcripts
+    if transcripts:
+        response['transcriptsById'] = transcripts
     response['locusListsByGuid'] = _add_locus_lists(
         projects, genes, add_list_detail=add_locus_list_detail, user=request.user)
 
@@ -407,8 +429,8 @@ def get_variants_response(request, saved_variants, response_variants=None, add_a
     rna_tpm = None
     if include_individual_gene_scores:
         present_family_genes = {k: v for k, v in family_genes.items() if v}
-        rna_sample_family_map = dict(Sample.objects.filter(
-            individual__family__guid__in=present_family_genes.keys(), sample_type=Sample.SAMPLE_TYPE_RNA, is_active=True,
+        rna_sample_family_map = dict(RnaSample.objects.filter(
+            individual__family__guid__in=present_family_genes.keys(), is_active=True,
         ).values_list('id', 'individual__family__guid'))
         response['rnaSeqData'] = _get_rna_seq_outliers(genes.keys(), rna_sample_family_map.keys())
         rna_tpm = _get_family_has_rna_tpm(present_family_genes, genes.keys(), rna_sample_family_map)

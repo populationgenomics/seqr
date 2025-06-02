@@ -16,7 +16,7 @@ import {
 import {
   getVariantTagsByGuid, getVariantNotesByGuid, getSavedVariantsByGuid, getAnalysisGroupsByGuid, getGenesById, getUser,
   getFamiliesByGuid, getProjectsByGuid, getIndividualsByGuid, getRnaSeqDataByIndividual,
-  getPhenotypeGeneScoresByIndividual,
+  getPhenotypeGeneScoresByIndividual, getCurrentAnalysisGroupFamilyGuids,
 } from 'redux/selectors'
 
 export const getIndividualGeneDataByFamilyGene = createSelector(
@@ -71,10 +71,10 @@ const sortCompHet = (a, b) => (a.populations ? 1 : 0) - (b.populations ? 1 : 0)
 const getProjectSavedVariantsSelection = createSelector(
   (state, props) => props.match.params,
   getFamiliesByGuid,
-  getAnalysisGroupsByGuid,
+  getCurrentAnalysisGroupFamilyGuids,
   state => state.currentProjectGuid,
   getVariantTagsByGuid,
-  ({ tag, familyGuid, analysisGroupGuid, variantGuid }, familiesByGuid, analysisGroupsByGuid,
+  ({ tag, familyGuid, analysisGroupGuid, variantGuid }, familiesByGuid, analysisGroupFamilyGuids,
     projectGuid, tagsByGuid) => {
     if (!projectGuid) {
       return null
@@ -83,8 +83,7 @@ const getProjectSavedVariantsSelection = createSelector(
     let variantFilter
     if (variantGuid) {
       variantFilter = o => variantGuid.split(',').includes(o.variantGuid)
-    } else if (analysisGroupGuid && analysisGroupsByGuid[analysisGroupGuid]) {
-      const analysisGroupFamilyGuids = analysisGroupsByGuid[analysisGroupGuid].familyGuids
+    } else if (analysisGroupFamilyGuids) {
       variantFilter = o => o.familyGuids.some(fg => analysisGroupFamilyGuids.includes(fg))
     } else if (familyGuid) {
       variantFilter = o => o.familyGuids.includes(familyGuid)
@@ -310,10 +309,11 @@ export const getSavedVariantExportConfig = createSelector(
   getAnalysisGroupsByGuid,
   getVariantTagsByGuid,
   getVariantNotesByGuid,
+  getGenesById,
   (state, props) => props.project,
   getSavedVariantTableState,
   (state, props) => props.match.params,
-  (analysisGroupsByGuid, tagsByGuid, notesByGuid, project, tableState, params) => {
+  (analysisGroupsByGuid, tagsByGuid, notesByGuid, genesById, project, tableState, params) => {
     if (project && project.isDemo && !project.allUserDemo) {
       // Do not allow downloads for demo projects
       return null
@@ -330,7 +330,7 @@ export const getSavedVariantExportConfig = createSelector(
       getHeaders: state => getSavedVariantExportHeaders(state, { project, match: { params } }),
       processRow: variant => ([
         ...VARIANT_EXPORT_DATA.map(config => (
-          config.getVal ? config.getVal(variant, tagsByGuid, notesByGuid) : variant[config.header])),
+          config.getVal ? config.getVal(variant, tagsByGuid, notesByGuid, genesById) : variant[config.header])),
         ...Object.values(variant.genotypes).reduce(
           (acc, { sampleId, numAlt, gq, ab }) => ([...acc, sampleId, numAlt, gq, ab]), [],
         ),

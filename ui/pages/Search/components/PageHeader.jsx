@@ -2,10 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { getProjectsByGuid, getFamiliesByGuid, getAnalysisGroupsByGuid, getSearchesByHash } from 'redux/selectors'
+import { getProjectsByGuid, getFamiliesByGuid, getAnalysisGroupsByGuid, getSearchesByHash, getSearchFamiliesByHash } from 'redux/selectors'
 import PageHeaderLayout from 'shared/components/page/PageHeaderLayout'
 import { snakecaseToTitlecase } from 'shared/utils/stringUtils'
-import { getSelectedAnalysisGroups } from '../constants'
 
 const PAGE_CONFIGS = {
   project: (entityGuid, projectsByGuid) => ({
@@ -20,7 +19,14 @@ const PAGE_CONFIGS = {
     entity: analysisGroupsByGuid[entityGuid],
     entityUrlPath: `analysis_group/${entityGuid}`,
   }),
-  families: entityGuid => ({ description: `Searching in ${entityGuid.split(/[,:]/).length} Families` }),
+  families: (entityGuid, p, f, a, s, searchFamiliesByHash) => {
+    const numFamilies = Object.values(searchFamiliesByHash[entityGuid] || {}).reduce(
+      (acc, familyGuids) => acc + familyGuids.length, 0,
+    )
+    return {
+      description: `Searching in ${numFamilies} Families`,
+    }
+  },
   results: (entityGuid, projectsByGuid, familiesByGuid, analysisGroupsByGuid, searchesByHash) => {
     const { projectFamilies } = searchesByHash[entityGuid] || {}
     let pageType
@@ -33,7 +39,9 @@ const PAGE_CONFIGS = {
           pageType = 'family'
           specificEntityGuid = familyGuids[0] // eslint-disable-line prefer-destructuring
         } else {
-          const analysisGroups = getSelectedAnalysisGroups(analysisGroupsByGuid, familyGuids)
+          const analysisGroups = Object.values(analysisGroupsByGuid).filter(
+            group => group.familyGuids?.every(familyGuid => familyGuids.includes(familyGuid)),
+          )
           if (analysisGroups.length === 1 && analysisGroups[0].familyGuids.length === familyGuids.length) {
             pageType = 'analysis_group'
             specificEntityGuid = analysisGroups[0].analysisGroupGuid
@@ -61,15 +69,19 @@ const PAGE_CONFIGS = {
   variant: entityGuid => ({ entity: { name: entityGuid } }),
 }
 
-const getPageHeaderProps = ({ projectsByGuid, familiesByGuid, analysisGroupsByGuid, searchesByHash, match }) => {
-  const { pageType, entityGuid } = match.params
+const getPageHeaderProps = (
+  { projectsByGuid, familiesByGuid, analysisGroupsByGuid, searchesByHash, searchFamiliesByHash, match },
+) => {
+  const { pageType, entityGuid, subPageType, subEntityGuid } = match.params
 
   const breadcrumbIdSections = []
-  const { entity, entityUrlPath, actualPageType, description } =
-    PAGE_CONFIGS[pageType](entityGuid, projectsByGuid, familiesByGuid, analysisGroupsByGuid, searchesByHash)
+  const { entity, entityUrlPath, actualPageType, description } = PAGE_CONFIGS[subPageType || pageType](
+    subEntityGuid || entityGuid, projectsByGuid, familiesByGuid, analysisGroupsByGuid, searchesByHash,
+    searchFamiliesByHash,
+  )
   if (entity) {
-    const project = projectsByGuid[entity.projectGuid]
-    breadcrumbIdSections.push({ content: snakecaseToTitlecase(actualPageType || pageType) })
+    const project = projectsByGuid[entity.projectGuid || entityGuid]
+    breadcrumbIdSections.push({ content: snakecaseToTitlecase(actualPageType || subPageType || pageType) })
     breadcrumbIdSections.push({
       content: entity.displayName || entity.name,
       link: project && `/project/${project.projectGuid}/${entityUrlPath}`,
@@ -88,6 +100,7 @@ PageHeader.propTypes = {
   familiesByGuid: PropTypes.object,
   analysisGroupsByGuid: PropTypes.object,
   searchesByHash: PropTypes.object,
+  searchFamiliesByHash: PropTypes.object,
   match: PropTypes.object,
 }
 
@@ -96,6 +109,7 @@ const mapStateToProps = state => ({
   familiesByGuid: getFamiliesByGuid(state),
   analysisGroupsByGuid: getAnalysisGroupsByGuid(state),
   searchesByHash: getSearchesByHash(state),
+  searchFamiliesByHash: getSearchFamiliesByHash(state),
 })
 
 export default connect(mapStateToProps)(PageHeader)

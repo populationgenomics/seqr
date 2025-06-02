@@ -1,10 +1,12 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import { NavLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { Popup, Form } from 'semantic-ui-react'
 import { Field } from 'react-final-form'
 
+import { getHpoTermOptionsByFamily } from 'redux/selectors'
 import { HorizontalSpacer } from '../../Spacers'
 import { ColoredLabel, ColoredOutlineLabel } from '../../StyledComponents'
 import { LargeMultiselect, Multiselect } from '../../form/Inputs'
@@ -20,10 +22,10 @@ const MetadataFormGroup = styled(Form.Group).attrs({ inline: true })`
   label, .label {
     white-space: nowrap;
   }
-  
+
   .fluid.selection.dropdown {
     width: 100% !important;
-  } 
+  }
 `
 
 const MultiselectField = ({ input, ...props }) => <Multiselect {...input} {...props} />
@@ -32,8 +34,18 @@ MultiselectField.propTypes = {
   input: PropTypes.object,
 }
 
+const mapHpoDropdownStateToProps = (state, ownProps) => ({
+  options: getHpoTermOptionsByFamily(state)[ownProps.metadataId],
+})
+
+const LIST_FORMAT_PROPS = {
+  format: val => (val || '').split(', ').filter(v => v),
+  parse: val => (val || []).join(', '),
+}
+
 const METADATA_FIELD_PROPS = {
   [NOTES_METADATA_TITLE]: { width: 16, maxLength: 50, placeholder: 'Enter up to 50 characters' },
+  Name: { width: 16, maxLength: 100, placeholder: 'Enter up to 100 characters' },
   Reason: { width: 16, maxLength: 50, placeholder: 'Brief reason for excluding. Enter up to 50 characters' },
   'Test Type(s)': {
     width: 16,
@@ -43,12 +55,26 @@ const METADATA_FIELD_PROPS = {
     addValueOptions: true,
     options: ['Sanger', 'Segregation', 'SV', 'Splicing'].map(value => ({ value })),
     placeholder: 'Select test types or add your own',
-    format: val => (val || '').split(', ').filter(v => v),
-    parse: val => (val || []).join(', '),
+    ...LIST_FORMAT_PROPS,
+  },
+  'Exclude Type(s)': {
+    width: 16,
+    component: MultiselectField,
+    fluid: true,
+    allowAdditions: true,
+    addValueOptions: true,
+    options: ['Polymorphism', 'Artefact', 'No phenotypic fit', 'Irrelevant expression', 'Does not segregate'].map(value => ({ value })),
+    placeholder: 'Select test types or add your own',
+    ...LIST_FORMAT_PROPS,
+  },
+  'HPO Terms': {
+    width: 16,
+    component: connect(mapHpoDropdownStateToProps)(MultiselectField),
+    ...LIST_FORMAT_PROPS,
   },
 }
 
-const MetadataField = React.memo(({ value, name, error }) => {
+const MetadataField = React.memo(({ value, name, error, metadataId }) => {
   if (!value.metadataTitle) {
     return null
   }
@@ -62,6 +88,7 @@ const MetadataField = React.memo(({ value, name, error }) => {
         component={Form.Input}
         label={value.metadataTitle}
         error={error}
+        metadataId={metadataId}
         {...fieldProps}
       />
     </MetadataFormGroup>
@@ -72,13 +99,15 @@ MetadataField.propTypes = {
   value: PropTypes.object,
   name: PropTypes.string,
   error: PropTypes.bool,
+  metadataId: PropTypes.string,
 }
 
-export const TagFieldDisplay = React.memo((
-  { displayFieldValues, tagAnnotation, popup, displayAnnotationFirst, displayMetadata, linkTagType, tagLinkUrl },
-) => (
+export const TagFieldDisplay = React.memo(({
+  displayFieldValues, tagAnnotation, popup, displayAnnotationFirst, displayMetadata, linkTagType, tagLinkUrl, tagLookup,
+}) => (
   <span>
-    {displayFieldValues.map((tag) => {
+    {displayFieldValues.map((initialTag) => {
+      const tag = tagLookup ? tagLookup[initialTag] : initialTag
       let content = tag.name || tag.text
       if (displayMetadata && tag.metadata) {
         content = `${content}: ${tag.metadata}`
@@ -100,13 +129,14 @@ export const TagFieldDisplay = React.memo((
 ))
 
 TagFieldDisplay.propTypes = {
-  displayFieldValues: PropTypes.arrayOf(PropTypes.object).isRequired,
+  displayFieldValues: PropTypes.arrayOf(PropTypes.oneOfType(PropTypes.object, PropTypes.string)).isRequired,
   popup: PropTypes.func,
   tagAnnotation: PropTypes.func,
   displayAnnotationFirst: PropTypes.bool,
   displayMetadata: PropTypes.bool,
   linkTagType: PropTypes.string,
   tagLinkUrl: PropTypes.string,
+  tagLookup: PropTypes.object,
 }
 
 class TagFieldView extends React.PureComponent {
@@ -127,6 +157,7 @@ class TagFieldView extends React.PureComponent {
     noEditTagTypes: PropTypes.arrayOf(PropTypes.string),
     linkTagType: PropTypes.string,
     tagLinkUrl: PropTypes.string,
+    modalId: PropTypes.string,
   }
 
   getSimplifiedProps() {
@@ -197,7 +228,7 @@ class TagFieldView extends React.PureComponent {
 
   render() {
     const {
-      simplifiedValue, field, tagOptions, popup, tagAnnotation, validate, displayMetadata, ...props
+      simplifiedValue, field, tagOptions, popup, tagAnnotation, validate, displayMetadata, modalId, ...props
     } = this.props
 
     const additionalFields = tagOptions.some(({ metadataTitle }) => metadataTitle) ? [{
@@ -206,6 +237,7 @@ class TagFieldView extends React.PureComponent {
       isArrayField: true,
       validate: val => ((!val || !val.metadataTitle || val.metadataTitle === NOTES_METADATA_TITLE || val.metadata) ? undefined : 'Required'),
       component: MetadataField,
+      metadataId: modalId,
     }] : []
 
     return (
@@ -214,6 +246,7 @@ class TagFieldView extends React.PureComponent {
         additionalEditFields={additionalFields}
         modalStyle={MODAL_STYLE}
         fieldDisplay={this.fieldDisplay}
+        modalId={modalId}
         {...props}
         {...(simplifiedValue ? this.getSimplifiedProps() : this.getMappedProps())}
       />

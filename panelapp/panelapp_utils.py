@@ -1,14 +1,21 @@
+from collections import defaultdict
+
 import requests
 from django.db import transaction
 from django.utils import timezone
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+from urllib3.exceptions import MaxRetryError
 
 from panelapp.models import PaLocusList, PaLocusListGene
+from reference_data.models import GENOME_VERSION_GRCh38
 from seqr.models import LocusList as SeqrLocusList, LocusListGene as SeqrLocusListGene
 from seqr.utils.gene_utils import parse_locus_list_items
 from seqr.utils.logging_utils import SeqrLogger
 from seqr.views.utils.json_to_orm_utils import update_model_from_json, create_model_from_json
 
 logger = SeqrLogger(__name__)
+
+REQUEST_TIMEOUT_S = 300
 
 
 def import_all_panels(user, panel_app_api_url, label=None):
@@ -23,8 +30,10 @@ def import_all_panels(user, panel_app_api_url, label=None):
             return None
 
     panels_url = '{}/panels/?page=1'.format(panel_app_api_url)
-
     all_panels = _get_all_panels(panels_url, [])
+
+    genes_url = '{}/genes/?page=1'.format(panel_app_api_url)
+    genes_by_panel_id = _get_all_genes(genes_url, defaultdict(list))
 
     for panel in all_panels:
         panel_app_id = panel.get('id')
@@ -33,11 +42,13 @@ def import_all_panels(user, panel_app_api_url, label=None):
             with transaction.atomic():
                 panel_genes_url = '{}/panels/{}/genes'.format(panel_app_api_url, panel_app_id)
                 pa_locus_list = _create_or_update_locus_list_from_panel(user, panel_genes_url, panel, label)
-                all_genes_for_panel = _get_all_genes_for_panel('{}/?page=1'.format(panel_genes_url), [])
+                all_genes_for_panel = genes_by_panel_id.get(panel_app_id, [])
+                if not all_genes_for_panel:
+                    continue  # Genes in 'super panels' are associated with sub panels
                 panel_genes_by_id = {_extract_ensembl_id_from_json(gene): gene for gene in all_genes_for_panel
                                      if _extract_ensembl_id_from_json(gene)}
                 raw_ensbl_38_gene_ids_csv = ','.join(panel_genes_by_id.keys())
-                genes_by_id, _, invalid_items = parse_locus_list_items({'rawItems': raw_ensbl_38_gene_ids_csv})
+                genes_by_id, _, invalid_items = parse_locus_list_items({'rawItems': raw_ensbl_38_gene_ids_csv}, genome_version=GENOME_VERSION_GRCh38)
                 if len(invalid_items) > 0:
                     logger.warning('Genes found in panel {} but not in reference data, ignoring genes {}'
                                    .format(panel_app_id, invalid_items), user)
@@ -93,7 +104,7 @@ def _create_pa_locus_list_gene(seqr_locus_list_gene, panel_gene_json):
 
 
 def _get_all_panels(panels_url, all_results):
-    resp = requests.get(panels_url)
+    resp = requests.get(panels_url, timeout=REQUEST_TIMEOUT_S)
     resp_json = resp.json()
     curr_page_results = [r for r in resp_json.get('results', []) if r.get('stats', {}).get('number_of_genes', 0) > 0]
     all_results += curr_page_results
@@ -105,16 +116,27 @@ def _get_all_panels(panels_url, all_results):
         return _get_all_panels(next_page, all_results)
 
 
-def _get_all_genes_for_panel(panel_genes_url, all_results):
-    resp = requests.get(panel_genes_url)
-    resp_json = resp.json()
-    all_results += resp_json.get('results', [])
+def _get_all_genes(genes_url: str, results_by_panel_id: dict):
+    @retry(
+        retry=retry_if_exception_type(MaxRetryError),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(5),
+    )
+    def _get(url):
+        resp = requests.get(url, timeout=REQUEST_TIMEOUT_S)
+        return resp.json()
+
+    resp_json = _get(genes_url)
+    for result in resp_json.get('results', []):
+        if result.get('panel'):
+            panel_id = result['panel']['id']
+            results_by_panel_id[panel_id].append(result)
 
     next_page = resp_json.get('next', None)
     if next_page is None:
-        return all_results
+        return results_by_panel_id
     else:
-        return _get_all_genes_for_panel(next_page, all_results)
+        return _get_all_genes(next_page, results_by_panel_id)
 
 
 def _create_or_update_locus_list_from_panel(user, panelgenes_url, panel_json, label):
