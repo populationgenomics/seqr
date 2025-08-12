@@ -407,7 +407,6 @@ export const ALL_ANNOTATION_FILTER_DETAILS =
 export const THIS_CALLSET_FREQUENCY = 'callset'
 export const SV_CALLSET_FREQUENCY = 'sv_callset'
 export const TOPMED_FREQUENCY = 'topmed'
-export const OURDNA_FREQUENCY = 'ourdna'
 export const SNP_FREQUENCIES = [
   {
     name: 'gnomad_genomes',
@@ -434,10 +433,16 @@ export const SNP_FREQUENCIES = [
     labelHelp: 'Filter by allele count (AC) or by allele frequency (AF) among the samples in this family plus the rest of the samples that were joint-called as part of variant calling for this project.',
   },
   {
-    name: OURDNA_FREQUENCY,
-    label: 'OurDNA',
+    name: 'ourdna_exomes',
+    label: 'OurDNA exomes',
     homHemi: true,
-    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA',
+    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA exomes',
+  },
+  {
+    name: 'ourdna_genome',
+    label: 'OurDNA genomes',
+    homHemi: true,
+    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA genomes',
   },
 ]
 

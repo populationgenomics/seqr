@@ -113,7 +113,10 @@ POPULATIONS = {
         'AF': 'helix_AF_het',
         'max_hl': 'helix_max_hl',
     },
-    'ourdna': {
+    'ourdna_exomes': {
+        'filter_AF': 'AF',
+    },
+    'ourdna_genomes': {
         'filter_AF': 'AF',
     },
 }

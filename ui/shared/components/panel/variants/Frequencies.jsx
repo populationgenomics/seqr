@@ -214,9 +214,16 @@ const POPULATIONS = [
     helpMessage: GNOMAD_SV_CRITERIA_MESSAGE,
   },
   {
-    field: 'ourdna',
-    fieldTitle: 'OurDNA',
+    field: 'ourdna_exomes',
+    fieldTitle: 'OurDNA exomes',
     precision: 3,
+    urls: { [GENOME_VERSION_38]: 'ourdna-dev.popgen.rocks', },
+  },
+  {
+    field: 'ourdna_genomes',
+    fieldTitle: 'OurDNA genomes',
+    precision: 3,
+    urls: { [GENOME_VERSION_38]: 'ourdna-dev.popgen.rocks', },
   },
 ]
 
