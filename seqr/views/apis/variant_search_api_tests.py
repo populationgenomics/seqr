@@ -406,7 +406,7 @@ class VariantSearchAPITest(object):
         self.assertEqual(response.status_code, 200)
         expected_content = [
             ['chrom', 'pos', 'ref', 'alt', 'gene', 'worst_consequence', 'callset_freq', 'exac_freq', 'gnomad_genomes_freq',
-             'gnomad_exomes_freq', 'topmed_freq', 'cadd', 'revel', 'eigen', 'splice_ai', 'polyphen', 'sift', 'muttaster', 'fathmm',
+             'gnomad_exomes_freq', 'topmed_freq', 'ourdna_freq', 'cadd', 'revel', 'eigen', 'splice_ai', 'polyphen', 'sift', 'muttaster', 'fathmm',
              'rsid', 'hgvsc', 'hgvsp', 'clinvar_clinical_significance', 'clinvar_gold_stars', 'filter', 'family_id_1',
              'tags_1', 'notes_1', 'family_id_2', 'tags_2', 'notes_2', 'sample_1', 'num_alt_alleles_1', 'gq_1', 'ab_1',
              'sample_2', 'num_alt_alleles_2', 'gq_2', 'ab_2', 'sample_3', 'num_alt_alleles_3', 'gq_3', 'ab_3'],
@@ -437,7 +437,7 @@ class VariantSearchAPITest(object):
             self.assertEqual(response.status_code, 200)
             expected_content = [
                 ['chrom', 'pos', 'ref', 'alt', 'gene', 'worst_consequence', 'callset_freq', 'exac_freq', 'gnomad_genomes_freq',
-                 'gnomad_exomes_freq', 'topmed_freq', 'cadd', 'revel', 'eigen', 'splice_ai', 'polyphen', 'sift', 'muttaster', 'fathmm',
+                 'gnomad_exomes_freq', 'topmed_freq', 'ourdna_freq', 'cadd', 'revel', 'eigen', 'splice_ai', 'polyphen', 'sift', 'muttaster', 'fathmm',
                  'rsid', 'hgvsc', 'hgvsp', 'clinvar_clinical_significance', 'clinvar_gold_stars', 'filter', 'family_id_1',
                  'tags_1', 'notes_1', 'sample_1', 'num_alt_alleles_1', 'gq_1', 'ab_1', 'sample_2', 'num_alt_alleles_2',
                  'gq_2', 'ab_2', 'sample_3', 'num_alt_alleles_3', 'gq_3', 'ab_3'],
