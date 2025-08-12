@@ -112,6 +112,9 @@ POPULATIONS = {
         'AC': 'helix_AC_het',
         'AF': 'helix_AF_het',
         'max_hl': 'helix_max_hl',
+    },
+    'ourdna': {
+        'filter_AF': 'AF',
     }
 }
 

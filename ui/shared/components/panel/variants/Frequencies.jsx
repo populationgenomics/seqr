@@ -213,6 +213,11 @@ const POPULATIONS = [
     queryParams: { [GENOME_VERSION_37]: 'dataset=gnomad_sv_r2_1' },
     helpMessage: GNOMAD_SV_CRITERIA_MESSAGE,
   },
+  {
+    field: 'ourdna',
+    fieldTitle: 'OurDNA',
+    precision: 3,
+  },
 ]
 
 const CALLSET_HET_POP = {
