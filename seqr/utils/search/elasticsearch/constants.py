@@ -115,7 +115,7 @@ POPULATIONS = {
     },
     'ourdna': {
         'filter_AF': 'AF',
-    }
+    },
 }
 
 POPULATION_FIELD_CONFIGS = {
