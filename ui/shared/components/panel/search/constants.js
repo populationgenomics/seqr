@@ -437,7 +437,7 @@ export const SNP_FREQUENCIES = [
     name: OURDNA_FREQUENCY,
     label: 'OurDNA',
     homHemi: true,
-    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA'
+    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA',
   },
 ]
 
