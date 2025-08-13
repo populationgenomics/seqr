@@ -27,7 +27,6 @@ CLOUD_STORAGE_URLS = {
 }
 TIMEOUT = 300
 
-
 def _process_alignment_records(rows, num_id_cols=1, **kwargs):
     num_cols = num_id_cols + 1
     invalid_row = next((row for row in rows if not num_cols <= len(row) <= num_cols+1), None)
@@ -46,6 +45,37 @@ def _process_alignment_records(rows, num_id_cols=1, **kwargs):
                 index_file_path = row[num_cols]
         parsed_records[row_id].append({'filePath': row[num_id_cols], 'sampleId': sample_id, 'indexFilePath': index_file_path})
     return parsed_records
+
+
+def _post_process_igv_records(individual_dataset_mapping, get_valid_matched_individuals, filename):
+    info = []
+    all_updates = []
+
+    matched_individuals = get_valid_matched_individuals(individual_dataset_mapping)
+
+    message = f'Parsed {sum([len(rows) for rows in individual_dataset_mapping.values()])} rows in {len(matched_individuals)} individuals'
+    if filename:
+        message += f' from {filename}'
+    info.append(message)
+
+    existing_sample_files = defaultdict(set)
+    for sample in IgvSample.objects.select_related('individual').filter(individual__in=matched_individuals.keys()):
+        existing_sample_files[sample.individual].add(sample.file_path)
+
+    num_unchanged_rows = 0
+    for individual, updates in matched_individuals.items():
+        changed_updates = [
+            dict(individualGuid=individual.guid, individualId=individual.individual_id, **update)
+            for update in updates
+            if update['filePath'] not in existing_sample_files[individual]
+        ]
+        all_updates += changed_updates
+        num_unchanged_rows += len(updates) - len(changed_updates)
+
+    if num_unchanged_rows:
+        info.append('No change detected for {} rows'.format(num_unchanged_rows))
+
+    return info, all_updates
 
 
 def _process_igv_table_handler(parse_uploaded_file, get_valid_matched_individuals):

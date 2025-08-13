@@ -13,9 +13,9 @@ const getDateFromDateStr = dateStr => (
 const FeatureUpdatesFeed = ({ entries }) => (
   <div>
     <Header key="header" dividing size="huge">
-      CPG Updates
+      CaRDinal Updates
       <Header.Subheader>
-        This page serves as an announcement hub for CPG seqr updates, sourced from this
+        This page serves as an announcement hub for CaRDinal seqr updates, sourced from this
         &nbsp;
         <a href="https://github.com/populationgenomics/seqr/discussions/categories/feature-updates">GitHub Discussion</a>
         .
