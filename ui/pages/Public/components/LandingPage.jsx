@@ -106,7 +106,7 @@ const LandingPage = () => (
         </List.Item>
         <List.Item>
           Please use the &nbsp;
-          <Anchor href="http://github.com/populationgenomics/seqr/issues">CPG&apos;s GitHub issues page</Anchor>
+          <Anchor href="http://github.com/populationgenomics/seqr/issues">CaRDinal seqr GitHub issues page</Anchor>
           &nbsp; to submit bug reports or feature requests
         </List.Item>
         <List.Item>
