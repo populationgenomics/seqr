@@ -432,6 +432,18 @@ export const SNP_FREQUENCIES = [
     homHemi: true,
     labelHelp: 'Filter by allele count (AC) or by allele frequency (AF) among the samples in this family plus the rest of the samples that were joint-called as part of variant calling for this project.',
   },
+  {
+    name: 'ourdna_exomes',
+    label: 'OurDNA exomes',
+    homHemi: true,
+    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA exomes',
+  },
+  {
+    name: 'ourdna_genome',
+    label: 'OurDNA genomes',
+    homHemi: true,
+    labelHelp: 'Filter by allele count (AC) or allele frequency (AF) in OurDNA genomes',
+  },
 ]
 
 export const MITO_FREQUENCIES = [

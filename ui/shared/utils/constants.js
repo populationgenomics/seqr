@@ -1616,6 +1616,8 @@ export const VARIANT_EXPORT_DATA = [
   { header: 'gnomad_genomes_freq', getVal: getPopAf('gnomad_genomes') },
   { header: 'gnomad_exomes_freq', getVal: getPopAf('gnomad_exomes') },
   { header: 'topmed_freq', getVal: getPopAf('topmed') },
+  { header: 'ourdna_exomes_freq', getVal: getPopAf('ourdna_exomes') },
+  { header: 'ourdna_genomes_freq', getVal: getPopAf('ourdna_genomes') },
   { header: 'cadd', getVal: variant => (variant.predictions || {}).cadd },
   { header: 'revel', getVal: variant => (variant.predictions || {}).revel },
   { header: 'eigen', getVal: variant => (variant.predictions || {}).eigen },
