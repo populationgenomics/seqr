@@ -24,6 +24,7 @@ S3_KEY = 's3'
 CLOUD_STORAGE_URLS = {
     S3_KEY: 'https://s3.amazonaws.com',
     'gs': GS_STORAGE_URL,
+    'ucsc': 'https://hgdownload.soe.ucsc.edu',
 }
 TIMEOUT = 300
 

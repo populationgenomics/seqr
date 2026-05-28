@@ -90,18 +90,18 @@ const REFERENCE_URLS = [
   },
   {
     key: 'cytobandURL',
-    baseUrl: `${BASE_REFERENCE_URL}/s3`,
+    baseUrl: BASE_REFERENCE_URL,
     path: {
-      37: 'igv.broadinstitute.org/genomes/seq/hg19/cytoBand.txt',
-      38: 'igv-genepattern-org/genomes/hg38/cytoBandIdeo.txt.gz',
+      37: 's3/igv.broadinstitute.org/genomes/seq/hg19/cytoBand.txt',
+      38: 'ucsc/goldenPath/hg38/database/cytoBandIdeo.txt.gz',
     },
   },
   {
     key: 'aliasURL',
-    baseUrl: `${BASE_REFERENCE_URL}/s3`,
+    baseUrl: BASE_REFERENCE_URL,
     path: {
-      37: 'hg19/hg19_alias.tab',
-      38: 'igv-genepattern-org/genomes/hg38/hg38_alias.tab',
+      37: 's3/hg19/hg19_alias.tab',
+      38: 'ucsc/goldenPath/hg38/bigZips/hg38.chromAlias.txt',
     },
   },
 ]
@@ -109,7 +109,7 @@ const REFERENCE_URLS = [
 const REFERENCE_TRACKS = [
   {
     name: 'Gencode v32',
-    indexPostfix: 'tbi',
+    indexPostfix: { 37: 'tbi', 38: 'tbi' },
     baseUrl: 'gs://seqr-reference-data',
     path: {
       37: 'GRCh37/gencode/gencode.v32lift37.annotation.sorted.bed.gz',
@@ -120,11 +120,11 @@ const REFERENCE_TRACKS = [
   },
   {
     name: 'Refseq',
-    indexPostfix: 'tbi',
-    baseUrl: `${BASE_REFERENCE_URL}`,
+    indexPostfix: { 37: 'tbi', 38: null },
+    baseUrl: BASE_REFERENCE_URL,
     path: {
       37: 's3/igv.org.genomes/hg19/refGene.sorted.txt.gz',
-      38: 's3/igv-genepattern-org/genomes/hg38/ncbiRefSeq.txt.gz',
+      38: 'ucsc/goldenPath/hg38/database/ncbiRefSeq.txt.gz',
     },
     format: 'refgene',
     visibilityWindow: -1,
@@ -138,7 +138,7 @@ export const REFERENCE_LOOKUP = ['37', '38'].reduce((acc, genome) => ({
     id: GENOME_VERSION_DISPLAY_LOOKUP[GENOME_VERSION_LOOKUP[genome]],
     tracks: REFERENCE_TRACKS.map(({ baseUrl, path, indexPostfix, ...track }) => ({
       url: `${baseUrl}/${path[genome]}`,
-      indexURL: indexPostfix ? `${baseUrl}/${path[genome]}.${indexPostfix}` : null,
+      indexURL: indexPostfix[genome] ? `${baseUrl}/${path[genome]}.${indexPostfix[genome]}` : null,
       ...track,
     })),
     ...REFERENCE_URLS.reduce((acc2, { key, baseUrl, path }) => ({ ...acc2, [key]: `${baseUrl}/${path[genome]}` }), {}),
