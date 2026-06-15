@@ -80,8 +80,11 @@ def parse_obo_file(file_iterator):
                 'is_category': False,
             }
         elif line.startswith("is_a: "):
-            # OBO format: "<id>" optionally followed by " ! <label>" and/or trailing " {<modifiers>}"
-            is_a = re.sub(r'\s*\{[^}]*\}\s*$', '', value).split(' ! ')[0].strip()
+            # Match the HPO id directly; OBO modifiers ({...}) and comments (! ...) may appear in any order around it.
+            match = re.search(r'HP:\d{7}', value)
+            if not match:
+                raise ValueError("is_a line missing HPO id: %s" % line)
+            is_a = match.group(0)
             if is_a == "HP:0000118":
                 hpo_id_to_record[hpo_id]['is_category'] = True
             hpo_id_to_record[hpo_id]['parent_id'] = is_a
