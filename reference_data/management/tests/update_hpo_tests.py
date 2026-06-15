@@ -135,20 +135,20 @@ EXPECTED_DB_DATA = {
         'category_id': None
     },
     'HP:9999001': {
-        'is_category': False,
+        'is_category': True,
         'definition': None,
         'name': 'trailer with xref only',
         'parent_id': 'HP:0000118',
         'hpo_id': 'HP:9999001',
-        'category_id': None,
+        'category_id': 'HP:9999001',
     },
     'HP:9999002': {
-        'is_category': False,
+        'is_category': True,
         'definition': None,
         'name': 'trailer with label and xref',
         'parent_id': 'HP:0000118',
         'hpo_id': 'HP:9999002',
-        'category_id': None,
+        'category_id': 'HP:9999002',
     },
 }
 
