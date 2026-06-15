@@ -81,6 +81,7 @@ PHO_DATA = [
     'synonym: "Head and neck abnormality" EXACT layperson []\n',
     'xref: UMLS:C4021817\n',
     'is_a: HP:0000118 ! Phenotypic abnormality\n',
+    '\n',
     '[Term]\n', # is_a with xref and no label
     'id: HP:9999001\n',
     'name: trailer with xref only\n',
@@ -90,7 +91,6 @@ PHO_DATA = [
     'id: HP:9999002\n',
     'name: trailer with label and xref\n',
     'is_a: HP:0000118 ! Phenotypic abnormality {xref="PMID:31677808"}\n',
-    '\n',
 ]
 
 EXPECTED_DB_DATA = {
@@ -133,7 +133,23 @@ EXPECTED_DB_DATA = {
         'parent_id': 'HP:0000001',
         'hpo_id': 'HP:0000003',
         'category_id': None
-    }
+    },
+    'HP:9999001': {
+        'is_category': False,
+        'definition': None,
+        'name': 'trailer with xref only',
+        'parent_id': 'HP:0000118',
+        'hpo_id': 'HP:9999001',
+        'category_id': None,
+    },
+    'HP:9999002': {
+        'is_category': False,
+        'definition': None,
+        'name': 'trailer with label and xref',
+        'parent_id': 'HP:0000118',
+        'hpo_id': 'HP:9999002',
+        'category_id': None,
+    },
 }
 
 class UpdateHpoTest(TestCase):
