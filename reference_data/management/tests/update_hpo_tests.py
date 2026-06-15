@@ -87,10 +87,15 @@ PHO_DATA = [
     'name: trailer with xref only\n',
     'is_a: HP:0000118 {xref="PMID:31677808"}\n',
     '\n',
-    '[Term]\n', # is_a with label and xref
+    '[Term]\n', # is_a with label and xref (label then modifier)
     'id: HP:9999002\n',
     'name: trailer with label and xref\n',
     'is_a: HP:0000118 ! Phenotypic abnormality {xref="PMID:31677808"}\n',
+    '\n',
+    '[Term]\n', # is_a with xref then label (OBO 1.4 standard ordering)
+    'id: HP:9999003\n',
+    'name: trailer with xref then label\n',
+    'is_a: HP:0000118 {xref="PMID:31677808"} ! Phenotypic abnormality\n',
 ]
 
 EXPECTED_DB_DATA = {
@@ -150,6 +155,14 @@ EXPECTED_DB_DATA = {
         'hpo_id': 'HP:9999002',
         'category_id': 'HP:9999002',
     },
+    'HP:9999003': {
+        'is_category': True,
+        'definition': None,
+        'name': 'trailer with xref then label',
+        'parent_id': 'HP:0000118',
+        'hpo_id': 'HP:9999003',
+        'category_id': 'HP:9999003',
+    },
 }
 
 class UpdateHpoTest(TestCase):
@@ -178,7 +191,7 @@ class UpdateHpoTest(TestCase):
         call_command('update_human_phenotype_ontology')
 
         calls = [
-            mock.call('Deleting HumanPhenotypeOntology table with 12 records and creating new table with 7 records'),
+            mock.call('Deleting HumanPhenotypeOntology table with 12 records and creating new table with 8 records'),
             mock.call('Done'),
         ]
         mock_logger.info.assert_has_calls(calls)
@@ -189,7 +202,7 @@ class UpdateHpoTest(TestCase):
         call_command('update_human_phenotype_ontology', tmp_file)
 
         calls = [
-            mock.call('Deleting HumanPhenotypeOntology table with 7 records and creating new table with 7 records'),
+            mock.call('Deleting HumanPhenotypeOntology table with 8 records and creating new table with 8 records'),
             mock.call('Done'),
         ]
         mock_logger.info.assert_has_calls(calls)
