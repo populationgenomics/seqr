@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from tqdm import tqdm
 
 from django.db import transaction
@@ -79,7 +80,8 @@ def parse_obo_file(file_iterator):
                 'is_category': False,
             }
         elif line.startswith("is_a: "):
-            is_a = value.split(" ! ")[0]
+            # OBO format: "<id>" optionally followed by " ! <label>" and/or trailing " {<modifiers>}"
+            is_a = re.sub(r'\s*\{[^}]*\}\s*$', '', value).split(' ! ')[0].strip()
             if is_a == "HP:0000118":
                 hpo_id_to_record[hpo_id]['is_category'] = True
             hpo_id_to_record[hpo_id]['parent_id'] = is_a
