@@ -81,6 +81,16 @@ PHO_DATA = [
     'synonym: "Head and neck abnormality" EXACT layperson []\n',
     'xref: UMLS:C4021817\n',
     'is_a: HP:0000118 ! Phenotypic abnormality\n',
+    '[Term]\n', # is_a with xref and no label
+    'id: HP:9999001\n',
+    'name: trailer with xref only\n',
+    'is_a: HP:0000118 {xref="PMID:31677808"}\n',
+    '\n',
+    '[Term]\n', # is_a with label and xref
+    'id: HP:9999002\n',
+    'name: trailer with label and xref\n',
+    'is_a: HP:0000118 ! Phenotypic abnormality {xref="PMID:31677808"}\n',
+    '\n',
 ]
 
 EXPECTED_DB_DATA = {
