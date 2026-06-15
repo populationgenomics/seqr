@@ -189,7 +189,7 @@ class UpdateHpoTest(TestCase):
         call_command('update_human_phenotype_ontology', tmp_file)
 
         calls = [
-            mock.call('Deleting HumanPhenotypeOntology table with 5 records and creating new table with 5 records'),
+            mock.call('Deleting HumanPhenotypeOntology table with 7 records and creating new table with 7 records'),
             mock.call('Done'),
         ]
         mock_logger.info.assert_has_calls(calls)
