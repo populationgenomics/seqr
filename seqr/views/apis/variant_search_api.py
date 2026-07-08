@@ -209,6 +209,8 @@ VARIANT_EXPORT_DATA = [
     {'header': 'gnomad_genomes_freq', 'value_path': 'populations.gnomad_genomes.af'},
     {'header': 'gnomad_exomes_freq', 'value_path': 'populations.gnomad_exomes.af'},
     {'header': 'topmed_freq', 'value_path': 'populations.topmed.af'},
+    {'header': 'ourdna_exomes_freq', 'value_path': 'populations.ourdna_exomes.af'},
+    {'header': 'ourdna_genomes_freq', 'value_path': 'populations.ourdna_genomes.af'},
     {'header': 'cadd', 'value_path': 'predictions.cadd'},
     {'header': 'revel', 'value_path': 'predictions.revel'},
     {'header': 'eigen', 'value_path': 'predictions.eigen'},
